@@ -1,9 +1,7 @@
-// src/router.js
-import { createRouter, createWebHistory } from 'vue-router'
-import MainPageUser from './components/user/MainPage.vue'
-import WelcomePage from './components/WelcomePage.vue'
-import Signup from './pages/user/Signup.vue'
-import Login from './pages/user/Login.vue'
+import MainPageUser from '../components/user/MainPage.vue'
+import WelcomePage from '../components/WelcomePage.vue'
+import Signup from '../pages/user/Signup.vue'
+import Login from '../pages/user/Login.vue'
 
 const routes = [
    // {
@@ -18,6 +16,7 @@ const routes = [
    {
       path: '/user',
       component: MainPageUser,
+      meta: { requiresAuth: true },
       children: [
          {
             path: 'login',
@@ -33,9 +32,4 @@ const routes = [
    }
 ]
 
-const router = createRouter({
-   history: createWebHistory(),
-   routes
-})
-
-export default router
+export default routes
