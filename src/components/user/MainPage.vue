@@ -12,6 +12,8 @@ import Footer from './Footer.vue';
 import Header from './Header.vue'
 </script>
 
-<style scoped>
-/* Component-specific styles */
+<style>
+::-ms-reveal {
+   display: none;
+}
 </style>

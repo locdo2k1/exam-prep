@@ -30,9 +30,6 @@
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Giới thiệu</a>
                </li>
                <li>
-                  <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Chương trình học</a>
-               </li>
-               <li>
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Đề thi online</a>
                </li>
                <li>
@@ -40,9 +37,6 @@
                </li>
                <li>
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Blog</a>
-               </li>
-               <li>
-                  <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Kích hoạt tài khoản</a>
                </li>
                <li class="mt-3 md:mt-0">
                   <router-link to="/user/login" custom v-slot="{ navigate }">

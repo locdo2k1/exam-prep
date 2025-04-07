@@ -13,16 +13,14 @@ export function getUserRole() {
 export function setupRouteGuards(router) {
    router.beforeEach((to, from, next) => {
       // Check if the route requires authentication
-      console.log(to.matched);
-
       if (to.matched.some(record => record.meta.requiresAuth && !['/user/login', '/user/signup'].includes(to.path))) {
-         if (!isAuthenticated()) {
-            next({
-               path: '/login',
-               query: { redirect: to.fullPath }
-            })
-            return
-         }
+         // if (!isAuthenticated()) {
+         // next({
+         //    path: '/user/login',
+         //    query: { redirect: to.fullPath }
+         // })
+         // return
+         // }
 
          // Check for required role
          const userRole = getUserRole()
