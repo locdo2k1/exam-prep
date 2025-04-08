@@ -14,24 +14,24 @@ export function setupRouteGuards(router) {
    router.beforeEach((to, from, next) => {
       // Check if the route requires authentication
       if (to.matched.some(record => record.meta.requiresAuth && !['/user/login', '/user/signup'].includes(to.path))) {
-         // if (!isAuthenticated()) {
-         // next({
-         //    path: '/user/login',
-         //    query: { redirect: to.fullPath }
-         // })
-         // return
-         // }
+         if (!isAuthenticated()) {
+            next({
+               path: '/user/login',
+               query: { redirect: to.fullPath }
+            })
+            return
+         }
 
          // Check for required role
-         const userRole = getUserRole()
-         if (to.matched.some(record => record.meta.requiredRole)) {
-            const routeWithRole = to.matched.find(record => record.meta.requiredRole)
+         // const userRole = getUserRole()
+         // if (to.matched.some(record => record.meta.requiredRole)) {
+         //    const routeWithRole = to.matched.find(record => record.meta.requiredRole)
 
-            if (routeWithRole && routeWithRole.meta.requiredRole !== userRole) {
-               next({ path: '/unauthorized' })
-               return
-            }
-         }
+         //    if (routeWithRole && routeWithRole.meta.requiredRole !== userRole) {
+         //       next({ path: '/unauthorized' })
+         //       return
+         //    }
+         // }
       }
 
       next()

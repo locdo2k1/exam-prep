@@ -46,12 +46,16 @@ const handleSubmit = async () => {
    isSubmitting.value = true
 
    try {
-      const response = await login({ username: username.value, password: password.value })
+      const response = await login(username.value, password.value)
 
       const redirect = route.query.redirect
-      console.log(redirect)
+
+      // Save token to local storage
+      localStorage.setItem('token', response);
+
+      console.log(response);
+
       if (redirect) {
-         console.log("here")
          router.push(redirect)
       } else {
          router.push('/user')

@@ -3,6 +3,6 @@
 
 <template>
   <div>
-    Welcome to User Page
+    <h1>Welcome to User Page</h1>
   </div>
 </template>
