@@ -12,3 +12,8 @@ import Home from './Home.vue';
 
 const route = useRoute();
 </script>
+<style>
+::-ms-reveal {
+   display: none;
+}
+</style>

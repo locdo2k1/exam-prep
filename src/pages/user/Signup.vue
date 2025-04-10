@@ -1,35 +1,168 @@
 <script setup>
-import { ref } from 'vue'
-import { FwbModal } from 'flowbite-vue'
+import { reactive, ref } from 'vue'
 
-const showPassword = ref(false)
+// Form fields
+const userName = ref('');
+const email = ref('');
 const password = ref('');
+const rePassword = ref('');
+
+
+// Form validation state
+const formSubmitted = ref(false);
+const formErrors = ref({
+   userName: false,
+   email: false,
+   password: false,
+   rePassword: false,
+   passwordMatch: false
+});
+
+console.log(userName)
+
+// Toggle for password visibility
+const showPassword = ref(false);
+const showRePassword = ref(false);
+
+// Validation checks
+const isEmailValid = (email) => {
+   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+   return emailRegex.test(email);
+};
+
+// Form submission handler
+const handleSubmit = (event) => {
+   event.preventDefault();
+   formSubmitted.value = true;
+
+   // Check all fields
+   let hasError = false;
+
+   // Validate username
+   if (userName.value.trim() === '') {
+      formErrors.value.userName = true;
+      hasError = true;
+   } else {
+      formErrors.value.userName = false;
+   }
+
+   // Validate email
+   if (email.value.trim() === '') {
+      formErrors.value.email = true;
+      hasError = true;
+   } else if (!isEmailValid(email.value)) {
+      formErrors.value.email = true;
+      hasError = true;
+   } else {
+      formErrors.value.email = false;
+   }
+
+   // Validate password
+   if (password.value.trim() === '') {
+      formErrors.value.password = true;
+      hasError = true;
+   } else {
+      formErrors.value.password = false;
+   }
+
+   // Validate re-password
+   if (rePassword.value.trim() === '') {
+      formErrors.value.rePassword = true;
+      hasError = true;
+   } else {
+      formErrors.value.rePassword = false;
+   }
+
+   // Check password match
+   if (password.value !== rePassword.value && rePassword.value.trim() !== '') {
+      formErrors.value.passwordMatch = true;
+      hasError = true;
+   } else {
+      formErrors.value.passwordMatch = false;
+   }
+
+   // Proceed with form submission if no errors
+   if (!hasError) {
+      console.log("Form submitted successfully!");
+      // Add your API call or form submission logic here
+
+      // You might want to reset the form after successful submission
+      // resetForm();
+   } else {
+      console.log("Form has validation errors");
+      // Scroll to first error for better UX (optional)
+      const firstErrorElement = document.querySelector('.border-red-500');
+      if (firstErrorElement) {
+         firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+         firstErrorElement.focus();
+      }
+   }
+};
+
+const resetForm = () => {
+   userName.value = '';
+   email.value = '';
+   password.value = '';
+   rePassword.value = '';
+   formSubmitted.value = false;
+   formErrors.value = {
+      userName: false,
+      email: false,
+      password: false,
+      rePassword: false,
+      passwordMatch: false
+   };
+};
 </script>
 
 <template>
    <div class="mx-auto w-md mt-10 mb-12 p-5 border border-gray-300 rounded-lg shadow-md">
-      <form>
+      <form @submit="handleSubmit" novalidate>
          <div class="grid gap-6 mb-4">
+            <!-- User Name Field -->
             <div>
-               <label for="user_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">User
-                  Name</label>
-               <input type="text" id="user_name"
-                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  required placeholder="User name" />
+               <label for="user_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  User Name <span class="text-red-500">*</span>
+               </label>
+               <input v-model="userName" type="text" id="user_name" :class="[
+                  'bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500',
+                  (formSubmitted && formErrors.userName)
+                     ? 'border-red-500 focus:border-red-500 dark:border-red-500 dark:focus:border-red-500'
+                     : 'border-gray-300 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-500'
+               ]" placeholder="User name" required />
+               <p v-if="formSubmitted && formErrors.userName" class="mt-2 text-sm text-red-600 dark:text-red-500">
+                  Vui lòng nhập tên người dùng
+               </p>
             </div>
+
+            <!-- Email Field -->
             <div>
-               <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-               <input type="text" id="email"
-                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  required placeholder="email" />
+               <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Email <span class="text-red-500">*</span>
+               </label>
+               <input v-model="email" type="email" id="email" :class="[
+                  'bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500',
+                  (formSubmitted && formErrors.email)
+                     ? 'border-red-500 focus:border-red-500 dark:border-red-500 dark:focus:border-red-500'
+                     : 'border-gray-300 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-500'
+               ]" placeholder="Email" required />
+               <p v-if="formSubmitted && formErrors.email" class="mt-2 text-sm text-red-600 dark:text-red-500">
+                  Vui lòng nhập email hợp lệ
+               </p>
             </div>
+
+            <!-- Password Field -->
             <div>
-               <label for="password"
-                  class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
+               <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Mật khẩu <span class="text-red-500">*</span>
+               </label>
                <div class="relative">
-                  <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password"
-                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                     placeholder="Password" required />
+                  <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" :class="[
+                     'bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 pr-10 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500',
+                     (formSubmitted && formErrors.password)
+                        ? 'border-red-500 focus:border-red-500 dark:border-red-500 dark:focus:border-red-500'
+                        : 'border-gray-300 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-500'
+                  ]" placeholder="Password" required />
                   <svg v-if="password" @click="showPassword = !showPassword"
                      class="absolute top-1/2 right-3 transform -translate-y-1/2 w-6 h-6 text-gray-800 dark:text-white cursor-pointer"
                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
@@ -44,25 +177,70 @@ const password = ref('');
                         d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                   </svg>
                </div>
+               <p v-if="formSubmitted && formErrors.password" class="mt-2 text-sm text-red-600 dark:text-red-500">
+                  Vui lòng nhập mật khẩu
+               </p>
+            </div>
+
+            <!-- Re-Password Field -->
+            <div>
+               <label for="re-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Xác minh mật khẩu <span class="text-red-500">*</span>
+               </label>
+               <div class="relative">
+                  <input v-model="rePassword" :type="showRePassword ? 'text' : 'password'" id="re-password" :class="[
+                     'bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 pr-10 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500',
+                     (formSubmitted && (formErrors.rePassword || formErrors.passwordMatch))
+                        ? 'border-red-500 focus:border-red-500 dark:border-red-500 dark:focus:border-red-500'
+                        : 'border-gray-300 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-500'
+                  ]" placeholder="Password" required />
+                  <svg v-if="rePassword" @click="showRePassword = !showRePassword"
+                     class="absolute top-1/2 right-3 transform -translate-y-1/2 w-6 h-6 text-gray-800 dark:text-white cursor-pointer"
+                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                     <!-- Slash Eye Icon (when showRePassword is true) -->
+                     <path v-if="showRePassword" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                     <!-- Open Eye Icon (when showRePassword is false) -->
+                     <path v-else stroke="currentColor" stroke-width="2"
+                        d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z" />
+                     <path v-if="!showRePassword" stroke="currentColor" stroke-width="2"
+                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  </svg>
+               </div>
+               <!-- Show appropriate error message -->
+               <p v-if="formErrors.rePassword" class="mt-2 text-sm text-red-600 dark:text-red-500">
+                  Vui lòng xác minh mật khẩu
+               </p>
+               <p v-else-if="formErrors.passwordMatch && password && password !== rePassword"
+                  class="mt-2 text-sm text-red-600 dark:text-red-500">
+                  Mật khẩu không khớp
+               </p>
             </div>
          </div>
+
          <p class="text-sm text-blue-500 hover:underline cursor-pointer text-center mb-4">
             Quên mật khẩu?
          </p>
+
          <button type="submit"
-            class="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-400 dark:hover:bg-blue-500 dark:focus:ring-blue-600 cursor-pointer">Đăng
-            ký</button>
+            class="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-400 dark:hover:bg-blue-500 dark:focus:ring-blue-600 cursor-pointer">
+            Đăng ký
+         </button>
+
          <p class="text-sm text-center mt-4">
             Đã có tài khoản?
             <router-link to="/user/login" custom v-slot="{ navigate }">
                <a href="#" class="text-blue-500 hover:underline cursor-pointer" @click="navigate">Đăng nhập ngay!</a>
             </router-link>
          </p>
+
          <div class="flex items-center my-3">
             <div class="flex-1 border-t border-gray-300"></div>
             <span class="px-4 text-gray-500 text-sm">Hoặc</span>
             <div class="flex-1 border-t border-gray-300"></div>
          </div>
+
          <button type="button"
             class="w-full text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center dark:hover:bg-gray-700 dark:focus:ring-gray-600 dark:bg-gray-600 dark:text-white dark:border-gray-600 cursor-pointer">
             <svg class="w-5 h-5 mr-2" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
