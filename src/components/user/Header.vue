@@ -9,7 +9,7 @@
             </a>
 
             <!-- Mobile menu button -->
-            <button v-if="$route.name === 'main'" @click="toggleMobileMenu" id="mobile-menu-button" type="button"
+            <button @click="toggleMobileMenu" id="mobile-menu-button" type="button"
                class="items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none hidden"
                aria-controls="navbar-default" :aria-expanded="isMobileMenuOpen">
                <span class="sr-only">Open main menu</span>

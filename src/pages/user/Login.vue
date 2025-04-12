@@ -25,13 +25,13 @@ const validateForm = () => {
 
    // Validate username
    if (!username.value.trim()) {
-      usernameError.value = 'Username is required'
+      usernameError.value = 'Tên người dùng là bắt buộc'
       isValid = false
    }
 
    // Validate password
    if (!password.value) {
-      passwordError.value = 'Password is required'
+      passwordError.value = 'Mật khẩu là bắt buộc'
       isValid = false
    }
 

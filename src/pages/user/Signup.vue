@@ -1,5 +1,7 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
+import { signup } from '../../api/auth/signup';
+import { useRouter } from 'vue-router';
 
 // Form fields
 const userName = ref('');
@@ -18,7 +20,8 @@ const formErrors = ref({
    passwordMatch: false
 });
 
-console.log(userName)
+//vue router
+const router = useRouter();
 
 // Toggle for password visibility
 const showPassword = ref(false);
@@ -31,7 +34,7 @@ const isEmailValid = (email) => {
 };
 
 // Form submission handler
-const handleSubmit = (event) => {
+const handleSubmit = async (event) => {
    event.preventDefault();
    formSubmitted.value = true;
 
@@ -81,20 +84,17 @@ const handleSubmit = (event) => {
       formErrors.value.passwordMatch = false;
    }
 
-   // Proceed with form submission if no errors
    if (!hasError) {
-      console.log("Form submitted successfully!");
-      // Add your API call or form submission logic here
+      try {
+         const response = await signup(userName.value, email.value, password.value);
+         // Handle successful signup
+         localStorage.setItem('token', response);
 
-      // You might want to reset the form after successful submission
-      // resetForm();
-   } else {
-      console.log("Form has validation errors");
-      // Scroll to first error for better UX (optional)
-      const firstErrorElement = document.querySelector('.border-red-500');
-      if (firstErrorElement) {
-         firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-         firstErrorElement.focus();
+         router.replace({ name: 'home' });
+      } catch (error) {
+         console.error(error);
+         // Handle signup error
+         // You can display an error message to the user
       }
    }
 };
