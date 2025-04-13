@@ -1,8 +1,30 @@
-// src/router/guards.js
+import { jwtDecode } from 'jwt-decode';
+
 
 // Authentication helpers
 export function isAuthenticated() {
-   return localStorage.getItem('token') !== null
+   const token = localStorage.getItem('token');
+
+   if (!token) {
+      return false;
+   }
+
+   try {
+      // Decode and check expiration
+      const decoded = jwtDecode(token);
+
+      // Check if token is expired
+      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+         console.log('Token expired');
+         localStorage.removeItem('token');
+         return false;
+      }
+
+      return true;
+   } catch (error) {
+      console.log('Token verification failed:', error);
+      return false;
+   }
 }
 
 export function getUserRole() {

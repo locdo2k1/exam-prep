@@ -1,7 +1,7 @@
 <template>
    <footer class="bg-white">
       <div class="footer-wrapper border-t border-gray-300 bg-size-auto bg-no-repeat bg-bottom"
-         style="background-image: url('/public/images/background/user_footer.webp')">
+         style="background-image: url('/images/background/user_footer.webp')">
          <div class="max-w-screen-xl mx-auto p-4 md:py-8">
             <!-- Footer links section -->
             <div class="grid grid-cols-1 gap-8 sm:gap-6 sm:grid-cols-4">
