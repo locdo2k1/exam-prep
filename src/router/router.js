@@ -1,9 +1,10 @@
-import LayoutUser from '../components/user/LayoutUser.vue'
-import WelcomePage from '../components/WelcomePage.vue'
+import LayoutUser from '../components/user/Layout/LayoutUser.vue'
+import WelcomePage from '../pages/WelcomePage.vue'
 import Signup from '../pages/user/Signup.vue'
 import Login from '../pages/user/Login.vue'
 import { isAuthenticated } from './guards'
-import Home from '../components/user/Home.vue'
+import Home from '../components/user/Layout/Home.vue'
+import Signin from '../pages/admin/auth/Signin.vue'
 
 const routes = [
    // {
@@ -52,6 +53,10 @@ const routes = [
             }
          },
       ]
+   },
+   {
+      path: '/admin/signin',
+      component: Signin
    }
 ]
 
