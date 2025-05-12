@@ -5,5 +5,5 @@
     </main>
   </div>
 </template>
-
+<style src="../../../admin.style.css"></style>
 <script setup lang="ts"></script>

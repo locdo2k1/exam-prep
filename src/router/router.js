@@ -5,13 +5,9 @@ import Login from '../pages/user/Login.vue'
 import { isAuthenticated } from './guards'
 import Home from '../components/user/Layout/Home.vue'
 import Signin from '../pages/admin/auth/Signin.vue'
+import FullScreenLayout from '../components/admin/layout/FullScreenLayout.vue'
 
 const routes = [
-   // {
-   //    // path: '/admin',
-   //    //  component: Admin,
-   //    //  children: adminRouter.options.routes
-   // },
    {
       path: '/',
       component: WelcomePage,
@@ -55,7 +51,17 @@ const routes = [
       ]
    },
    {
-      path: '/admin/signin',
+      path: '/admin',
+      // component: FullScreenLayout,
+      // children: [
+      //    {
+      //       path: 'login',
+      //       component: Signin
+      //    }
+      // ]
+   },
+   {
+      path: '/admin/login',
       component: Signin
    }
 ]
