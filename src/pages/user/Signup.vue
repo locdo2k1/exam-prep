@@ -122,14 +122,14 @@ const resetForm = () => {
             <!-- User Name Field -->
             <div>
                <label for="user_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                  User Name <span class="text-red-500">*</span>
+                  Tên người dùng <span class="text-red-500">*</span>
                </label>
                <input v-model="userName" type="text" id="user_name" :class="[
                   'bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500',
                   (formSubmitted && formErrors.userName)
                      ? 'border-red-500 focus:border-red-500 dark:border-red-500 dark:focus:border-red-500'
                      : 'border-gray-300 focus:border-blue-500 dark:border-gray-600 dark:focus:border-blue-500'
-               ]" placeholder="User name" required />
+               ]" placeholder="Tên người dùng" required />
                <p v-if="formSubmitted && formErrors.userName" class="mt-2 text-sm text-red-600 dark:text-red-500">
                   Vui lòng nhập tên người dùng
                </p>

@@ -1,5 +1,6 @@
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref, defineEmits, watch, onMounted } from 'vue'
+import { useGoogleAuth } from '@/api/auth/googleAuthService'
 
 const props = defineProps({
    redirectUrl: {
@@ -16,6 +17,47 @@ const showPassword = ref(false)
 const usernameError = ref('')
 const passwordError = ref('')
 const isSubmitting = ref(false)
+const GOOGLE_CLIENT_ID = ''
+// Set up Google authentication
+const googleAuth = useGoogleAuth(GOOGLE_CLIENT_ID);
+
+// Handle the credential received from Google
+const handleCredentialResponse = async (response) => {
+   if (response?.credential) {
+      try {
+         // await authStore.loginWithGoogle(response.credential);
+         router.push('/dashboard');
+      } catch (err) {
+         console.error('Authentication failed:', err);
+      }
+   }
+};
+
+// Watch for when Google API is loaded
+watch(() => googleAuth.isGapiLoaded.value, (isLoaded) => {
+   if (isLoaded) {
+      googleAuth.initializeGoogleSignIn(handleCredentialResponse);
+   }
+});
+
+// When the component is mounted
+onMounted(() => {
+   // If already authenticated, redirect to dashboard
+   // if (authStore.isAuthenticated) {
+   //    router.push('/dashboard');
+   //    return;
+   // }
+
+   // If Google API is already loaded, initialize
+   if (googleAuth.isGapiLoaded.value) {
+      googleAuth.initializeGoogleSignIn(handleCredentialResponse);
+
+      // Wait for DOM to be updated
+      setTimeout(() => {
+         googleAuth.renderButton('google-signin-button');
+      }, 0);
+   }
+});
 
 const validateForm = () => {
    let isValid = true
@@ -51,6 +93,8 @@ const handleSubmit = () => {
       isSubmitting.value = false
    }
 }
+
+
 </script>
 
 <template>
@@ -66,11 +110,11 @@ const handleSubmit = () => {
       <div class="grid gap-6 mb-4">
          <div>
             <label for="user_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-               User Name <span class="text-red-500">*</span>
+               Tên người dùng <span class="text-red-500">*</span>
             </label>
             <input type="text" id="user_name"
                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-               :class="{ 'border-red-500': usernameError }" placeholder="User name" v-model="username" />
+               :class="{ 'border-red-500': usernameError }" placeholder="Tên người dùng" v-model="username" />
             <p v-if="usernameError" class="mt-1 text-sm text-red-600">{{ usernameError }}</p>
          </div>
          <div>
@@ -119,7 +163,8 @@ const handleSubmit = () => {
          <span class="px-4 text-gray-500 text-sm">Hoặc</span>
          <div class="flex-1 border-t border-gray-300"></div>
       </div>
-      <button type="button"
+      <!-- Custom Google Sign-In Button -->
+      <button type="button" v-if="googleAuth.isInitialized" @click="googleAuth.promptSignIn"
          class="w-full text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center dark:hover:bg-gray-700 dark:focus:ring-gray-600 dark:bg-gray-600 dark:text-white dark:border-gray-600 cursor-pointer">
          <svg class="w-5 h-5 mr-2" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clip-path="url(#clip0_13183_10121)">
