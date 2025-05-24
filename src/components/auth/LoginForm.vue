@@ -1,66 +1,64 @@
-<script setup>
+<script setup lang="ts">
 import { ref, defineEmits, watch, onMounted } from 'vue'
-import { useGoogleAuth } from '@/api/auth/googleAuthService'
+import { useGoogleAuth } from '@/api/auth/googleAuthService';
+import { useRouter } from 'vue-router'
 
-const props = defineProps({
-   redirectUrl: {
-      type: String,
-      default: '/user'
-   }
+interface LoginFormProps {
+   redirectUrl: string
+}
+
+interface LoginCredentials {
+   username: string
+   password: string
+}
+
+interface GoogleResponse {
+   credential?: string
+   [key: string]: string | undefined
+}
+
+const props = withDefaults(defineProps<LoginFormProps>(), {
+   redirectUrl: '/user'
 })
 
-const emit = defineEmits(['login-submit'])
+const emit = defineEmits<{
+   (e: 'login-submit', credentials: LoginCredentials): void
+}>()
 
-const username = ref('')
-const password = ref('')
-const showPassword = ref(false)
-const usernameError = ref('')
-const passwordError = ref('')
-const isSubmitting = ref(false)
+const router = useRouter()
+const username = ref<string>('')
+const password = ref<string>('')
+const showPassword = ref<boolean>(false)
+const usernameError = ref<string>('')
+const passwordError = ref<string>('')
+const isSubmitting = ref<boolean>(false)
 
-// Set up Google authentication
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const googleAuth = useGoogleAuth(googleClientId);
+const googleClientId: string = import.meta.env.VITE_GOOGLE_CLIENT_ID
+const googleAuth = useGoogleAuth(googleClientId)
 
-// Handle the credential received from Google
-const handleCredentialResponse = async (response) => {
+const handleCredentialResponse = async (response: GoogleResponse): Promise<void> => {
    if (response?.credential) {
       try {
-         // await authStore.loginWithGoogle(response.credential);
-         router.push('/dashboard');
+         router.push('/dashboard')
       } catch (err) {
-         console.error('Authentication failed:', err);
+         console.error('Authentication failed:', err)
       }
    }
 };
 
-// Watch for when Google API is loaded
-watch(() => googleAuth.isGapiLoaded.value, (isLoaded) => {
+watch(() => googleAuth.isGapiLoaded, (isLoaded) => {
    if (isLoaded) {
       googleAuth.initializeGoogleSignIn(handleCredentialResponse);
    }
 });
 
-// When the component is mounted
 onMounted(() => {
-   // If already authenticated, redirect to dashboard
-   // if (authStore.isAuthenticated) {
-   //    router.push('/dashboard');
-   //    return;
-   // }
-
-   // If Google API is already loaded, initialize
-   if (googleAuth.isGapiLoaded.value) {
+   if (googleAuth.isGapiLoaded) {
       googleAuth.initializeGoogleSignIn(handleCredentialResponse);
-
-      // Wait for DOM to be updated
-      // setTimeout(() => {
-      //    googleAuth.renderButton('google-signin-button');
-      // }, 0);
    }
 });
 
-const validateForm = () => {
+const validateForm = (): boolean => {
    let isValid = true
    usernameError.value = ''
    passwordError.value = ''
@@ -78,24 +76,20 @@ const validateForm = () => {
    return isValid
 }
 
-const handleSubmit = () => {
+const handleSubmit = (): void => {
    if (!validateForm()) return
 
    isSubmitting.value = true
 
    try {
       emit('login-submit', {
-
          username: username.value,
          password: password.value
       })
-
    } finally {
       isSubmitting.value = false
    }
 }
-
-
 </script>
 
 <template>
