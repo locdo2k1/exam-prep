@@ -16,7 +16,7 @@
           </div>
           <div class="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
             <div>
-              <LoginForm @login-submit="handleLoginSubmit" />
+              <LoginForm @login-submit="handleLoginSubmit" :redirectUrl="'/admin'" />
             </div>
           </div>
         </div>
@@ -39,14 +39,15 @@
   </FullScreenLayout>
 </template>
 
-<script setup lang="ts">
-import { useRouter } from 'vue-router'
+<script setup>
+import { useRouter, useRoute } from 'vue-router'
 import CommonGridShape from '@/components/admin/common/CommonGridShape.vue'
 import LoginForm from '@/components/auth/LoginForm.vue'
 import FullScreenLayout from '@/components/admin/layout/FullScreenLayout.vue'
 import { login } from '../../../api/auth/login.js'
 
 const router = useRouter()
+const route = useRoute()
 
 const handleLoginSubmit = async (credentials) => {
   try {
@@ -54,7 +55,7 @@ const handleLoginSubmit = async (credentials) => {
     localStorage.setItem('token', response)
 
     const redirect = route.query.redirect
-    router.push(redirect || '/user')
+    router.push(redirect || '/admin')
   } catch (error) {
     console.error('Login error:', error)
     // You might want to emit this back to the form component

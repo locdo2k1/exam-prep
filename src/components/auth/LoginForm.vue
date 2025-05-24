@@ -17,9 +17,10 @@ const showPassword = ref(false)
 const usernameError = ref('')
 const passwordError = ref('')
 const isSubmitting = ref(false)
-const GOOGLE_CLIENT_ID = ''
+
 // Set up Google authentication
-const googleAuth = useGoogleAuth(GOOGLE_CLIENT_ID);
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const googleAuth = useGoogleAuth(googleClientId);
 
 // Handle the credential received from Google
 const handleCredentialResponse = async (response) => {
@@ -53,9 +54,9 @@ onMounted(() => {
       googleAuth.initializeGoogleSignIn(handleCredentialResponse);
 
       // Wait for DOM to be updated
-      setTimeout(() => {
-         googleAuth.renderButton('google-signin-button');
-      }, 0);
+      // setTimeout(() => {
+      //    googleAuth.renderButton('google-signin-button');
+      // }, 0);
    }
 });
 
@@ -164,7 +165,7 @@ const handleSubmit = () => {
          <div class="flex-1 border-t border-gray-300"></div>
       </div>
       <!-- Custom Google Sign-In Button -->
-      <button type="button" v-if="googleAuth.isInitialized" @click="googleAuth.promptSignIn"
+      <button type="button" v-if="googleAuth.isInitialized" @click="() => googleAuth.promptSignIn(props.redirectUrl)"
          class="w-full text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center dark:hover:bg-gray-700 dark:focus:ring-gray-600 dark:bg-gray-600 dark:text-white dark:border-gray-600 cursor-pointer">
          <svg class="w-5 h-5 mr-2" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clip-path="url(#clip0_13183_10121)">

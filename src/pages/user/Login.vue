@@ -22,6 +22,6 @@ const handleLoginSubmit = async (credentials) => {
 
 <template>
    <div class="mx-auto w-md mt-10 mb-12 p-5 border border-gray-300 rounded-lg shadow-md">
-      <LoginForm :redirectUrl="route.query.redirect" @login-submit="handleLoginSubmit" />
+      <LoginForm :redirectUrl="'/user'" @login-submit="handleLoginSubmit" />
    </div>
 </template>

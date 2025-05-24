@@ -1,5 +1,7 @@
 // src/services/GoogleAuthService.js
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { getToken } from './auth.js';
+import { useRouter } from 'vue-router';
 
 export function useGoogleAuth(clientId) {
    const isGapiLoaded = ref(false);
@@ -7,6 +9,7 @@ export function useGoogleAuth(clientId) {
    const isSignedIn = ref(false);
    const googleUser = ref(null);
    const error = ref(null);
+   const router = useRouter();
 
    // Initialize Google Sign-In
    const initializeGoogleSignIn = (callback) => {
@@ -30,27 +33,36 @@ export function useGoogleAuth(clientId) {
    };
 
    // Prompt for Google Sign-In
-   const promptSignIn = () => {
+   const promptSignIn = (redirectUrl) => {
+      console.log('Prompting for Google Sign-In...');
       if (!isInitialized.value || !window.google) {
          error.value = 'Google Sign-In not initialized';
          return;
       }
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectUri = urlParams.get('redirect') || '';
-      const fullRedirectUri = `${window.location.origin}${redirectUri}`;
-      console.log(fullRedirectUri);
-
       try {
          window.google.accounts.oauth2.initCodeClient({
             client_id: clientId,
             scope: 'email profile',
-            ux_mode: 'redirect',
-            redirect_uri: fullRedirectUri,
+            ux_mode: 'popup', // Changed from 'redirect' to 'popup'
+            redirect_uri: 'http://localhost:5173',
             callback: (response) => {
                if (response.code) {
                   googleUser.value = response;
                   isSignedIn.value = true;
+
+                  getToken(response.code, 'google')
+                     .then(tokenResponse => {
+                        console.log('Token received:', tokenResponse);
+
+                        localStorage.setItem('token', tokenResponse.data);
+                        router.push(redirectUrl);
+                     })
+                     .catch(err => {
+                        error.value = 'Failed to get token';
+                        console.error(err);
+                     });
+
                   console.log('Successfully signed in:', response);
                }
             }

@@ -4,7 +4,7 @@ import Signup from '../pages/user/Signup.vue'
 import Login from '../pages/user/Login.vue'
 import { isAuthenticated } from './guards'
 import Home from '../components/user/Layout/Home.vue'
-import Signin from '../pages/admin/auth/Signin.vue'
+import AdminLogin from '../pages/admin/auth/Login.vue'
 import FullScreenLayout from '../components/admin/layout/FullScreenLayout.vue'
 
 const routes = [
@@ -52,17 +52,19 @@ const routes = [
    },
    {
       path: '/admin',
-      // component: FullScreenLayout,
-      // children: [
-      //    {
-      //       path: 'login',
-      //       component: Signin
-      //    }
-      // ]
+      component: FullScreenLayout
    },
    {
       path: '/admin/login',
-      component: Signin
+      component: AdminLogin,
+      beforeEnter: (to, from, next) => {
+         // If user is already authenticated, redirect to /user
+         if (isAuthenticated()) {
+            next('/admin')
+         } else {
+            next()
+         }
+      }
    }
 ]
 

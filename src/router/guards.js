@@ -36,6 +36,7 @@ export function setupRouteGuards(router) {
    router.beforeEach((to, from, next) => {
       // Check if the route requires authentication
       if (to.matched.some(record => record.meta.requiresAuth && !['/user/login', '/user/signup'].includes(to.path))) {
+
          if (!isAuthenticated()) {
             next({
                path: '/user/login',
