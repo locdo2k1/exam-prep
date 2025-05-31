@@ -21,24 +21,35 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
    (response) => {
-      return response;
+      const apiResponse = response.data;
+      if (apiResponse.success) {
+         return apiResponse.data;
+      }
+      return Promise.reject({
+         message: apiResponse.message,
+         status: apiResponse.status,
+         errors: apiResponse.errors
+      });
    },
    (error) => {
-      if (error.response.status === 401) {
+      if (error.response?.data) {
+         const apiResponse = error.response.data;
+         return Promise.reject({
+            message: apiResponse.message,
+            status: apiResponse.status,
+            errors: apiResponse.errors
+         });
+      }
+
+      if (error.response?.status === 401) {
          // Handle unauthorized
          console.log("Handle unauthorized");
-      }
-      if (error.response.status === 403) {
+      } else if (error.response?.status === 403) {
          // Handle forbidden
          console.log("Handle forbidden");
       }
-      if (error.response.status === 404) {
-         // Handle not found
-      }
-      if (error.response.status === 500) {
-         // Handle server error
-      }
-      throw error;
+
+      return Promise.reject(error);
    },
 );
 
