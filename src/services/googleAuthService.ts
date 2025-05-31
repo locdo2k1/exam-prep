@@ -1,6 +1,6 @@
 // src/services/GoogleAuthService.ts
 import { ref, Ref, onMounted } from "vue";
-import { getToken } from "./auth.js";
+import { getToken } from "../api/auth/auth.js";
 import { useRouter, Router } from "vue-router";
 
 interface GoogleUser {
@@ -104,8 +104,6 @@ export function useGoogleAuth(clientId: string) {
       // If we need to manually load the script
       const script = document.createElement("script");
       script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
       script.onload = () => {
         isGapiLoaded.value = true;
       };

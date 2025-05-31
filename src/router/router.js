@@ -3,9 +3,9 @@ import WelcomePage from '../pages/WelcomePage.vue'
 import Signup from '../pages/user/Signup.vue'
 import Login from '../pages/user/Login.vue'
 import { isAuthenticated } from './guards'
-import Home from '../components/user/Layout/Home.vue'
+import Home from '../components/user/layout/UserHome.vue'
 import AdminLogin from '../pages/admin/auth/Login.vue'
-import FullScreenLayout from '../components/admin/layout/FullScreenLayout.vue'
+import AdminLayout from '../components/admin/layout/AdminLayout.vue'
 
 const routes = [
    {
@@ -52,7 +52,7 @@ const routes = [
    },
    {
       path: '/admin',
-      component: FullScreenLayout
+      component: AdminLayout
    },
    {
       path: '/admin/login',

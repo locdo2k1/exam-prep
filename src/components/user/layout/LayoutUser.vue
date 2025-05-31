@@ -4,11 +4,10 @@
    <Footer />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRoute } from 'vue-router';
-import Footer from './Footer.vue';
-import Header from './Header.vue'
-import Home from './Home.vue';
+import Footer from './UserFooter.vue';
+import Header from './UserHeader.vue'
 
 const route = useRoute();
 </script>

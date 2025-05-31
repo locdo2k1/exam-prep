@@ -84,15 +84,12 @@
    </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 
 const isMobileMenuOpen = ref(false);
 const isUserMenuOpen = ref(false);
 const isAuthenticated = ref(false);
-
-const router = useRouter();
 
 const toggleMobileMenu = () => {
    isMobileMenuOpen.value = !isMobileMenuOpen.value;

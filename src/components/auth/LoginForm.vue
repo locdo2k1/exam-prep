@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, defineEmits, watch, onMounted } from 'vue'
-import { useGoogleAuth } from '@/api/auth/googleAuthService';
+import { useGoogleAuth } from '@/services/googleAuthService';
 import { useRouter } from 'vue-router'
 
 interface LoginFormProps {

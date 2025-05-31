@@ -1,8 +1,14 @@
-<script setup>
+<script setup lang="ts">
+import ThemeProvider from './components/admin/layout/ThemeProvider.vue';
+import SidebarProvider from './components/admin/layout/SidebarProvider.vue';
 </script>
 
 <template>
-  <router-view />
+  <ThemeProvider>
+    <SidebarProvider>
+      <RouterView />
+    </SidebarProvider>
+  </ThemeProvider>
 </template>
 
 <style scoped>

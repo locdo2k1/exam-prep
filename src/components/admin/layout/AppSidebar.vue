@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <aside :class="[
     'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200',
     {
@@ -159,9 +159,9 @@ import {
   TableIcon,
   ListIcon,
   PlugInIcon,
-} from "../../icons";
-import SidebarWidget from "./SidebarWidget.vue";
-import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
+  BoxCubeIcon
+} from "@/icons";
+import SidebarWidget from "@/components/admin/layout/SidebarWidget.vue";
 import { useSidebar } from "@/composables/useSidebar";
 
 const route = useRoute();
@@ -284,4 +284,4 @@ const startTransition = (el) => {
 const endTransition = (el) => {
   el.style.height = "";
 };
-</script> -->
+</script>
