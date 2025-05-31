@@ -14,11 +14,11 @@
       !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
     ]">
       <router-link to="/">
-        <img v-if="isExpanded || isHovered || isMobileOpen" class="dark:hidden" src="/images/logo/logo.svg" alt="Logo"
-          width="150" height="40" />
-        <img v-if="isExpanded || isHovered || isMobileOpen" class="hidden dark:block" src="/images/logo/logo-dark.svg"
+        <img v-if="isExpanded || isHovered || isMobileOpen" class="dark:hidden" src="/images/logo/logo-admin.png"
           alt="Logo" width="150" height="40" />
-        <img v-else src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
+        <img v-if="isExpanded || isHovered || isMobileOpen" class="hidden dark:block"
+          src="/images/logo/logo-admin-dark.png" alt="Logo" width="150" height="40" />
+        <img v-else src="/images/logo/logo-icon.png" alt="Logo" width="32" height="32" />
       </router-link>
     </div>
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
@@ -163,6 +163,10 @@ import {
 } from "@/icons";
 import SidebarWidget from "@/components/admin/layout/SidebarWidget.vue";
 import { useSidebar } from "@/composables/useSidebar";
+import StaredIcon from "@/icons/StaredIcon.vue";
+import SettingsIcon from "@/icons/SettingsIcon.vue";
+import QuestionBankIcon from "@/icons/QuestionBankIcon.vue";
+import CategoryIcon from "@/icons/CategoryIcon.vue";
 
 const route = useRoute();
 
@@ -175,73 +179,42 @@ const menuGroups = [
       {
         icon: GridIcon,
         name: "Dashboard",
-        subItems: [{ name: "Ecommerce", path: "/", pro: false }],
       },
       {
-        icon: CalenderIcon,
-        name: "Calendar",
+        icon: QuestionBankIcon,
+        name: "Question Bank",
         path: "/calendar",
       },
       {
         icon: UserCircleIcon,
-        name: "User Profile",
+        name: "User Profiles",
         path: "/profile",
       },
-
       {
-        name: "Forms",
+        name: "Test Exam",
         icon: ListIcon,
-        subItems: [
-          { name: "Form Elements", path: "/form-elements", pro: false },
-        ],
+        path: "/test-exam",
       },
       {
-        name: "Tables",
+        name: "Question Set",
         icon: TableIcon,
-        subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+        path: "/question-set",
       },
       {
-        name: "Pages",
-        icon: PageIcon,
-        subItems: [
-          { name: "Black Page", path: "/blank", pro: false },
-          { name: "404 Page", path: "/error-404", pro: false },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Others",
-    items: [
-      {
-        icon: PieChartIcon,
-        name: "Charts",
-        subItems: [
-          { name: "Line Chart", path: "/line-chart", pro: false },
-          { name: "Bar Chart", path: "/bar-chart", pro: false },
-        ],
+        name: "Type and Cateogry",
+        icon: CategoryIcon,
+        path: "/type-category",
       },
       {
-        icon: BoxCubeIcon,
-        name: "Ui Elements",
-        subItems: [
-          { name: "Alerts", path: "/alerts", pro: false },
-          { name: "Avatars", path: "/avatars", pro: false },
-          { name: "Badge", path: "/badge", pro: false },
-          { name: "Buttons", path: "/buttons", pro: false },
-          { name: "Images", path: "/images", pro: false },
-          { name: "Videos", path: "/videos", pro: false },
-        ],
+        name: "Certificate",
+        icon: StaredIcon,
+        path: "/certificate",
       },
       {
-        icon: PlugInIcon,
-        name: "Authentication",
-        subItems: [
-          { name: "Signin", path: "/signin", pro: false },
-          { name: "Signup", path: "/signup", pro: false },
-        ],
+        name: "Settings",
+        icon: SettingsIcon,
+        path: "/settings",
       },
-      // ... Add other menu items here
     ],
   },
 ];
