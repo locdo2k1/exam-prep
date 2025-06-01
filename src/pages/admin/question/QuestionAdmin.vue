@@ -13,7 +13,8 @@
             class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"></textarea>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+        <!-- Question Type and Category -->
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-4.5">
           <div class="grid grid-cols-2 gap-6">
             <!-- Question Type -->
             <div>
@@ -37,7 +38,6 @@
                 </span>
               </div>
             </div>
-
             <!-- Question Category -->
             <div>
               <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -61,8 +61,7 @@
               </div>
             </div>
           </div>
-
-          <!-- Replace the multiple choice options section -->
+          <!-- the multiple choice options section -->
           <div v-if="question.type === 'multiple_choice'" class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -109,8 +108,7 @@
               Add option
             </button>
           </div>
-
-          <!-- Replace the fill-in blank section -->
+          <!-- the fill-in blank section -->
           <div v-if="question.type === 'fill_blank'" class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill-In-the Blank Answers</h5>
 
@@ -149,8 +147,48 @@
             </button>
           </div>
         </div>
+
+        <!-- Audio Files -->
+        <div class="mb-4.5">
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Audio Files
+          </label>
+          <AudioUploader :max-files="1" :max-size="20" :show-progress="true" :auto-upload="false"
+            class="dark:border-gray-700" @files-added="handleAudioFilesAdded" @file-removed="handleAudioFileRemoved"
+            @error="handleAudioUploadError" />
+        </div>
       </div>
 
+      <!-- Question Part and Test -->
+      <div class="grid grid-cols-2 gap-6 mb-4.5">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Question Part
+          </label>
+          <MultipleSelect v-model="question.parts" :options="[
+            { value: 'apple', label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' },
+            { value: 'date', label: 'Date' },
+            { value: 'elderberry', label: 'Elderberry' },
+            { value: 'graphs', label: 'Graphs' },
+          ]" class="w-full" />
+        </div>
+
+        <div>
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Question Test
+          </label>
+          <MultipleSelect v-model="question.tests" :options="[
+            { value: 'apple', label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' },
+            { value: 'date', label: 'Date' },
+            { value: 'elderberry', label: 'Elderberry' },
+            { value: 'graphs', label: 'Graphs' },
+          ]" class="w-full" placeholder="Select tests" />
+        </div>
+      </div>
       <!-- Action Buttons -->
       <div class="flex justify-end gap-4">
         <button @click="cancel"
@@ -167,11 +205,26 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, watch } from 'vue'
 import PageBreadcrumb from '@/components/admin/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/admin/common/ComponentCard.vue'
 import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
+import AudioUploader from '@/components/admin/forms/DropnDrapElements/AudioUploader.vue'
+import MultipleSelect from '@/components/admin/forms/FormElements/MultipleSelect.vue'
+
+const question = ref({
+  prompt: '',
+  type: '',
+  clipNumber: '',
+  correctOptions: '',
+  assignedTests: '',
+  assignedParts: '',
+  parts: [],
+  tests: [],
+  options: [],
+  blanks: [],
+})
 
 const addOption = () => {
   const newId = Math.max(...question.value.options.map(o => o.id)) + 1
@@ -207,17 +260,6 @@ const initializeFillBlankAnswers = () => {
   ]
 }
 
-const question = ref({
-  prompt: '',
-  type: '',
-  clipNumber: '',
-  correctOptions: '',
-  assignedTests: '',
-  assignedParts: '',
-  options: [],
-  blanks: [],
-})
-
 // Update the existing watch function
 watch(() => question.value.type, (newType) => {
   if (newType === 'multiple_choice') {
@@ -230,33 +272,18 @@ watch(() => question.value.type, (newType) => {
     question.value.options = []
     question.value.blanks = []
   }
+},)
+
+watch(() => question.value.parts, (newParts) => {
+  console.log('Question parts changed:', newParts)
 })
 
 const currentPageTitle = ref('Create Question for Exam Bank')
-const formData = reactive({
-  input: '',
-  inputWithPlaceholder: '',
-  selectInput: '',
-  password: '',
-  date: '',
-  time: '',
-  cardNumber: '',
-})
 
 const questionTypes = [
   { value: 'multiple_choice', label: 'Multiple Choice' },
   { value: 'fill_blank', label: 'Fill in the Blank' }
 ]
-
-const tests = ref([
-  { value: 'test1', label: 'Test 1' },
-  { value: 'test2', label: 'Test 2' }
-])
-
-const testParts = ref([
-  { value: 'part1', label: 'Part 1' },
-  { value: 'part2', label: 'Part 2' }
-])
 
 const addBlank = () => {
   question.value.blanks.push({ answer: '' })
@@ -269,4 +296,24 @@ const saveQuestion = () => {
 const cancel = () => {
   console.log('Cancel clicked')
 }
+
+const handleAudioFilesAdded = (files) => {
+  console.log('Audio files added:', files)
+  // Handle the added audio files here
+}
+
+const handleAudioFileRemoved = (file) => {
+  console.log('Audio file removed:', file)
+  // Handle the removed audio file here
+}
+
+const handleAudioUploadError = (error) => {
+  console.error('Audio upload error:', error)
+  // Handle any upload errors here
+}
+
 </script>
+
+<style scoped></style>
+
+/******* ba8fa003-5379-4b5a-bd77-333408019985 *******/
