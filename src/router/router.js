@@ -6,6 +6,7 @@ import { isAuthenticated } from './guards'
 import Home from '../components/user/layout/UserHome.vue'
 import AdminLogin from '../pages/admin/auth/Login.vue'
 import AdminLayout from '../components/admin/layout/AdminLayout.vue'
+import QuestionAdmin from '../pages/admin/question/QuestionAdmin.vue'
 
 const routes = [
    {
@@ -52,7 +53,14 @@ const routes = [
    },
    {
       path: '/admin',
-      component: AdminLayout
+      component: AdminLayout,
+      children: [
+         {
+            path: 'question-management',
+            component: QuestionAdmin,
+            meta: { requiresAuth: true },
+         }
+      ]
    },
    {
       path: '/admin/login',
