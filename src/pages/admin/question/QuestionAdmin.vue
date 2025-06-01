@@ -1,6 +1,6 @@
 <template>
   <PageBreadcrumb :pageTitle="currentPageTitle" />
-  <ComponentCard title="Create Question for Exam Bank">
+  <ComponentCard title="Question Detail">
     <div class="space-y-6">
       <!-- Question Details -->
       <div class="mb-4.5">
@@ -44,13 +44,13 @@
                 Category
               </label>
               <div class="relative z-20 bg-transparent">
-                <select name="question-category" v-model="question.category"
+                <!-- <select name="question-category" v-model="question.category"
                   class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
                   <option disabled="" selected="" value="">Select Option</option>
                   <option v-for="category in questionCategories" :key="category.value" :value="category.value">
                     {{ category.label }}
                   </option>
-                </select>
+                </select> -->
                 <span
                   class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
                   <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -77,12 +77,16 @@
                     </label>
 
                     <!-- Delete Button -->
-                    <button v-if="question.options.length > 4" @click="removeOption(index)" type="button"
-                      class="text-red-500 hover:text-red-600 transition-colors duration-150" aria-label="Remove option">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                          clip-rule="evenodd" />
+                    <button v-if="question.options.length > 4" @click="removeOption(index)" type="button" class="p-1 rounded-full bg-red-50 text-red-400 
+                        hover:bg-red-100 hover:text-red-500 
+                        transition-colors duration-150 
+                        dark:bg-red-500/10 dark:text-red-300 
+                        dark:hover:bg-red-500/20 dark:hover:text-red-200" aria-label="Remove option">
+                      <svg role="button" width="14" height="14" viewBox="0 0 14 14" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M3.40717 4.46881C3.11428 4.17591 3.11428 3.70104 3.40717 3.40815C3.70006 3.11525 4.17494 3.11525 4.46783 3.40815L6.99943 5.93975L9.53095 3.40822C9.82385 3.11533 10.2987 3.11533 10.5916 3.40822C10.8845 3.70112 10.8845 4.17599 10.5916 4.46888L8.06009 7.00041L10.5916 9.53193C10.8845 9.82482 10.8845 10.2997 10.5916 10.5926C10.2987 10.8855 9.82385 10.8855 9.53095 10.5926L6.99943 8.06107L4.46783 10.5927C4.17494 10.8856 3.70006 10.8856 3.40717 10.5927C3.11428 10.2998 3.11428 9.8249 3.40717 9.53201L5.93877 7.00041L3.40717 4.46881Z"
+                          fill="currentColor" />
                       </svg>
                     </button>
                   </div>
@@ -98,12 +102,14 @@
                 </div>
               </div>
             </div>
-            <button @click="addOption" type="button"
-              class="text-primary dark:text-white/90 hover:bg-primary/5 dark:hover:bg-transparent inline-flex items-center gap-2 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clip-rule="evenodd" />
+            <button @click="addOption" type="button" class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium 
+                text-gray-600/70 dark:text-gray-300/70
+                bg-emerald-200/80 dark:bg-emerald-500/20
+                hover:bg-emerald-300/90 dark:hover:bg-emerald-500/30
+                rounded-lg transition-colors duration-200">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </svg>
               Add option
             </button>
@@ -117,12 +123,16 @@
                 <div
                   class="flex w-full items-center gap-3 rounded-lg border p-4 shadow-sm bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700">
                   <!-- Remove Button on the Left -->
-                  <button @click="removeBlank(index)" type="button"
-                    class="text-red-500 hover:text-red-600 transition-colors duration-150" aria-label="Remove blank">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd" />
+                  <button @click="removeBlank(index)" type="button" class="p-1 rounded-full bg-red-50 text-red-400 
+                      hover:bg-red-100 hover:text-red-500 
+                      transition-colors duration-150 
+                      dark:bg-red-500/10 dark:text-red-300 
+                      dark:hover:bg-red-500/20 dark:hover:text-red-200" aria-label="Remove blank">
+                    <svg role="button" width="14" height="14" viewBox="0 0 14 14" fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M3.40717 4.46881C3.11428 4.17591 3.11428 3.70104 3.40717 3.40815C3.70006 3.11525 4.17494 3.11525 4.46783 3.40815L6.99943 5.93975L9.53095 3.40822C9.82385 3.11533 10.2987 3.11533 10.5916 3.40822C10.8845 3.70112 10.8845 4.17599 10.5916 4.46888L8.06009 7.00041L10.5916 9.53193C10.8845 9.82482 10.8845 10.2997 10.5916 10.5926C10.2987 10.8855 9.82385 10.8855 9.53095 10.5926L6.99943 8.06107L4.46783 10.5927C4.17494 10.8856 3.70006 10.8856 3.40717 10.5927C3.11428 10.2998 3.11428 9.8249 3.40717 9.53201L5.93877 7.00041L3.40717 4.46881Z"
+                        fill="currentColor" />
                     </svg>
                   </button>
 
@@ -136,12 +146,14 @@
               </div>
             </div>
 
-            <button @click="addBlank" type="button"
-              class="text-primary hover:bg-primary/5 dark:text-white/90 dark:hover:bg-primary/10 inline-flex items-center gap-2 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clip-rule="evenodd" />
+            <button @click="addBlank" type="button" class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium 
+                text-gray-600/70 dark:text-gray-300/70
+                bg-emerald-200/80 dark:bg-emerald-500/20
+                hover:bg-emerald-300/90 dark:hover:bg-emerald-500/30
+                rounded-lg transition-colors duration-200">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </svg>
               Add blank
             </button>
@@ -165,7 +177,7 @@
           <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
             Question Part
           </label>
-          <MultipleSelect v-model="question.parts" :options="[
+          <MultipleSelect v-model="parts" @update:modelValue="handlePartsChange" :options="[
             { value: 'apple', label: 'Apple' },
             { value: 'banana', label: 'Banana' },
             { value: 'cherry', label: 'Cherry' },
@@ -218,13 +230,13 @@ const question = ref({
   type: '',
   clipNumber: '',
   correctOptions: '',
-  assignedTests: '',
-  assignedParts: '',
   parts: [],
   tests: [],
   options: [],
   blanks: [],
 })
+
+const parts = ref([]);
 
 const addOption = () => {
   const newId = Math.max(...question.value.options.map(o => o.id)) + 1
@@ -274,9 +286,18 @@ watch(() => question.value.type, (newType) => {
   }
 },)
 
-watch(() => question.value.parts, (newParts) => {
-  console.log('Question parts changed:', newParts)
-})
+watch(() => question.value.options, (newOptions) => {
+  if (newOptions.length === 0) {
+    initializeMultipleChoiceOptions()
+  }
+
+  console.log(newOptions);
+
+}, { deep: true })
+
+const handlePartsChange = (newParts) => {
+  question.value.parts = newParts
+}
 
 const currentPageTitle = ref('Create Question for Exam Bank')
 
@@ -315,5 +336,3 @@ const handleAudioUploadError = (error) => {
 </script>
 
 <style scoped></style>
-
-/******* ba8fa003-5379-4b5a-bd77-333408019985 *******/
