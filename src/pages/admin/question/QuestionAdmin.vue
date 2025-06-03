@@ -44,13 +44,13 @@
                 Category
               </label>
               <div class="relative z-20 bg-transparent">
-                <!-- <select name="question-category" v-model="question.category"
+                <select name="question-category" v-model="question.category"
                   class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
                   <option disabled="" selected="" value="">Select Option</option>
                   <option v-for="category in questionCategories" :key="category.value" :value="category.value">
                     {{ category.label }}
                   </option>
-                </select> -->
+                </select>
                 <span
                   class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
                   <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -207,6 +207,7 @@
           class="rounded-lg border border-gray-300 px-6 py-2.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
           Cancel
         </button>
+
         <button @click="saveQuestion"
           class="rounded-lg bg-blue-500 px-6 py-2.5 font-medium text-white hover:bg-blue-600 dark:bg-blue-400 dark:hover:bg-blue-500 dark:text-white/90">
           Save Question
@@ -217,13 +218,14 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import PageBreadcrumb from '@/components/admin/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/admin/common/ComponentCard.vue'
 import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
 import AudioUploader from '@/components/admin/forms/DropnDrapElements/AudioUploader.vue'
 import MultipleSelect from '@/components/admin/forms/FormElements/MultipleSelect.vue'
+import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi'
 
 const question = ref({
   prompt: '',
@@ -237,6 +239,8 @@ const question = ref({
 })
 
 const parts = ref([]);
+const questionCategories = ref([])
+const loadingCategories = ref(false)
 
 const addOption = () => {
   const newId = Math.max(...question.value.options.map(o => o.id)) + 1
@@ -332,6 +336,28 @@ const handleAudioUploadError = (error) => {
   console.error('Audio upload error:', error)
   // Handle any upload errors here
 }
+
+const fetchQuestionCategories = async () => {
+  try {
+    loadingCategories.value = true
+    const response = await questionCategoryApi.getAll({
+      size: 100 // Adjust size as needed
+    })
+    questionCategories.value = response.content.map(category => ({
+      value: category.id,
+      label: category.name
+    }))
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+  } finally {
+    loadingCategories.value = false
+  }
+}
+
+// Add onMounted to fetch categories when component loads
+onMounted(() => {
+  fetchQuestionCategories()
+})
 
 </script>
 
