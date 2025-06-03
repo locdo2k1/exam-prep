@@ -44,20 +44,51 @@
                 Category
               </label>
               <div class="relative z-20 bg-transparent">
-                <select name="question-category" v-model="question.category"
-                  class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
-                  <option selected disabled value="">Select Category</option>
-                  <option v-for="category in questionCategories" :key="category.id" :value="category.value">
-                    {{ category.label }}
-                  </option>
-                </select>
-                <span
-                  class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
-                  <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.5"
-                      stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </span>
+                <!-- Search input with debounce -->
+                <input type="text" v-model="categorySearch" placeholder="Search categories..." @input="debouncedSearch"
+                  @focus="handleFocus"
+                  class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
+
+                <!-- Loading indicator -->
+                <div v-if="loadingCategories" class="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div
+                    class="w-5 h-5 border-2 border-t-transparent border-blue-500 rounded-full animate-spin dark:border-brand-400">
+                  </div>
+                </div>
+
+                <!-- Dropdown list with improved dark mode -->
+                <div v-if="isDropdownOpen"
+                  class="absolute w-full mt-1 bg-white rounded-lg shadow-lg dark:bg-gray-900 border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+                  <div class="max-h-60 overflow-y-auto custom-scrollbar">
+                    <!-- Categories list -->
+                    <div v-for="category in filteredCategories" :key="category.value" @click="selectCategory(category)"
+                      class="px-4 py-2.5 cursor-pointer transition-colors duration-150 flex items-center justify-between group"
+                      :class="{
+                        'bg-gray-50 dark:bg-gray-800/50 text-blue-600 dark:text-brand-400': question.category === category.value,
+                        'hover:bg-gray-50 dark:hover:bg-gray-800/30': question.category !== category.value
+                      }">
+                      <span :class="{ 'text-gray-800 dark:text-white/90': question.category !== category.value }">
+                        {{ category.label }}
+                      </span>
+                      <svg v-if="question.category === category.value" class="w-5 h-5 text-blue-600 dark:text-brand-400"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+
+                    <!-- Load more button -->
+                    <div v-if="hasMore && filteredCategories.length > 0" @click.stop="loadMore"
+                      class="px-4 py-2 text-sm text-blue-600 dark:text-brand-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 cursor-pointer text-center">
+                      Load more...
+                    </div>
+
+                    <!-- Empty state -->
+                    <div v-if="filteredCategories.length === 0"
+                      class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                      {{ loadingCategories ? 'Searching...' : 'No categories found' }}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -218,7 +249,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import PageBreadcrumb from '@/components/admin/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/admin/common/ComponentCard.vue'
 import flatPickr from 'vue-flatpickr-component'
@@ -242,6 +273,8 @@ const question = ref({
 const parts = ref([]);
 const questionCategories = ref([])
 const loadingCategories = ref(false)
+const categorySearch = ref('')
+const isDropdownOpen = ref(false)
 
 const addOption = () => {
   const newId = Math.max(...question.value.options.map(o => o.id)) + 1
@@ -360,6 +393,102 @@ onMounted(() => {
   fetchQuestionCategories()
 })
 
+const page = ref(0)
+const hasMore = ref(true)
+
+// Replace the existing filteredCategories computed property
+const filteredCategories = computed(() => {
+  const start = page.value * 10
+  const end = start + 10
+  return questionCategories.value
+    .filter(category => category.label.toLowerCase().includes(categorySearch.value.toLowerCase()))
+    .slice(start, end)
+})
+
+// Add this new method for loading more items
+const loadMore = () => {
+  const start = (page.value + 1) * 10
+  const filtered = questionCategories.value
+    .filter(category => category.label.toLowerCase().includes(categorySearch.value.toLowerCase()))
+
+  hasMore.value = start < filtered.length
+  if (hasMore.value) {
+    page.value++
+  }
+}
+
+const selectCategory = (category) => {
+  question.value.category = category.value
+  categorySearch.value = category.label
+  isDropdownOpen.value = false
+}
+
+// Add debounce function
+const debounce = (fn, delay) => {
+  let timeoutId = null
+  return (...args) => {
+    if (timeoutId) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
+const searchTimeout = ref(null)
+
+const handleFocus = () => {
+  isDropdownOpen.value = true
+  if (categorySearch.value) {
+    fetchQuestionCategories()
+  }
+}
+
+const debouncedSearch = debounce(async () => {
+  if (categorySearch.value.length >= 2) {
+    try {
+      loadingCategories.value = true
+      const response = await questionCategoryApi.getAll({
+        search: categorySearch.value,
+        size: 100
+      })
+      questionCategories.value = response.content.map(category => ({
+        value: category.id,
+        label: category.name
+      }))
+      // Reset pagination when searching
+      page.value = 0
+      hasMore.value = true
+    } catch (error) {
+      console.error('Error searching categories:', error)
+    } finally {
+      loadingCategories.value = false
+    }
+  }
+}, 300)
+
+// Add CSS for custom scrollbar
+const style = document.createElement('style')
+style.textContent = `
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.5);
+}
+`
+document.head.appendChild(style)
 </script>
 
 <style scoped></style>
