@@ -43,9 +43,9 @@
               <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                 Category
               </label>
-              <QuestionCategorySelect v-model="question.category" :categories="questionCategories"
-                :loading="loadingCategories" :has-more="hasMore" @search="handleCategorySearch"
-                @focus="handleCategoryFocus" @load-more="loadMore" />
+              <SearchableSelect v-model="question.category" :options="questionCategories" :loading="loadingCategories"
+                :has-more="hasMore" placeholder="Search categories..." @search="handleCategorySearch"
+                @load-more="loadMore" />
             </div>
           </div>
           <!-- the multiple choice options section -->
@@ -103,7 +103,7 @@
           </div>
           <!-- the fill-in blank section -->
           <div v-if="question.type === 'fill_blank'" class="space-y-4">
-            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill-In-the Blank Answers</h5>
+            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(blank, index) in question.blanks" :key="index" class="flex items-center gap-3">
@@ -213,7 +213,7 @@ import 'flatpickr/dist/flatpickr.css'
 import AudioUploader from '@/components/admin/forms/DropnDrapElements/AudioUploader.vue'
 import MultipleSelect from '@/components/admin/forms/FormElements/MultipleSelect.vue'
 import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi'
-import QuestionCategorySelect from '@/components/admin/forms/FormElements/QuestionCategorySelect.vue'
+import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue'
 
 const question = ref({
   prompt: '',
@@ -283,9 +283,6 @@ watch(() => question.value.options, (newOptions) => {
   if (newOptions.length === 0) {
     initializeMultipleChoiceOptions()
   }
-
-  console.log(newOptions);
-
 }, { deep: true })
 
 const handlePartsChange = (newParts) => {
@@ -348,6 +345,10 @@ onMounted(() => {
   fetchQuestionCategories()
 })
 
+// // Add this watch in script setup
+// watch(questionCategories, (newValue) => {
+// }, { immediate: true })
+
 const page = ref(0)
 const hasMore = ref(true)
 
@@ -363,12 +364,6 @@ const loadMore = async () => {
   }))]
   page.value++
   hasMore.value = response.content.length === 10
-}
-
-const handleCategoryFocus = async () => {
-  if (!categorySearch.value) {
-    fetchQuestionCategories();
-  }
 }
 
 const handleCategorySearch = async (searchQuery) => {

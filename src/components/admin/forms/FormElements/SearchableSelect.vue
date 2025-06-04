@@ -15,17 +15,17 @@
       <div v-if="isOpen"
          class="absolute w-full mt-1 bg-white rounded-lg shadow-lg dark:bg-gray-900 border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
          <div class="max-h-60 overflow-y-auto custom-scrollbar">
-            <!-- Categories list -->
-            <div v-for="category in categories" :key="category.value" @click="selectCategory(category)"
+            <!-- Options list -->
+            <div v-for="option in options" :key="option[valueKey]" @click="selectOption(option)"
                class="px-4 py-2.5 cursor-pointer transition-colors duration-150 flex items-center justify-between group"
                :class="{
-                  'bg-gray-50 dark:bg-gray-800/50 text-blue-600 dark:text-brand-400': modelValue === category.value,
-                  'hover:bg-gray-50 dark:hover:bg-gray-800/30': modelValue !== category.value
+                  'bg-gray-50 dark:bg-gray-800/50 text-blue-600 dark:text-brand-400': modelValue === option[valueKey],
+                  'hover:bg-gray-50 dark:hover:bg-gray-800/30': modelValue !== option[valueKey]
                }">
-               <span :class="{ 'text-gray-800 dark:text-white/90': modelValue !== category.value }">
-                  {{ category.label }}
+               <span :class="{ 'text-gray-800 dark:text-white/90': modelValue !== option[valueKey] }">
+                  {{ option[labelKey] }}
                </span>
-               <svg v-if="modelValue === category.value" class="w-5 h-5 text-blue-600 dark:text-brand-400" fill="none"
+               <svg v-if="modelValue === option[valueKey]" class="w-5 h-5 text-blue-600 dark:text-brand-400" fill="none"
                   viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                </svg>
@@ -34,12 +34,12 @@
             <!-- Load more button -->
             <div v-if="hasMore" @click.stop="$emit('load-more')"
                class="px-4 py-2 text-sm text-blue-600 dark:text-brand-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 cursor-pointer text-center">
-               Load more...
+               {{ loadMoreText }}
             </div>
 
             <!-- Empty state -->
-            <div v-if="categories.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
-               {{ loading ? 'Searching...' : 'No categories found' }}
+            <div v-if="options.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+               {{ loading ? loadingText : noOptionsText }}
             </div>
          </div>
       </div>
@@ -47,16 +47,24 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({
    modelValue: {
       type: [String, Number],
       default: ''
    },
-   categories: {
+   options: {
       type: Array,
       default: () => []
+   },
+   valueKey: {
+      type: String,
+      default: 'value'
+   },
+   labelKey: {
+      type: String,
+      default: 'label'
    },
    loading: {
       type: Boolean,
@@ -68,7 +76,19 @@ const props = defineProps({
    },
    placeholder: {
       type: String,
-      default: 'Search categories...'
+      default: 'Search...'
+   },
+   loadingText: {
+      type: String,
+      default: 'Searching...'
+   },
+   noOptionsText: {
+      type: String,
+      default: 'No options found'
+   },
+   loadMoreText: {
+      type: String,
+      default: 'Load more...'
    }
 });
 
@@ -77,7 +97,6 @@ const emit = defineEmits(['update:modelValue', 'search', 'load-more', 'focus']);
 const isOpen = ref(false);
 const searchQuery = ref('');
 
-// Debounce function
 const debounce = (fn, delay) => {
    let timeoutId = null;
    return (...args) => {
@@ -95,9 +114,9 @@ const handleFocus = () => {
    emit('focus');
 };
 
-const selectCategory = (category) => {
-   emit('update:modelValue', category.value);
-   searchQuery.value = category.label;
+const selectOption = (option) => {
+   emit('update:modelValue', option[props.valueKey]);
+   searchQuery.value = option[props.labelKey];
    isOpen.value = false;
 };
 
