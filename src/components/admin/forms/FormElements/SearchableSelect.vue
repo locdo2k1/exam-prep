@@ -32,7 +32,7 @@
             </div>
 
             <!-- Load more button -->
-            <div v-if="hasMore" @click.stop="$emit('load-more')"
+            <div v-if="hasMore" @click.stop="$emit('load-more', searchQuery)"
                class="px-4 py-2 text-sm text-blue-600 dark:text-brand-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 cursor-pointer text-center">
                {{ loadMoreText }}
             </div>

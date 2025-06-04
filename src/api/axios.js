@@ -7,6 +7,15 @@ const apiClient = axios.create({
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
    },
+   paramsSerializer: params => {
+      const query = new URLSearchParams();
+      for (const key in params) {
+         if (params[key] !== undefined) {
+            query.append(key, encodeURIComponent(params[key]));
+         }
+      }
+      return query.toString();
+   }
 });
 
 apiClient.interceptors.request.use(

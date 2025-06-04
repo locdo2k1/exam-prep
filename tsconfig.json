@@ -34,8 +34,7 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "vite.config.ts",
-    "src/components/admin/forms/FormElements/.SearchableSelectvue"
+    "vite.config.ts"
   ],
   "exclude": [
     "node_modules"

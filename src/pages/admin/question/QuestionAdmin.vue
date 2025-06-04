@@ -353,10 +353,11 @@ const page = ref(0)
 const hasMore = ref(true)
 
 // Add this new method for loading more items
-const loadMore = async () => {
+const loadMore = async (searchQuery) => {
   const response = await questionCategoryApi.getAll({
     size: 10,
-    page: page.value + 1
+    page: page.value + 1,
+    search: searchQuery
   })
   questionCategories.value = [...questionCategories.value, ...response.content.map(category => ({
     value: category.id,
