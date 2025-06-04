@@ -43,7 +43,7 @@
               <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                 Category
               </label>
-              <div class="relative z-20 bg-transparent">
+              <div class="relative z-20 bg-transparent" v-click-outside="closeDropdown">
                 <!-- Search input with debounce -->
                 <input type="text" v-model="categorySearch" placeholder="Search categories..." @input="debouncedSearch"
                   @focus="handleFocus"
@@ -61,7 +61,7 @@
                   class="absolute w-full mt-1 bg-white rounded-lg shadow-lg dark:bg-gray-900 border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
                   <div class="max-h-60 overflow-y-auto custom-scrollbar">
                     <!-- Categories list -->
-                    <div v-for="category in filteredCategories" :key="category.value" @click="selectCategory(category)"
+                    <div v-for="category in questionCategories" :key="category.value" @click="selectCategory(category)"
                       class="px-4 py-2.5 cursor-pointer transition-colors duration-150 flex items-center justify-between group"
                       :class="{
                         'bg-gray-50 dark:bg-gray-800/50 text-blue-600 dark:text-brand-400': question.category === category.value,
@@ -77,13 +77,13 @@
                     </div>
 
                     <!-- Load more button -->
-                    <div v-if="hasMore && filteredCategories.length > 0" @click.stop="loadMore"
+                    <div v-if="hasMore" @click.stop="loadMore"
                       class="px-4 py-2 text-sm text-blue-600 dark:text-brand-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 cursor-pointer text-center">
                       Load more...
                     </div>
 
                     <!-- Empty state -->
-                    <div v-if="filteredCategories.length === 0"
+                    <div v-if="questionCategories.length === 0"
                       class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
                       {{ loadingCategories ? 'Searching...' : 'No categories found' }}
                     </div>
@@ -375,7 +375,7 @@ const fetchQuestionCategories = async () => {
   try {
     loadingCategories.value = true
     const response = await questionCategoryApi.getAll({
-      size: 100 // Adjust size as needed
+      size: 10 // Adjust size as needed
     })
     questionCategories.value = response.content.map(category => ({
       value: category.id,
@@ -396,25 +396,18 @@ onMounted(() => {
 const page = ref(0)
 const hasMore = ref(true)
 
-// Replace the existing filteredCategories computed property
-const filteredCategories = computed(() => {
-  const start = page.value * 10
-  const end = start + 10
-  return questionCategories.value
-    .filter(category => category.label.toLowerCase().includes(categorySearch.value.toLowerCase()))
-    .slice(start, end)
-})
-
 // Add this new method for loading more items
-const loadMore = () => {
-  const start = (page.value + 1) * 10
-  const filtered = questionCategories.value
-    .filter(category => category.label.toLowerCase().includes(categorySearch.value.toLowerCase()))
-
-  hasMore.value = start < filtered.length
-  if (hasMore.value) {
-    page.value++
-  }
+const loadMore = async () => {
+  const response = await questionCategoryApi.getAll({
+    size: 10,
+    page: page.value + 1
+  })
+  questionCategories.value = [...questionCategories.value, ...response.content.map(category => ({
+    value: category.id,
+    label: category.name
+  }))]
+  page.value++
+  hasMore.value = response.content.length === 10
 }
 
 const selectCategory = (category) => {
@@ -432,37 +425,51 @@ const debounce = (fn, delay) => {
   }
 }
 
-const searchTimeout = ref(null)
-
-const handleFocus = () => {
-  isDropdownOpen.value = true
+const handleFocus = async () => {
+  isDropdownOpen.value = true;
   if (categorySearch.value) {
-    fetchQuestionCategories()
+    try {
+      loadingCategories.value = true;
+      const response = await questionCategoryApi.getAll({
+        search: categorySearch.value,
+        size: 10
+      });
+      questionCategories.value = response.content.map(category => ({
+        value: category.id,
+        label: category.name
+      }));
+      hasMore.value = response.totalPages > 1;
+    } catch (error) {
+      console.error('Error searching categories:', error);
+    } finally {
+      loadingCategories.value = false;
+    }
+  } else {
+    fetchQuestionCategories();
   }
 }
 
 const debouncedSearch = debounce(async () => {
-  if (categorySearch.value.length >= 2) {
-    try {
-      loadingCategories.value = true
-      const response = await questionCategoryApi.getAll({
-        search: categorySearch.value,
-        size: 100
-      })
-      questionCategories.value = response.content.map(category => ({
-        value: category.id,
-        label: category.name
-      }))
-      // Reset pagination when searching
-      page.value = 0
-      hasMore.value = true
-    } catch (error) {
-      console.error('Error searching categories:', error)
-    } finally {
-      loadingCategories.value = false
-    }
+  const searchQuery = categorySearch.value.length >= 1 ? categorySearch.value : undefined;
+  try {
+    loadingCategories.value = true;
+    const response = await questionCategoryApi.getAll({
+      search: searchQuery,
+      size: 10
+    });
+    questionCategories.value = response.content.map(category => ({
+      value: category.id,
+      label: category.name
+    }));
+    // Reset pagination when searching
+    page.value = 0;
+    hasMore.value = response.totalPages > 1;
+  } catch (error) {
+    console.error('Error searching categories:', error);
+  } finally {
+    loadingCategories.value = false;
   }
-}, 300)
+}, 300);
 
 // Add CSS for custom scrollbar
 const style = document.createElement('style')
@@ -489,6 +496,37 @@ style.textContent = `
 }
 `
 document.head.appendChild(style)
+
+// Define the click-outside directive without defineDirectives
+const clickOutside = {
+  mounted(el, binding) {
+    el._clickOutside = (event) => {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value(event)
+      }
+    }
+    document.addEventListener('click', el._clickOutside)
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el._clickOutside)
+  }
+}
+
+// Define the directive using the Vue 3 composition API
+const vClickOutside = {
+  beforeMount(el, binding) {
+    clickOutside.mounted(el, binding)
+  },
+  unmounted(el) {
+    clickOutside.unmounted(el)
+  }
+}
+
+// Add to your script setup section
+const closeDropdown = () => {
+  isDropdownOpen.value = false
+}
+
 </script>
 
 <style scoped></style>
