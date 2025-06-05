@@ -22,7 +22,7 @@
         </div>
 
         <!-- Text Content -->
-        <div class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
+        <div class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 dark:text-gray-400">
           {{ placeholderText }}
         </div>
         <div class="text-sm text-gray-500 dark:text-gray-400">
