@@ -9,8 +9,7 @@
           <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
             Question Prompt
           </label>
-          <textarea v-model="question.prompt" rows="4" placeholder="Enter question text"
-            class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"></textarea>
+          <Editor />
         </div>
 
         <!-- Question Type and Category -->
@@ -154,7 +153,7 @@
           </label>
           <AudioUploader :max-files="1" :max-size="20" :show-progress="true" :auto-upload="false"
             class="dark:border-gray-700" @files-added="handleAudioFilesAdded" @file-removed="handleAudioFileRemoved"
-            @error="handleAudioUploadError" />
+            @error="handleAudioUploadError" @clear-all="handleClearAudio" />
         </div>
       </div>
 
@@ -214,6 +213,7 @@ import AudioUploader from '@/components/admin/forms/DropnDrapElements/AudioUploa
 import MultipleSelect from '@/components/admin/forms/FormElements/MultipleSelect.vue'
 import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi'
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue'
+import Editor from '@/components/admin/common/Editor.vue'
 
 const question = ref({
   prompt: '',
@@ -225,6 +225,7 @@ const question = ref({
   tests: [],
   options: [],
   blanks: [],
+  audioFiles: []
 })
 
 const parts = ref([]);
@@ -310,12 +311,18 @@ const cancel = () => {
 
 const handleAudioFilesAdded = (files) => {
   console.log('Audio files added:', files)
-  // Handle the added audio files here
+  question.value.audioFiles.push(files);
 }
 
 const handleAudioFileRemoved = (file) => {
   console.log('Audio file removed:', file)
-  // Handle the removed audio file here
+  question.value.audioFiles = question.value.audioFiles.filter((audio) => audio !== file);
+}
+
+const handleClearAudio = () => {
+  question.value.audioFiles = []
+  console.log('Audio files cleared', question.value.audioFiles);
+
 }
 
 const handleAudioUploadError = (error) => {

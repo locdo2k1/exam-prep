@@ -87,7 +87,8 @@ export default {
       'upload-progress',
       'upload-complete',
       'upload-error',
-      'error'
+      'error',
+      'clear-all'
    ],
    setup(props, { emit }) {
       const files = ref([])
@@ -130,6 +131,7 @@ export default {
 
       const clearAll = () => {
          files.value = []
+         emit('clear-all');
       }
 
       const uploadFiles = async () => {
