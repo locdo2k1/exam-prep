@@ -9,7 +9,8 @@
           <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
             Question Prompt
           </label>
-          <Editor />
+          <Editor v-model="question.prompt" placeholder="Write your question here..."
+            class="dark:bg-gray-900 dark:border-gray-700" />
         </div>
 
         <!-- Question Type and Category -->
@@ -216,7 +217,7 @@ import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSe
 import Editor from '@/components/admin/common/Editor.vue'
 
 const question = ref({
-  prompt: '',
+  prompt: '', // This will store the editor content
   type: '',
   category: '',
   clipNumber: '',
@@ -397,4 +398,9 @@ const handleCategorySearch = async (searchQuery) => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Add these styles if needed for editor spacing */
+:deep(.editor-container) {
+  margin-bottom: 1rem;
+}
+</style>
