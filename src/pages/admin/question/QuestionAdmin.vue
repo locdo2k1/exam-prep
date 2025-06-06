@@ -157,37 +157,6 @@
             @error="handleAudioUploadError" @clear-all="handleClearAudio" />
         </div>
       </div>
-
-      <!-- Question Part and Test -->
-      <div class="grid grid-cols-2 gap-6 mb-4.5">
-        <div>
-          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-            Question Part
-          </label>
-          <MultipleSelect v-model="parts" @update:modelValue="handlePartsChange" :options="[
-            { value: 'apple', label: 'Apple' },
-            { value: 'banana', label: 'Banana' },
-            { value: 'cherry', label: 'Cherry' },
-            { value: 'date', label: 'Date' },
-            { value: 'elderberry', label: 'Elderberry' },
-            { value: 'graphs', label: 'Graphs' },
-          ]" class="w-full" />
-        </div>
-
-        <div>
-          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-            Question Test
-          </label>
-          <MultipleSelect v-model="question.tests" :options="[
-            { value: 'apple', label: 'Apple' },
-            { value: 'banana', label: 'Banana' },
-            { value: 'cherry', label: 'Cherry' },
-            { value: 'date', label: 'Date' },
-            { value: 'elderberry', label: 'Elderberry' },
-            { value: 'graphs', label: 'Graphs' },
-          ]" class="w-full" placeholder="Select tests" />
-        </div>
-      </div>
       <!-- Action Buttons -->
       <div class="flex justify-end gap-4">
         <button @click="cancel"
@@ -211,10 +180,12 @@ import ComponentCard from '@/components/admin/common/ComponentCard.vue'
 import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
 import AudioUploader from '@/components/admin/forms/DropnDrapElements/AudioUploader.vue'
-import MultipleSelect from '@/components/admin/forms/FormElements/MultipleSelect.vue'
 import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi'
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue'
 import Editor from '@/components/admin/common/Editor.vue'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const question = ref({
   prompt: '', // This will store the editor content
@@ -233,22 +204,35 @@ const parts = ref([]);
 const questionCategories = ref([])
 const loadingCategories = ref(false)
 
-const addOption = () => {
-  const newId = Math.max(...question.value.options.map(o => o.id)) + 1
-  question.value.options.push({
-    id: newId,
-    text: '',
-    isCorrect: false
-  })
-}
+const validationErrors = ref({
+  prompt: '',
+  type: '',
+  category: '',
+  options: '',
+  blanks: ''
+})
 
-// Add this function in the script setup section
-const removeBlank = (index) => {
-  question.value.blanks.splice(index, 1)
+const addOption = () => {
+  try {
+    const newId = Math.max(...question.value.options.map(o => o.id)) + 1
+    question.value.options.push({
+      id: newId,
+      text: '',
+      isCorrect: false
+    })
+    toast.info('New option added', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to add option', { timeout: 2000 })
+  }
 }
 
 const removeOption = (index) => {
-  question.value.options.splice(index, 1)
+  try {
+    question.value.options.splice(index, 1)
+    toast.info('Option removed', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to remove option', { timeout: 2000 })
+  }
 }
 
 const initializeMultipleChoiceOptions = () => {
@@ -260,14 +244,12 @@ const initializeMultipleChoiceOptions = () => {
   ]
 }
 
-// Add this function after initializeMultipleChoiceOptions
 const initializeFillBlankAnswers = () => {
   question.value.blanks = [
     { id: 1, answer: '' }
   ]
 }
 
-// Update the existing watch function
 watch(() => question.value.type, (newType) => {
   if (newType === 'multiple_choice') {
     initializeMultipleChoiceOptions()
@@ -299,11 +281,122 @@ const questionTypes = [
 ]
 
 const addBlank = () => {
-  question.value.blanks.push({ answer: '' })
+  try {
+    question.value.blanks.push({ answer: '' })
+    toast.info('New blank added', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to add blank', { timeout: 2000 })
+  }
 }
 
-const saveQuestion = () => {
-  console.log('Saving question:', question.value)
+const removeBlank = (index) => {
+  try {
+    question.value.blanks.splice(index, 1)
+    toast.info('Blank removed', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to remove blank', { timeout: 2000 })
+  }
+}
+
+const validateForm = () => {
+  // Reset all validation errors
+  validationErrors.value = {
+    prompt: '',
+    type: '',
+    category: '',
+    options: '',
+    blanks: ''
+  }
+
+  let isValid = true
+  const errors = []
+
+  if (!question.value.prompt.trim()) {
+    validationErrors.value.prompt = 'Question prompt is required'
+    errors.push('Question prompt is required')
+    isValid = false
+  }
+
+  if (!question.value.type) {
+    validationErrors.value.type = 'Question type is required'
+    errors.push('Question type is required')
+    isValid = false
+  }
+
+  if (!question.value.category) {
+    validationErrors.value.category = 'Category is required'
+    errors.push('Category is required')
+    isValid = false
+  }
+
+  if (question.value.type === 'multiple_choice') {
+    if (question.value.options.some(option => !option.text.trim())) {
+      validationErrors.value.options = 'All options must be filled'
+      errors.push('All options must be filled')
+      isValid = false
+    }
+
+    if (!question.value.options.some(option => option.isCorrect)) {
+      validationErrors.value.options = 'Select at least one correct answer'
+      errors.push('Select at least one correct answer')
+      isValid = false
+    }
+  }
+
+  if (question.value.type === 'fill_blank') {
+    if (question.value.blanks.some(blank => !blank.answer.trim())) {
+      validationErrors.value.blanks = 'All blanks must be filled'
+      errors.push('All blanks must be filled')
+      isValid = false
+    }
+  }
+
+  // Show all validation errors as toasts
+  if (!isValid) {
+    errors.forEach(error => {
+      toast.error(error, {
+        timeout: 3000,
+        position: "top-right",
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
+    })
+  }
+
+  return isValid
+}
+
+const saveQuestion = async () => {
+  if (!validateForm()) {
+    return
+  }
+
+  try {
+    // Add your API call here
+    // await questionApi.create(question.value)
+
+    toast.success('Question saved successfully', {
+      timeout: 2000,
+      position: "top-right",
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+
+    // Optional: Reset form or redirect
+    // resetForm() or router.push('/questions')
+
+  } catch (error) {
+    toast.error('Failed to save question. Please try again.', {
+      timeout: 3000,
+      position: "top-right",
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+    console.error('Error saving question:', error)
+  }
 }
 
 const cancel = () => {
@@ -322,45 +415,45 @@ const handleAudioFileRemoved = (file) => {
 
 const handleClearAudio = () => {
   question.value.audioFiles = []
-  console.log('Audio files cleared', question.value.audioFiles);
-
+  toast.info('Audio files cleared', { timeout: 1500 })
 }
 
 const handleAudioUploadError = (error) => {
+  toast.error(`Audio upload error: ${error.message || 'Unknown error'}`, {
+    timeout: 3000,
+    position: "top-right",
+  })
   console.error('Audio upload error:', error)
-  // Handle any upload errors here
 }
 
 const fetchQuestionCategories = async () => {
   try {
     loadingCategories.value = true
     const response = await questionCategoryApi.getAll({
-      size: 10 // Adjust size as needed
+      size: 10
     })
     questionCategories.value = response.content.map(category => ({
       value: category.id,
       label: category.name
     }))
   } catch (error) {
+    toast.error('Failed to fetch categories', {
+      timeout: 3000,
+      position: "top-right",
+    })
     console.error('Error fetching categories:', error)
   } finally {
     loadingCategories.value = false
   }
 }
 
-// Add onMounted to fetch categories when component loads
 onMounted(() => {
   fetchQuestionCategories()
 })
 
-// // Add this watch in script setup
-// watch(questionCategories, (newValue) => {
-// }, { immediate: true })
-
 const page = ref(0)
 const hasMore = ref(true)
 
-// Add this new method for loading more items
 const loadMore = async (searchQuery) => {
   const response = await questionCategoryApi.getAll({
     size: 10,
@@ -377,21 +470,25 @@ const loadMore = async (searchQuery) => {
 
 const handleCategorySearch = async (searchQuery) => {
   try {
-    loadingCategories.value = true;
+    loadingCategories.value = true
     const response = await questionCategoryApi.getAll({
       search: searchQuery,
       size: 10
-    });
+    })
     questionCategories.value = response.content.map(category => ({
       value: category.id,
       label: category.name
-    }));
-    page.value = 0;
-    hasMore.value = response.totalPages > 1;
+    }))
+    page.value = 0
+    hasMore.value = response.totalPages > 1
   } catch (error) {
-    console.error('Error searching categories:', error);
+    toast.error('Failed to search categories', {
+      timeout: 3000,
+      position: "top-right",
+    })
+    console.error('Error searching categories:', error)
   } finally {
-    loadingCategories.value = false;
+    loadingCategories.value = false
   }
 };
 
