@@ -58,7 +58,7 @@ const routes = [
          {
             path: 'question-management',
             component: QuestionAdmin,
-            // meta: { requiresAuth: true },
+            meta: { requiresAuth: true },
          }
       ]
    },
