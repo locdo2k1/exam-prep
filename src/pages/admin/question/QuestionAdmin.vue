@@ -64,7 +64,7 @@
                     </label>
 
                     <!-- Delete Button -->
-                    <button v-if="question.options.length > 4" @click="removeOption(index)" type="button" class="p-1 rounded-full bg-red-50 text-red-400 
+                    <button v-if="question.options.length > 1" @click="removeOption(index)" type="button" class="p-1 rounded-full bg-red-50 text-red-400 
                         hover:bg-red-100 hover:text-red-500 
                         transition-colors duration-150 
                         dark:bg-red-500/10 dark:text-red-300 
@@ -209,7 +209,8 @@ const validationErrors = ref({
   type: '',
   category: '',
   options: '',
-  blanks: ''
+  blanks: '',
+  audioFiles: ''
 })
 
 const addOption = () => {
@@ -238,9 +239,6 @@ const removeOption = (index) => {
 const initializeMultipleChoiceOptions = () => {
   question.value.options = [
     { id: 1, text: '', isCorrect: false },
-    { id: 2, text: '', isCorrect: false },
-    { id: 3, text: '', isCorrect: false },
-    { id: 4, text: '', isCorrect: false }
   ]
 }
 
@@ -305,7 +303,8 @@ const validateForm = () => {
     type: '',
     category: '',
     options: '',
-    blanks: ''
+    blanks: '',
+    audioFiles: ''
   }
 
   let isValid = true
@@ -349,6 +348,19 @@ const validateForm = () => {
       errors.push('All blanks must be filled')
       isValid = false
     }
+  }
+
+  // Validate audio files
+  if (question.value.audioFiles.length === 0) {
+    validationErrors.value.audioFiles = 'Audio file is required'
+    errors.push('Audio file is required')
+    isValid = false
+  }
+
+  if (question.value.audioFiles.length > 1) {
+    validationErrors.value.audioFiles = 'Only one audio file is allowed'
+    errors.push('Only one audio file is allowed')
+    isValid = false
   }
 
   // Show all validation errors as toasts
@@ -404,21 +416,43 @@ const cancel = () => {
 }
 
 const handleAudioFilesAdded = (files) => {
-  console.log('Audio files added:', files)
-  question.value.audioFiles.push(files);
+  try {
+    if (files.length > 1) {
+      toast.error('Only one audio file is allowed', { timeout: 3000 })
+      return
+    }
+    question.value.audioFiles.push(files)
+    toast.success('Audio file added successfully', { timeout: 1500 })
+    // Clear any existing validation errors
+    validationErrors.value.audioFiles = ''
+  } catch (error) {
+    toast.error('Failed to add audio file', { timeout: 2000 })
+    console.error('Error adding audio file:', error)
+  }
 }
 
 const handleAudioFileRemoved = (file) => {
-  console.log('Audio file removed:', file)
-  question.value.audioFiles = question.value.audioFiles.filter((audio) => audio !== file);
+  try {
+    question.value.audioFiles = question.value.audioFiles.filter((audio) => audio !== file)
+    toast.info('Audio file removed', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to remove audio file', { timeout: 2000 })
+    console.error('Error removing audio file:', error)
+  }
 }
 
 const handleClearAudio = () => {
-  question.value.audioFiles = []
-  toast.info('Audio files cleared', { timeout: 1500 })
+  try {
+    question.value.audioFiles = []
+    toast.info('Audio files cleared', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to clear audio files', { timeout: 2000 })
+    console.error('Error clearing audio files:', error)
+  }
 }
 
 const handleAudioUploadError = (error) => {
+  validationErrors.value.audioFiles = error.message || 'Unknown error'
   toast.error(`Audio upload error: ${error.message || 'Unknown error'}`, {
     timeout: 3000,
     position: "top-right",
