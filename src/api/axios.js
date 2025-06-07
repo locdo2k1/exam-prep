@@ -4,7 +4,6 @@ const apiClient = axios.create({
    baseURL: 'http://localhost:8080/api',
    timeout: 10000,
    headers: {
-      'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
    },
    paramsSerializer: params => {
@@ -24,6 +23,14 @@ apiClient.interceptors.request.use(
       if (token) {
          config.headers.Authorization = `Bearer ${token}`;
       }
+
+      // Set Content-Type based on the request data
+      if (config.data instanceof FormData) {
+         config.headers['Content-Type'] = 'multipart/form-data';
+      } else {
+         config.headers['Content-Type'] = 'application/json';
+      }
+
       return config;
    },
 );

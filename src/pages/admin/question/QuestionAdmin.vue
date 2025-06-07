@@ -25,7 +25,7 @@
                 <select name="question-type" v-model="question.type"
                   class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
                   <option disabled="" selected="" value="">Select Option</option>
-                  <option v-for="type in questionTypes" :key="type.value" :value="type.value">
+                  <option v-for="type in questionTypes" :key="type.value" :value="type.value" :data-label="type.label">
                     {{ type.label }}
                   </option>
                 </select>
@@ -49,7 +49,7 @@
             </div>
           </div>
           <!-- the multiple choice options section -->
-          <div v-if="question.type === 'multiple_choice'" class="space-y-4">
+          <div v-if="typeLabel === 'multiple_choice'" class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
@@ -64,7 +64,7 @@
                     </label>
 
                     <!-- Delete Button -->
-                    <button v-if="question.options.length > 4" @click="removeOption(index)" type="button" class="p-1 rounded-full bg-red-50 text-red-400 
+                    <button v-if="question.options.length > 1" @click="removeOption(index)" type="button" class="p-1 rounded-full bg-red-50 text-red-400 
                         hover:bg-red-100 hover:text-red-500 
                         transition-colors duration-150 
                         dark:bg-red-500/10 dark:text-red-300 
@@ -102,7 +102,8 @@
             </button>
           </div>
           <!-- the fill-in blank section -->
-          <div v-if="question.type === 'fill_blank'" class="space-y-4">
+          <div v-if="questionTypes.find(type => type.value === question.type)?.value === 'fill_blank'"
+            class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,6 +148,15 @@
           </div>
         </div>
 
+        <!-- Score Field -->
+        <div class="mb-4.5">
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Score
+          </label>
+          <input type="number" v-model="question.score" placeholder="Enter question score"
+            class="no-spinner w-full h-11 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white/90 dark:placeholder-white/30 dark:focus:ring-brand-500" />
+        </div>
+
         <!-- Audio Files -->
         <div class="mb-4.5">
           <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
@@ -184,6 +194,7 @@ import { questionCategoryApi } from '@/api/admin/question-category/questionCateg
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue'
 import Editor from '@/components/admin/common/Editor.vue'
 import { useToast } from 'vue-toastification'
+import { questionApi } from '@/api/admin/question/questionApi'
 
 const toast = useToast()
 
@@ -197,10 +208,10 @@ const question = ref({
   tests: [],
   options: [],
   blanks: [],
-  audioFiles: []
+  audioFiles: [],
+  score: 0 // Add this line
 })
 
-const parts = ref([]);
 const questionCategories = ref([])
 const loadingCategories = ref(false)
 
@@ -209,7 +220,8 @@ const validationErrors = ref({
   type: '',
   category: '',
   options: '',
-  blanks: ''
+  blanks: '',
+  audioFiles: ''
 })
 
 const addOption = () => {
@@ -222,7 +234,7 @@ const addOption = () => {
     })
     toast.info('New option added', { timeout: 1500 })
   } catch (error) {
-    toast.error('Failed to add option', { timeout: 2000 })
+    toast.error('Failed to add option', error, { timeout: 2000 })
   }
 }
 
@@ -231,16 +243,13 @@ const removeOption = (index) => {
     question.value.options.splice(index, 1)
     toast.info('Option removed', { timeout: 1500 })
   } catch (error) {
-    toast.error('Failed to remove option', { timeout: 2000 })
+    toast.error('Failed to remove option', error, { timeout: 2000 })
   }
 }
 
 const initializeMultipleChoiceOptions = () => {
   question.value.options = [
     { id: 1, text: '', isCorrect: false },
-    { id: 2, text: '', isCorrect: false },
-    { id: 3, text: '', isCorrect: false },
-    { id: 4, text: '', isCorrect: false }
   ]
 }
 
@@ -251,6 +260,8 @@ const initializeFillBlankAnswers = () => {
 }
 
 watch(() => question.value.type, (newType) => {
+  console.log(newType);
+
   if (newType === 'multiple_choice') {
     initializeMultipleChoiceOptions()
     question.value.blanks = []
@@ -269,15 +280,11 @@ watch(() => question.value.options, (newOptions) => {
   }
 }, { deep: true })
 
-const handlePartsChange = (newParts) => {
-  question.value.parts = newParts
-}
-
 const currentPageTitle = ref('Create Question for Exam Bank')
 
 const questionTypes = [
-  { value: 'multiple_choice', label: 'Multiple Choice' },
-  { value: 'fill_blank', label: 'Fill in the Blank' }
+  { value: '0ea0b8ee-7823-4e9c-99bb-4efb4adfc5d9', label: 'Multiple Choice' },
+  { value: '0ea0b8ee-7823-4e9c-99bb-4efb4adfc5d9', label: 'Fill in the Blank' }
 ]
 
 const addBlank = () => {
@@ -285,7 +292,7 @@ const addBlank = () => {
     question.value.blanks.push({ answer: '' })
     toast.info('New blank added', { timeout: 1500 })
   } catch (error) {
-    toast.error('Failed to add blank', { timeout: 2000 })
+    toast.error('Failed to add blank', error, { timeout: 2000 })
   }
 }
 
@@ -294,7 +301,7 @@ const removeBlank = (index) => {
     question.value.blanks.splice(index, 1)
     toast.info('Blank removed', { timeout: 1500 })
   } catch (error) {
-    toast.error('Failed to remove blank', { timeout: 2000 })
+    toast.error('Failed to remove blank', error, { timeout: 2000 })
   }
 }
 
@@ -305,11 +312,20 @@ const validateForm = () => {
     type: '',
     category: '',
     options: '',
-    blanks: ''
+    blanks: '',
+    audioFiles: '',
+    score: '' // Add this line
   }
 
   let isValid = true
   const errors = []
+
+  // Add score validation
+  if (!question.value.score || question.value.score <= 0) {
+    validationErrors.value.score = 'Score must be greater than 0'
+    errors.push('Score must be greater than 0')
+    isValid = false
+  }
 
   if (!question.value.prompt.trim()) {
     validationErrors.value.prompt = 'Question prompt is required'
@@ -351,6 +367,13 @@ const validateForm = () => {
     }
   }
 
+  // Validate audio files
+  if (question.value.audioFiles.length === 0) {
+    validationErrors.value.audioFiles = 'Audio file is required'
+    errors.push('Audio file is required')
+    isValid = false
+  }
+
   // Show all validation errors as toasts
   if (!isValid) {
     errors.forEach(error => {
@@ -373,8 +396,17 @@ const saveQuestion = async () => {
   }
 
   try {
-    // Add your API call here
-    // await questionApi.create(question.value)
+    const createQuestionViewModel = {
+      prompt: question.value.prompt,
+      questionTypeId: question.value.type,
+      categoryId: question.value.category,
+      options: question.value.options,
+      blankAnswers: question.value.blanks,
+      audios: question.value.audioFiles,
+      score: question.value.score,
+    };
+
+    await questionApi.create(createQuestionViewModel);
 
     toast.success('Question saved successfully', {
       timeout: 2000,
@@ -404,21 +436,44 @@ const cancel = () => {
 }
 
 const handleAudioFilesAdded = (files) => {
-  console.log('Audio files added:', files)
-  question.value.audioFiles.push(files);
+  try {
+    if (files.length > 1) {
+      toast.error('Only one audio file is allowed', { timeout: 3000 });
+      return;
+    }
+    // Verify files are actual File objects
+    const validFiles = files.filter(file => file instanceof File);
+    question.value.audioFiles.push(...validFiles);
+    toast.success('Audio file added successfully', { timeout: 1500 });
+    validationErrors.value.audioFiles = '';
+  } catch (error) {
+    toast.error('Failed to add audio file', { timeout: 2000 });
+    console.error('Error adding audio file:', error);
+  }
 }
 
 const handleAudioFileRemoved = (file) => {
-  console.log('Audio file removed:', file)
-  question.value.audioFiles = question.value.audioFiles.filter((audio) => audio !== file);
+  try {
+    question.value.audioFiles = question.value.audioFiles.filter((audio) => audio !== file)
+    toast.info('Audio file removed', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to remove audio file', { timeout: 2000 })
+    console.error('Error removing audio file:', error)
+  }
 }
 
 const handleClearAudio = () => {
-  question.value.audioFiles = []
-  toast.info('Audio files cleared', { timeout: 1500 })
+  try {
+    question.value.audioFiles = []
+    toast.info('Audio files cleared', { timeout: 1500 })
+  } catch (error) {
+    toast.error('Failed to clear audio files', { timeout: 2000 })
+    console.error('Error clearing audio files:', error)
+  }
 }
 
 const handleAudioUploadError = (error) => {
+  validationErrors.value.audioFiles = error.message || 'Unknown error'
   toast.error(`Audio upload error: ${error.message || 'Unknown error'}`, {
     timeout: 3000,
     position: "top-right",
@@ -492,12 +547,23 @@ const handleCategorySearch = async (searchQuery) => {
   }
 };
 
-
 </script>
 
 <style scoped>
 /* Add these styles if needed for editor spacing */
 :deep(.editor-container) {
   margin-bottom: 1rem;
+}
+
+/* Chrome, Safari, Edge, Opera */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.no-spinner {
+  -moz-appearance: textfield;
 }
 </style>
