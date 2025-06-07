@@ -92,28 +92,16 @@ export default {
    ],
    setup(props, { emit }) {
       const files = ref([])
-      let fileIdCounter = 0
+      const fileIdCounter = 0
 
       const isUploading = computed(() =>
          files.value.some(file => file.uploading)
       )
 
       const handleFilesDropped = (newFiles) => {
-         const processedFiles = newFiles.map(file => ({
-            id: ++fileIdCounter,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified,
-            file, // Keep original File object
-            uploading: false,
-            progress: 0,
-            uploaded: false,
-            error: null
-         }))
 
-         files.value.push(...processedFiles)
-         emit('files-added', processedFiles)
+         files.value.push(...newFiles)
+         emit('files-added', newFiles)
 
          if (props.autoUpload) {
             uploadFiles()
