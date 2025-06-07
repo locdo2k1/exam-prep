@@ -22,10 +22,12 @@
                 Question Type
               </label>
               <div class="relative z-20 bg-transparent">
-                <select name="question-type" v-model="question.type"
+                <select name="question-type" v-model="question.type" :disabled="loadingQuestionTypes"
                   class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
-                  <option disabled="" selected="" value="">Select Option</option>
-                  <option v-for="type in questionTypes" :key="type.value" :value="type.value" :data-label="type.label">
+                  <option disabled selected value="">
+                    {{ loadingQuestionTypes ? 'Loading...' : 'Select Option' }}
+                  </option>
+                  <option v-for="type in questionTypes" :key="type.value" :value="type.value">
                     {{ type.label }}
                   </option>
                 </select>
@@ -49,7 +51,8 @@
             </div>
           </div>
           <!-- the multiple choice options section -->
-          <div v-if="typeLabel === 'multiple_choice'" class="space-y-4">
+          <div v-if="questionTypes.find(type => type.value === question.type)?.label === 'Multiple Choice'"
+            class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
@@ -102,7 +105,7 @@
             </button>
           </div>
           <!-- the fill-in blank section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.value === 'fill_blank'"
+          <div v-if="questionTypes.find(type => type.value === question.type)?.label === 'Fill in the Blank'"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
@@ -195,6 +198,7 @@ import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSe
 import Editor from '@/components/admin/common/Editor.vue'
 import { useToast } from 'vue-toastification'
 import { questionApi } from '@/api/admin/question/questionApi'
+import { questionTypeApi } from '@/api/admin/question-type/questionTypeApi'
 
 const toast = useToast()
 
@@ -214,6 +218,8 @@ const question = ref({
 
 const questionCategories = ref([])
 const loadingCategories = ref(false)
+const questionTypes = ref([])
+const loadingQuestionTypes = ref(false)
 
 const validationErrors = ref({
   prompt: '',
@@ -260,12 +266,12 @@ const initializeFillBlankAnswers = () => {
 }
 
 watch(() => question.value.type, (newType) => {
-  console.log(newType);
+  const typeName = questionTypes.value.find(type => type.value === newType)?.label
 
-  if (newType === 'multiple_choice') {
+  if (typeName === 'Multiple Choice') {
     initializeMultipleChoiceOptions()
     question.value.blanks = []
-  } else if (newType === 'fill_blank') {
+  } else if (typeName === 'Fill in the Blank') {
     initializeFillBlankAnswers()
     question.value.options = []
   } else {
@@ -282,10 +288,26 @@ watch(() => question.value.options, (newOptions) => {
 
 const currentPageTitle = ref('Create Question for Exam Bank')
 
-const questionTypes = [
-  { value: '0ea0b8ee-7823-4e9c-99bb-4efb4adfc5d9', label: 'Multiple Choice' },
-  { value: '0ea0b8ee-7823-4e9c-99bb-4efb4adfc5d9', label: 'Fill in the Blank' }
-]
+const fetchQuestionTypes = async () => {
+  try {
+    loadingQuestionTypes.value = true
+    const response = await questionTypeApi.getAll({
+      size: 100 // Fetch all types since we typically won't have too many
+    })
+    questionTypes.value = response.content.map(type => ({
+      value: type.id,
+      label: type.name
+    }))
+  } catch (error) {
+    toast.error('Failed to fetch question types', {
+      timeout: 3000,
+      position: "top-right",
+    })
+    console.error('Error fetching question types:', error)
+  } finally {
+    loadingQuestionTypes.value = false
+  }
+}
 
 const addBlank = () => {
   try {
@@ -345,7 +367,7 @@ const validateForm = () => {
     isValid = false
   }
 
-  if (question.value.type === 'multiple_choice') {
+  if (question.value.type === 'Multiple Choice') {
     if (question.value.options.some(option => !option.text.trim())) {
       validationErrors.value.options = 'All options must be filled'
       errors.push('All options must be filled')
@@ -359,7 +381,7 @@ const validateForm = () => {
     }
   }
 
-  if (question.value.type === 'fill_blank') {
+  if (question.value.type === 'Fill in the Blank') {
     if (question.value.blanks.some(blank => !blank.answer.trim())) {
       validationErrors.value.blanks = 'All blanks must be filled'
       errors.push('All blanks must be filled')
@@ -504,6 +526,7 @@ const fetchQuestionCategories = async () => {
 
 onMounted(() => {
   fetchQuestionCategories()
+  fetchQuestionTypes()
 })
 
 const page = ref(0)
