@@ -1,7 +1,12 @@
 <template>
    <div class="relative z-20 bg-transparent" v-click-outside="closeDropdown">
       <!-- Search input with debounce -->
-      <input type="text" v-model="searchQuery" :placeholder="placeholder" @input="debouncedSearch" @focus="handleFocus"
+      <input 
+        type="text" 
+        :value="searchQuery || previousValue" 
+        :placeholder="placeholder" 
+        @input="onInput"
+        @focus="handleFocus"
          class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
       <span class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
          <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -52,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 
 const props = defineProps({
    modelValue: {
@@ -94,13 +99,29 @@ const props = defineProps({
    loadMoreText: {
       type: String,
       default: 'Load more...'
+   },
+   previousValue: {
+      type: [String, Number],
+      default: ''
    }
 });
+
+const previousValue = ref('');
+
+onMounted(() => {
+   previousValue.value = props.previousValue;
+})
 
 const emit = defineEmits(['update:modelValue', 'search', 'load-more', 'focus']);
 
 const isOpen = ref(false);
 const searchQuery = ref('');
+
+const onInput = (event) => {
+  searchQuery.value = event.target.value;
+  previousValue.value = '';
+  debouncedSearch();
+};
 
 const debounce = (fn, delay) => {
    let timeoutId = null;
@@ -143,6 +164,12 @@ const vClickOutside = {
       document.removeEventListener('click', el._clickOutside);
    }
 };
+
+watch(() => props.previousValue, (newVal) => {
+   previousValue.value = newVal;
+});
+
+
 </script>
 
 <style scoped>

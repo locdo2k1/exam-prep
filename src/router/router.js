@@ -6,7 +6,8 @@ import { isAuthenticated } from './guards'
 import Home from '../components/user/layout/UserHome.vue'
 import AdminLogin from '../pages/admin/auth/Login.vue'
 import AdminLayout from '../components/admin/layout/AdminLayout.vue'
-import QuestionAdmin from '../pages/admin/question/QuestionAdmin.vue'
+import QuestionAdminCreate from '../pages/admin/question/QuestionAdminCreate.vue'
+import QuestionAdminEdit from '../pages/admin/question/QuestionAdminEdit.vue'
 
 const routes = [
    {
@@ -57,7 +58,17 @@ const routes = [
       children: [
          {
             path: 'question-management',
-            component: QuestionAdmin,
+            component: QuestionAdminCreate,
+            meta: { requiresAuth: true },
+         },
+         {
+            path: 'question-management/create',
+            component: QuestionAdminCreate,
+            meta: { requiresAuth: true },
+         },
+         {
+            path: 'question-management/edit/:id',
+            component: QuestionAdminEdit,
             meta: { requiresAuth: true },
          }
       ]
