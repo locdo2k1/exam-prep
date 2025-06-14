@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import DragDropZone from './DragDropZone.vue'
 import FileList from './FileList.vue'
 
@@ -78,6 +78,10 @@ export default {
       uploadHeaders: {
          type: Object,
          default: () => ({})
+      },
+      initialFiles: {
+         type: Array,
+         default: () => []
       }
    },
    emits: [
@@ -92,7 +96,20 @@ export default {
    ],
    setup(props, { emit }) {
       const files = ref([])
-      const fileIdCounter = 0
+      
+      // Format initial files to match the expected file object structure
+      const formatInitialFiles = (fileList) => {
+         return fileList.map(file => file)
+      }
+
+      // Watch for changes to initialFiles
+      watch(() => props.initialFiles, (newFiles) => {
+         if (newFiles?.length) {
+            files.value = formatInitialFiles(newFiles)
+         } else {
+            files.value = []
+         }
+      }, { immediate: true })
 
       const isUploading = computed(() =>
          files.value.some(file => file.uploading)

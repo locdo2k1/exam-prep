@@ -24,9 +24,20 @@ interface CreateQuestionViewModel {
   questionTypeId: string;
   categoryId: string;
   options: Option[];
-  blankAnswers: string[];
+  blankAnswers: Array<{ answer: string }>;
   audios: File[];
   score: number;
+}
+
+interface UpdateQuestionViewModel {
+  prompt: string;
+  questionTypeId: string;
+  categoryId: string;
+  options: Option[];
+  blanks: Array<{ answer: string }>;
+  audios: File[];
+  score: number;
+  deletedFileIds?: string[];
 }
 
 interface Option {
@@ -91,9 +102,15 @@ export const questionApi = {
         })
       )
     );
-
     // Add blank answers as JSON string
-    formData.append("blankAnswers", JSON.stringify(blankAnswers));
+    formData.append(
+      "blankAnswers",
+      JSON.stringify(
+        blankAnswers.map((ba) => {
+          return ba.answer
+        })
+      )
+    );
 
     // Append each audio file with proper type checking
     audios.forEach((audio) => {
@@ -110,8 +127,52 @@ export const questionApi = {
   /**
    * Update an existing question
    */
-  update: async (id: string, question: Question) => {
-    return await apiClient.put<Question>(`${BASE_URL}/${id}`, question);
+  update: async (id: string, updateQuestionViewModel: UpdateQuestionViewModel) => {
+    const { prompt, questionTypeId, categoryId, options, blanks, audios, score, deletedFileIds = [] } = updateQuestionViewModel;
+
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+    formData.append("questionTypeId", questionTypeId);
+    formData.append("categoryId", categoryId);
+    formData.append("score", score.toString());
+
+    // Add options as JSON string
+    formData.append(
+      "options",
+      JSON.stringify(
+        options.map((o) => {
+          return {
+            text: o.text,
+            correct: o.isCorrect,
+          };
+        })
+      )
+    );
+    // Add blank answers as JSON string
+    formData.append(
+      "blankAnswers",
+      JSON.stringify(
+        blanks.map((ba) => {
+          return ba
+        })
+      )
+    );
+
+    // Append each audio file with proper type checking
+    audios.forEach((audio) => {
+      if (audio instanceof File) {
+        formData.append("audios", audio);
+      } else {
+        console.warn("Invalid audio file type detected");
+      }
+    });
+
+    // Add deleted audio IDs if any
+    if (deletedFileIds && deletedFileIds.length > 0) {
+      formData.append("deletedAudiosIds", JSON.stringify(deletedFileIds));
+    }
+
+    return await apiClient.put<Question>(`${BASE_URL}/${id}`, formData);
   },
 
   /**
