@@ -11,9 +11,3 @@ import SidebarProvider from './components/admin/layout/SidebarProvider.vue';
   </ThemeProvider>
 </template>
 
-<style scoped>
-input::-ms-reveal,
-input::-ms-clear {
-  display: none;
-}
-</style>

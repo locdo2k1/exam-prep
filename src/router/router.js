@@ -8,6 +8,7 @@ import AdminLogin from '../pages/admin/auth/Login.vue'
 import AdminLayout from '../components/admin/layout/AdminLayout.vue'
 import QuestionAdminCreate from '../pages/admin/question/QuestionAdminCreate.vue'
 import QuestionAdminEdit from '../pages/admin/question/QuestionAdminEdit.vue'
+import QuestionAdminList from '../pages/admin/question/QuestionAdminList.vue'
 
 const routes = [
    {
@@ -58,7 +59,7 @@ const routes = [
       children: [
          {
             path: 'question-management',
-            component: QuestionAdminCreate,
+            component: QuestionAdminList,
             meta: { requiresAuth: true },
          },
          {
