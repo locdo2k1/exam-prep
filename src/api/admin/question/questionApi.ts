@@ -2,13 +2,42 @@
 
 import apiClient from "@/api/axios";
 
-interface Question {
-  // Define the shape of the Question object
+interface FileInfoViewModel {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+}
+
+interface OptionViewModel {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+interface QuestionTypeViewModel {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface QuestionCategoryViewModel {
+  id: string;
+  code: string;
+  skill: string;
+  name: string;
+}
+
+export interface QuestionViewModel {
   id: string;
   prompt: string;
-  type: string;
-  category: string;
-  // Add other properties as needed
+  questionCategory: QuestionCategoryViewModel;
+  questionType: QuestionTypeViewModel;
+  score: number;
+  questionAnswers: string[];
+  options: OptionViewModel[];
+  questionAudios: FileInfoViewModel[];
 }
 
 interface PageResponse<T> {
@@ -60,7 +89,7 @@ export const questionApi = {
     direction?: "asc" | "desc";
     search?: string;
   }) => {
-    return await apiClient.get<PageResponse<Question>>(BASE_URL, {
+    return await apiClient.get<PageResponse<QuestionViewModel>>(BASE_URL, {
       params: {
         page: params.page || 0,
         size: params.size || 10,
@@ -75,7 +104,7 @@ export const questionApi = {
    * Get a question by ID
    */
   getById: async (id: string) => {
-    return await apiClient.get<Question>(`${BASE_URL}/${id}`);
+    return await apiClient.get<QuestionViewModel>(`${BASE_URL}/${id}`);
   },
 
   /**
