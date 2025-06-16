@@ -51,7 +51,7 @@
             </div>
           </div>
           <!-- the multiple choice options section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.label === 'Multiple Choice'"
+          <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.MULTIPLE_CHOICE"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,7 +105,7 @@
             </button>
           </div>
           <!-- the fill-in blank section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.label === 'Fill in the Blank'"
+          <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.FILL_IN_THE_BLANK"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
@@ -199,6 +199,7 @@ import Editor from '@/components/admin/common/Editor.vue'
 import { useToast } from 'vue-toastification'
 import { questionApi } from '@/api/admin/question/questionApi'
 import { questionTypeApi } from '@/api/admin/question-type/questionTypeApi'
+import { QUESTION_TYPES } from '@/constants/question.constants'
 
 const toast = useToast()
 
@@ -254,37 +255,33 @@ const removeOption = (index) => {
 }
 
 const initializeMultipleChoiceOptions = () => {
-  question.value.options = [
-    { id: 1, text: '', isCorrect: false },
-  ]
+  if (!question.value.options || question.value.options.length === 0) {
+    question.value.options = [
+      { id: 1, text: '', isCorrect: false },
+    ]
+  }
 }
 
 const initializeFillBlankAnswers = () => {
-  question.value.blanks = [
-    { id: 1, answer: '' }
-  ]
+  if (!question.value.blanks || question.value.blanks.length === 0) {
+    question.value.blanks = [
+      { id: 1, answer: '' }
+    ]
+  }
 }
 
 watch(() => question.value.type, (newType) => {
   const typeName = questionTypes.value.find(type => type.value === newType)?.label
 
-  if (typeName === 'Multiple Choice') {
+  if (typeName === QUESTION_TYPES.MULTIPLE_CHOICE) {
     initializeMultipleChoiceOptions()
-    question.value.blanks = []
-  } else if (typeName === 'Fill in the Blank') {
+  } else if (typeName === QUESTION_TYPES.FILL_IN_THE_BLANK) {
     initializeFillBlankAnswers()
-    question.value.options = []
   } else {
     question.value.options = []
     question.value.blanks = []
   }
 },)
-
-// watch(() => question.value.options, (newOptions) => {
-//   if (newOptions.length === 0) {
-//     initializeMultipleChoiceOptions()
-//   }
-// }, { deep: true })
 
 const currentPageTitle = ref('Create Question for Exam Bank')
 
