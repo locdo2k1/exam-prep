@@ -66,7 +66,7 @@
       </div>
       
       <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-800">
           <tr class="divide-x divide-gray-200 dark:divide-gray-700">
             <th 
@@ -115,12 +115,10 @@
             <td 
               v-for="(column, colIndex) in props.columns" 
               :key="colIndex"
-              :class="{
-                'px-4 py-3 text-sm text-gray-900 dark:text-gray-100 break-words': true,
+              :class="[tdClass, {
                 'hidden md:table-cell': column.hideOnMobile,
                 'font-medium': column.key === primaryColumn
-              }"
-              :style="{ width: column.width || 'auto' }"
+              }]"
             >
               <slot :name="`cell-${column.key}`" :row="item" :value="item[column.key]">
                 <span v-html="column.render ? column.render(item[column.key], item) : item[column.key]"></span>
