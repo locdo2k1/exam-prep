@@ -26,22 +26,18 @@
               </template>
             </div>
           </div>
-          <div v-if="actions && actions.length > 0" class="ml-2 flex-shrink-0">
+          <div v-if="props.actions && props.actions.length > 0" class="ml-2 flex-shrink-0">
             <div class="flex flex-col space-y-1">
               <button
-                v-for="(action, actionIndex) in actions"
+                v-for="(action, actionIndex) in props.actions"
                 :key="actionIndex"
                 @click="action.handler(item)"
-                class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
                 :class="action.class"
                 :title="action.label"
               >
-                <component 
-                  :is="action.icon || 'span'" 
-                  class="w-4 h-4"
-                  v-if="action.icon"
-                />
-                <span v-else class="text-xs">{{ action.label.charAt(0) }}</span>
+                <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
+                <span class="sr-only">{{ action.label }}</span>
               </button>
             </div>
           </div>
@@ -50,8 +46,27 @@
     </div>
 
     <!-- Desktop table view -->
-    <div class="hidden sm:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <div class="hidden sm:block">
+      <!-- Search input -->
+      <div v-if="props.searchable" class="mb-4">
+        <div class="relative max-w-xs">
+          <input
+            type="text"
+            :placeholder="props.searchPlaceholder || 'Search...'"
+            v-model="searchQuery"
+            @input="handleSearch"
+            class="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-600"
+          />
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-800">
           <tr class="divide-x divide-gray-200 dark:divide-gray-700">
             <th 
@@ -84,8 +99,8 @@
               </div>
             </th>
             <th 
-              v-if="actions && actions.length > 0" 
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              v-if="props.actions && props.actions.length > 0" 
+              class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
             >
               Actions
             </th>
@@ -112,38 +127,35 @@
               </slot>
             </td>
             <td 
-              v-if="actions && actions.length > 0" 
+              v-if="props.actions && props.actions.length > 0" 
               class="px-4 py-3 whitespace-nowrap text-sm font-medium"
             >
-              <div class="flex justify-end space-x-2">
-                <button
-                  v-for="(action, actionIndex) in actions"
-                  :key="actionIndex"
-                  @click="action.handler(item)"
-                  class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  :class="action.class"
-                  :title="action.label"
-                >
-                  <component 
-                    :is="action.icon || 'span'" 
-                    class="w-4 h-4"
-                    v-if="action.icon"
-                  />
-                  <span v-else class="text-xs">{{ action.label.charAt(0) }}</span>
-                </button>
+              <div class="flex justify-end space-x-1">
+                <div v-for="(action, actionIndex) in props.actions" :key="actionIndex">
+                  <button
+                    @click="action.handler(item)"
+                    class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
+                    :class="action.class"
+                    :title="action.label"
+                  >
+                    <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
+                    <span class="sr-only">{{ action.label }}</span>
+                  </button>
+                </div>
               </div>
             </td>
           </tr>
           <tr v-if="tableData.length === 0">
-            <td :colspan="props.columns.length + (actions && actions.length > 0 ? 1 : 0)" class="px-6 py-4 text-center text-sm text-gray-500">
+            <td :colspan="props.columns.length + (props.actions && props.actions.length > 0 ? 1 : 0)" class="px-6 py-4 text-center text-sm text-gray-500">
               No data available
             </td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
       
       <!-- Pagination -->
-      <div v-if="tableData.length > itemsPerPage" class="mt-4 flex flex-col sm:flex-row items-center justify-between px-2">
+      <div v-if="props.showPagination && tableData.length > 0" class="mt-4 flex flex-col sm:flex-row items-center justify-between px-2">
         <div class="text-sm text-gray-700 dark:text-gray-400 mb-2 sm:mb-0">
           Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to 
           <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, tableData.length) }}</span> of 
@@ -203,7 +215,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeMount } from 'vue';
 
 // Icons
 const EditIcon = {
@@ -228,6 +240,10 @@ const props = defineProps({
     required: true,
     default: () => [],
     validator: (cols) => cols.every(col => col.key && col.label)
+  },
+  actions: {
+    type: Array,
+    default: () => []
   },
   primaryColumn: {
     type: String,
@@ -334,6 +350,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  showPagination: {
+    type: Boolean,
+    default: true
+  },
   sortable: {
     type: Boolean,
     default: true
@@ -360,29 +380,67 @@ const sortBy = ref('');
 const sortDirection = ref('asc');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
+const searchQuery = ref('');
+
+// Handle search input
+const handleSearch = (event) => {
+  searchQuery.value = event.target.value;
+  currentPage.value = 1; // Reset to first page when searching
+  emit('search', searchQuery.value);
+};
+
+// Filter data based on search query
+const filteredData = computed(() => {
+  if (!searchQuery.value) return tableData.value;
+  
+  const query = searchQuery.value.toLowerCase();
+  return tableData.value.filter(item => {
+    return Object.entries(item).some(([key, value]) => {
+      // Skip if the column is not searchable
+      const column = props.columns.find(col => col.key === key);
+      if (column && column.searchable === false) return false;
+      
+      // Check if the value matches the search query
+      return String(value || '').toLowerCase().includes(query);
+    });
+  });
+});
 
 // Computed properties
 const sortedData = computed(() => {
-  if (!sortBy.value) return tableData.value;
+  const dataToSort = searchQuery.value ? filteredData.value : tableData.value;
+  if (!sortBy.value) return dataToSort;
   
-  return [...tableData.value].sort((a, b) => {
+  return [...dataToSort].sort((a, b) => {
     let modifier = 1;
     if (sortDirection.value === 'desc') modifier = -1;
     
-    if (a[sortBy.value] < b[sortBy.value]) return -1 * modifier;
-    if (a[sortBy.value] > b[sortBy.value]) return 1 * modifier;
-    return 0;
+    const aValue = a[sortBy.value];
+    const bValue = b[sortBy.value];
+    
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) return 1 * modifier;
+    if (bValue === undefined || bValue === null) return -1 * modifier;
+    
+    // Handle different data types
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return aValue.localeCompare(bValue) * modifier;
+    }
+    
+    return (aValue > bValue ? 1 : -1) * modifier;
   });
 });
 
 const paginatedData = computed(() => {
+  const dataToPaginate = searchQuery.value ? filteredData.value : sortedData.value;
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return sortedData.value.slice(start, end);
+  return dataToPaginate.slice(start, end);
 });
 
 const totalPages = computed(() => {
-  return Math.ceil(sortedData.value.length / itemsPerPage.value);
+  const dataToCount = searchQuery.value ? filteredData.value : sortedData.value;
+  return Math.ceil(dataToCount.length / itemsPerPage.value) || 1; // Ensure at least 1 page
 });
 
 // Methods
@@ -407,8 +465,16 @@ watch(() => props.data, () => {
   currentPage.value = 1; // Reset to first page when data changes
 }, { deep: true });
 
+
+
 // Initialize on mount
 onMounted(() => {
+  console.log('DataTable mounted with props:', {
+    columns: props.columns,
+    actions: props.actions,
+    data: props.data
+  });
+  
   // Set default sort if specified
   const defaultSort = props.columns.find(col => col.defaultSort);
   if (defaultSort) {

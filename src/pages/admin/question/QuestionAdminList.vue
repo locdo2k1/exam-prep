@@ -18,20 +18,20 @@
 
     <DataTable 
       :columns="columns" 
-      :data="filteredQuestions" 
-      :actions="actions"
-      primary-column="question"
-      @sort="handleSort"
+      :data="questions" 
+      :showPagination="true"
+      :currentPage="currentPage"
+      :perPage="itemsPerPage"
       @page-change="handlePageChange"
-      :per-page="10"
-      :current-page="currentPage"
-      :total-items="filteredQuestions.length"
-      :show-pagination="true"
-      :show-search="true"
-      search-placeholder="Search questions..."
+      :actions="actions"
+      :primaryColumn="'question'"
+      @sort="handleSort"
+      :searchable="true"
+      :searchPlaceholder="'Search questions...'"
       :loading="loading"
-      loading-text="Loading questions..."
-      empty-text="No questions found"
+      @search="handleSearch"
+      :loadingText="'Loading questions...'"
+      :emptyStateText="'No questions found'"
       class="mt-6"
       :mobile-card-class="'bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-100 dark:border-gray-700'"
       :mobile-card-title-class="'font-medium text-gray-900 dark:text-white text-base'"
@@ -55,6 +55,20 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import DataTable from '@/components/DataTable.vue';
+import { questionApi } from '@/api/admin/question/questionApi';
+
+// Icons for actions as strings
+const editIcon = `
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+`;
+
+const deleteIcon = `
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+`;
 
 const router = useRouter();
 
@@ -134,219 +148,95 @@ const columns = [
   }
 ];
 
-// Sample data - replace with your actual data fetching logic
-const questions = ref([
-  {
-    id: 1,
-    question: 'What is the capital of France?',
-    category: 'Geography',
-    difficulty: 'Easy',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-15',
-    options: ['London', 'Berlin', 'Paris', 'Madrid'],
-    correctAnswer: 'Paris'
-  },
-  {
-    id: 2,
-    question: 'What is 2 + 2?',
-    category: 'Math',
-    difficulty: 'Easy',
-    type: 'True/False',
-    status: 'Active',
-    createdAt: '2023-05-16',
-    options: ['3', '4', '5', '6'],
-    correctAnswer: '4'
-  },
-  {
-    id: 3,
-    question: 'Which planet is known as the Red Planet?',
-    category: 'Science',
-    difficulty: 'Medium',
-    type: 'Multiple Choice',
-    status: 'Draft',
-    createdAt: '2023-05-17',
-    options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
-    correctAnswer: 'Mars'
-  },
-  {
-    id: 4,
-    question: 'What is the largest mammal?',
-    category: 'Biology',
-    difficulty: 'Medium',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-18',
-    options: ['Elephant', 'Blue Whale', 'Giraffe', 'Polar Bear'],
-    correctAnswer: 'Blue Whale'
-  },
-  {
-    id: 5,
-    question: 'Who painted the Mona Lisa?',
-    category: 'Art',
-    difficulty: 'Hard',
-    type: 'Short Answer',
-    status: 'Inactive',
-    createdAt: '2023-05-19',
-    correctAnswer: 'Leonardo da Vinci'
-  },
-  {
-    id: 6,
-    question: 'What is the chemical symbol for gold?',
-    category: 'Chemistry',
-    difficulty: 'Easy',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-20',
-    options: ['Au', 'Ag', 'Fe', 'Pb'],
-    correctAnswer: 'Au'
-  },
-  {
-    id: 7,
-    question: 'Which country is home to the Great Barrier Reef?',
-    category: 'Geography',
-    difficulty: 'Medium',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-21',
-    options: ['Brazil', 'Australia', 'Thailand', 'Mexico'],
-    correctAnswer: 'Australia'
-  },
-  {
-    id: 8,
-    question: 'What is the largest ocean on Earth?',
-    category: 'Geography',
-    difficulty: 'Easy',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-22',
-    options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'],
-    correctAnswer: 'Pacific'
-  },
-  {
-    id: 9,
-    question: 'Who wrote "Romeo and Juliet"?',
-    category: 'Literature',
-    difficulty: 'Medium',
-    type: 'Short Answer',
-    status: 'Active',
-    createdAt: '2023-05-23',
-    correctAnswer: 'William Shakespeare'
-  },
-  {
-    id: 10,
-    question: 'What is the square root of 144?',
-    category: 'Math',
-    difficulty: 'Easy',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-24',
-    options: ['10', '11', '12', '13'],
-    correctAnswer: '12'
-  },
-  {
-    id: 11,
-    question: 'Which element has the atomic number 1?',
-    category: 'Chemistry',
-    difficulty: 'Easy',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-25',
-    options: ['Helium', 'Hydrogen', 'Oxygen', 'Carbon'],
-    correctAnswer: 'Hydrogen'
-  },
-  {
-    id: 12,
-    question: 'What is the capital of Japan?',
-    category: 'Geography',
-    difficulty: 'Medium',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-26',
-    options: ['Beijing', 'Seoul', 'Tokyo', 'Bangkok'],
-    correctAnswer: 'Tokyo'
-  },
-  {
-    id: 13,
-    question: 'Who developed the theory of relativity?',
-    category: 'Physics',
-    difficulty: 'Hard',
-    type: 'Short Answer',
-    status: 'Active',
-    createdAt: '2023-05-27',
-    correctAnswer: 'Albert Einstein'
-  },
-  {
-    id: 14,
-    question: 'What is the largest planet in our solar system?',
-    category: 'Astronomy',
-    difficulty: 'Easy',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-28',
-    options: ['Earth', 'Saturn', 'Jupiter', 'Neptune'],
-    correctAnswer: 'Jupiter'
-  },
-  {
-    id: 15,
-    question: 'What is the main component of the Sun?',
-    category: 'Astronomy',
-    difficulty: 'Medium',
-    type: 'Multiple Choice',
-    status: 'Active',
-    createdAt: '2023-05-29',
-    options: ['Liquid Lava', 'Hydrogen and Helium', 'Oxygen and Nitrogen', 'Carbon Dioxide'],
-    correctAnswer: 'Hydrogen and Helium'
-  }
-]);
-
-const currentPage = ref(1);
+// Questions data
+const questions = ref([]);
 const loading = ref(false);
+const currentPage = ref(1);
+const itemsPerPage = ref(5);
+const totalItems = ref(0);
+const sortBy = ref('id');
+const sortDirection = ref('asc');
+const searchQuery = ref('');
 
-// Use questions directly since search is now handled by DataTable
-const filteredQuestions = computed(() => questions.value);
+// Fetch all questions from API
+const fetchQuestions = async () => {
+  try {
+    loading.value = true;
+    // Fetch all questions (empty search to get all)
+    const response = await questionApi.getAll({
+      page: 0,
+      size: 1000, // Large number to get all questions
+      sort: sortBy.value,
+      direction: sortDirection.value,
+      search: searchQuery.value || undefined
+    });
+    
+    questions.value = response.content;
+    totalItems.value = response.totalElements;
 
-// Table actions
+    console.log(response);
+    
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    // You might want to show an error notification here
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Computed property for paginated data
+const paginatedQuestions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return questions.value.slice(start, end);
+});
+
+// Initialize component
+onMounted(() => {
+  fetchQuestions();
+});
+
+// Handle page change
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
+
+// Handle sorting
+const handleSort = ({ sortBy: newSortBy, sortDirection: newSortDirection }) => {
+  sortBy.value = newSortBy;
+  sortDirection.value = newSortDirection;
+  currentPage.value = 1; // Reset to first page when sorting changes
+  fetchQuestions(); // Re-fetch to get sorted data
+};
+
+// Handle search
+const handleSearch = (query) => {
+  searchQuery.value = query;
+  currentPage.value = 1; // Reset to first page when search changes
+  fetchQuestions(); // Re-fetch to get filtered data
+};
+
+// Table actions with inline SVG
 const actions = [
   {
     label: 'Edit',
-    icon: 'EditIcon',
+    icon: editIcon,
     handler: (item) => {
-      // Handle edit action
-      console.log('Edit:', item);
+      editQuestion(item);
     },
     class: 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
   },
   {
     label: 'Delete',
-    icon: 'DeleteIcon',
+    icon: deleteIcon,
     handler: (item) => {
-      // Handle delete action
-      if (confirm(`Are you sure you want to delete "${item.question}"?`)) {
-        console.log('Delete confirmed:', item);
-      }
+        deleteQuestion(item);
     },
     class: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
   }
 ];
 
-// Event handlers
-function handlePageChange(page) {
-  currentPage.value = page;
-  // Here you would typically fetch data for the new page
-  // For now, we're just updating the currentPage
-}
-
-function handleSort({ sortBy, sortDirection }) {
-  // Simple client-side sorting
-  questions.value.sort((a, b) => {
-    let modifier = sortDirection === 'asc' ? 1 : -1;
-    if (a[sortBy] < b[sortBy]) return -1 * modifier;
-    if (a[sortBy] > b[sortBy]) return 1 * modifier;
-    return 0;
-  });
-}
-
+// Event handler for actions
 function handleAction({ action, item }) {
   action.handler(item);
 }
