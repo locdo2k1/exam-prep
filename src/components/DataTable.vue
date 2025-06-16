@@ -2,11 +2,8 @@
   <div class="w-full">
     <!-- Mobile cards view -->
     <div class="sm:hidden space-y-3">
-      <div 
-        v-for="(item, index) in tableData" 
-        :key="index"
-        class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-100 dark:border-gray-700"
-      >
+      <div v-for="(item, index) in tableData" :key="index"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-100 dark:border-gray-700">
         <div class="flex justify-between items-start">
           <div class="flex-1 min-w-0">
             <h3 class="text-base font-medium text-gray-900 dark:text-white truncate">
@@ -18,24 +15,17 @@
                   <span class="text-xs font-medium text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">
                     {{ column.label }}:
                   </span>
-                  <span 
-                    class="text-sm text-gray-700 dark:text-gray-300 break-words flex-1"
-                    v-html="column.render ? column.render(item[column.key], item) : item[column.key]"
-                  ></span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300 break-words flex-1"
+                    v-html="column.render ? column.render(item[column.key], item) : item[column.key]"></span>
                 </div>
               </template>
             </div>
           </div>
           <div v-if="props.actions && props.actions.length > 0" class="ml-2 flex-shrink-0">
             <div class="flex flex-col space-y-1">
-              <button
-                v-for="(action, actionIndex) in props.actions"
-                :key="actionIndex"
-                @click="action.handler(item)"
+              <button v-for="(action, actionIndex) in props.actions" :key="actionIndex" @click="action.handler(item)"
                 class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
-                :class="action.class"
-                :title="action.label"
-              >
+                :class="action.class" :title="action.label">
                 <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
                 <span class="sr-only">{{ action.label }}</span>
               </button>
@@ -50,160 +40,115 @@
       <!-- Search input -->
       <div v-if="props.searchable" class="mb-4">
         <div class="relative max-w-xs">
-          <input
-            type="text"
-            :placeholder="props.searchPlaceholder || 'Search...'"
-            v-model="searchQuery"
+          <input type="text" :placeholder="props.searchPlaceholder || 'Search...'" v-model="searchQuery"
             @input="handleSearch"
-            class="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-600"
-          />
+            class="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 dark:bg-gray-800 dark:text-white dark:ring-gray-600" />
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+              <path fill-rule="evenodd"
+                d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                clip-rule="evenodd" />
             </svg>
           </div>
         </div>
       </div>
-      
+
       <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead class="bg-gray-50 dark:bg-gray-800">
-          <tr class="divide-x divide-gray-200 dark:divide-gray-700">
-            <th 
-              v-for="(column, index) in props.columns" 
-              :key="index"
-              :class="{
+        <table class="min-w-full w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-800">
+            <tr class="divide-x divide-gray-200 dark:divide-gray-700">
+              <th v-for="(column, index) in props.columns" :key="index" :class="{
                 'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap': true,
                 'cursor-pointer': column.sortable !== false,
                 'hidden md:table-cell': column.hideOnMobile
-              }"
-              @click="column.sortable !== false && handleSort(column.key)"
-            >
-              <div class="flex items-center">
-                <span class="truncate">{{ column.label }}</span>
-                <span v-if="column.sortable !== false" class="ml-1 flex-shrink-0 opacity-50 group-hover:opacity-100">
-                  <svg 
-                    class="w-3 h-3" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      stroke-linecap="round" 
-                      stroke-linejoin="round" 
-                      stroke-width="2" 
-                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                    />
-                  </svg>
-                </span>
-              </div>
-            </th>
-            <th 
-              v-if="props.actions && props.actions.length > 0" 
-              class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-            >
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-          <tr 
-            v-for="(item, rowIndex) in paginatedData" 
-            :key="rowIndex"
-            class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150"
-          >
-            <td 
-              v-for="(column, colIndex) in props.columns" 
-              :key="colIndex"
-              :class="[tdClass, {
+              }" @click="column.sortable !== false && handleSort(column.key)">
+                <div class="flex items-center">
+                  <span class="truncate">{{ column.label }}</span>
+                  <span v-if="column.sortable !== false" class="ml-1 flex-shrink-0 opacity-50 group-hover:opacity-100">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                  </span>
+                </div>
+              </th>
+              <th v-if="props.actions && props.actions.length > 0"
+                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            <tr v-for="(item, rowIndex) in paginatedData" :key="rowIndex"
+              class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150">
+              <td v-for="(column, colIndex) in props.columns" :key="colIndex" :class="[tdClass, {
                 'hidden md:table-cell': column.hideOnMobile,
                 'font-medium': column.key === primaryColumn
-              }]"
-            >
-              <slot :name="`cell-${column.key}`" :row="item" :value="item[column.key]">
-                <span v-html="column.render ? column.render(item[column.key], item) : item[column.key]"></span>
-              </slot>
-            </td>
-            <td 
-              v-if="props.actions && props.actions.length > 0" 
-              class="px-4 py-3 whitespace-nowrap text-sm font-medium"
-            >
-              <div class="flex justify-end space-x-1">
-                <div v-for="(action, actionIndex) in props.actions" :key="actionIndex">
-                  <button
-                    @click="action.handler(item)"
-                    class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
-                    :class="action.class"
-                    :title="action.label"
-                  >
-                    <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
-                    <span class="sr-only">{{ action.label }}</span>
-                  </button>
+              }]">
+                <slot :name="`cell-${column.key}`" :row="item" :value="item[column.key]">
+                  <span v-html="column.render ? column.render(item[column.key], item) : item[column.key]"></span>
+                </slot>
+              </td>
+              <td v-if="props.actions && props.actions.length > 0"
+                class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                <div class="flex justify-end space-x-1">
+                  <div v-for="(action, actionIndex) in props.actions" :key="actionIndex">
+                    <button @click="action.handler(item)"
+                      class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
+                      :class="action.class" :title="action.label">
+                      <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
+                      <span class="sr-only">{{ action.label }}</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="tableData.length === 0">
-            <td :colspan="props.columns.length + (props.actions && props.actions.length > 0 ? 1 : 0)" class="px-6 py-4 text-center text-sm text-gray-500">
-              No data available
-            </td>
-          </tr>
-        </tbody>
+              </td>
+            </tr>
+            <tr v-if="tableData.length === 0">
+              <td :colspan="props.columns.length + (props.actions && props.actions.length > 0 ? 1 : 0)"
+                class="px-6 py-4 text-center text-sm text-gray-500">
+                No data available
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
-      
+
       <!-- Pagination -->
-      <div v-if="props.showPagination && tableData.length > 0" class="mt-4 flex flex-col sm:flex-row items-center justify-between px-2">
+      <div v-if="props.showPagination && tableData.length > 0"
+        class="mt-4 flex flex-col sm:flex-row items-center justify-between px-2">
         <div class="text-sm text-gray-700 dark:text-gray-400 mb-2 sm:mb-0">
-          Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to 
-          <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, tableData.length) }}</span> of 
+          Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to
+          <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, tableData.length) }}</span> of
           <span class="font-medium">{{ tableData.length }}</span> results
         </div>
         <div class="flex space-x-1">
-          <button
-            @click="changePage(1)"
-            :disabled="currentPage === 1"
-            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
-            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
+          <button @click="changePage(1)" :disabled="currentPage === 1"
+            :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
+            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
             First
           </button>
-          <button
-            @click="changePage(currentPage - 1)"
-            :disabled="currentPage === 1"
-            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
-            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
+          <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1"
+            :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }"
+            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
             Previous
           </button>
-          
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            @click="changePage(page)"
-            :class="{
-              'px-3 py-1 rounded-md text-sm font-medium': true,
-              'bg-blue-600 text-white': currentPage === page,
-              'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700': currentPage !== page
-            }"
-          >
+
+          <button v-for="page in totalPages" :key="page" @click="changePage(page)" :class="{
+            'px-3 py-1 rounded-md text-sm font-medium': true,
+            'bg-blue-600 text-white': currentPage === page,
+            'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700': currentPage !== page
+          }">
             {{ page }}
           </button>
-          
-          <button
-            @click="changePage(currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
-            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
+
+          <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages"
+            :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }"
+            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
             Next
           </button>
-          <button
-            @click="changePage(totalPages)"
-            :disabled="currentPage === totalPages"
-            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
-            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
+          <button @click="changePage(totalPages)" :disabled="currentPage === totalPages"
+            :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }"
+            class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
             Last
           </button>
         </div>
@@ -390,14 +335,14 @@ const handleSearch = (event) => {
 // Filter data based on search query
 const filteredData = computed(() => {
   if (!searchQuery.value) return tableData.value;
-  
+
   const query = searchQuery.value.toLowerCase();
   return tableData.value.filter(item => {
     return Object.entries(item).some(([key, value]) => {
       // Skip if the column is not searchable
       const column = props.columns.find(col => col.key === key);
       if (column && column.searchable === false) return false;
-      
+
       // Check if the value matches the search query
       return String(value || '').toLowerCase().includes(query);
     });
@@ -408,23 +353,23 @@ const filteredData = computed(() => {
 const sortedData = computed(() => {
   const dataToSort = searchQuery.value ? filteredData.value : tableData.value;
   if (!sortBy.value) return dataToSort;
-  
+
   return [...dataToSort].sort((a, b) => {
     let modifier = 1;
     if (sortDirection.value === 'desc') modifier = -1;
-    
+
     const aValue = a[sortBy.value];
     const bValue = b[sortBy.value];
-    
+
     // Handle undefined/null values
     if (aValue === undefined || aValue === null) return 1 * modifier;
     if (bValue === undefined || bValue === null) return -1 * modifier;
-    
+
     // Handle different data types
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return aValue.localeCompare(bValue) * modifier;
     }
-    
+
     return (aValue > bValue ? 1 : -1) * modifier;
   });
 });
@@ -472,14 +417,14 @@ onMounted(() => {
     actions: props.actions,
     data: props.data
   });
-  
+
   // Set default sort if specified
   const defaultSort = props.columns.find(col => col.defaultSort);
   if (defaultSort) {
     sortBy.value = defaultSort.key;
     sortDirection.value = defaultSort.defaultSort;
   }
-  
+
   // Set default items per page from props if provided
   if (props.perPage) {
     itemsPerPage.value = props.perPage;
