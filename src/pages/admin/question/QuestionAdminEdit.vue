@@ -51,7 +51,7 @@
             </div>
           </div>
           <!-- the multiple choice options section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.label === 'Multiple Choice'"
+          <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.MULTIPLE_CHOICE"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,7 +105,7 @@
             </button>
           </div>
           <!-- the fill-in blank section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.label === 'Fill in the Blank'"
+          <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.FILL_IN_THE_BLANK"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
@@ -188,6 +188,7 @@
 <script setup>
 import { ref, watch, onMounted, mergeProps } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { QUESTION_TYPES } from '@/constants/question.constants'
 import PageBreadcrumb from '@/components/admin/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/admin/common/ComponentCard.vue'
 import flatPickr from 'vue-flatpickr-component'
@@ -406,17 +407,17 @@ const validateForm = () => {
 
   const type = questionTypes.value.find(t => t.value === question.value.type)?.label
 
-  if (type === 'Multiple Choice' && (!question.value.options || question.value.options.length < 2)) {
+  if (type === QUESTION_TYPES.MULTIPLE_CHOICE && (!question.value.options || question.value.options.length < 2)) {
     toast.error('At least two options are required for multiple choice questions')
     return false
   }
 
-  if (type === 'Multiple Choice' && !question.value.options.some(opt => opt.isCorrect)) {
+  if (type === QUESTION_TYPES.MULTIPLE_CHOICE && !question.value.options.some(opt => opt.isCorrect)) {
     toast.error('At least one option must be marked as correct')
     return false
   }
 
-  if (type === 'Fill in the Blank') {
+  if (type === QUESTION_TYPES.FILL_IN_THE_BLANK) {
     if (!question.value.blanks || question.value.blanks.length === 0) {
       toast.error('At least one blank answer is required')
       return false
@@ -510,11 +511,11 @@ onMounted(async () => {
 watch(() => question.value.type, (newType) => {
   const typeName = questionTypes.value.find(type => type.value === newType)?.label
 
-  if (typeName === 'Multiple Choice') {
+  if (typeName === QUESTION_TYPES.MULTIPLE_CHOICE) {
     if (!question.value.options || question.value.options.length === 0) {
       initializeMultipleChoiceOptions()
     }
-  } else if (typeName === 'Fill in the Blank') {
+  } else if (typeName === QUESTION_TYPES.FILL_IN_THE_BLANK) {
     if (!question.value.blanks || question.value.blanks.length === 0) {
       initializeFillBlankAnswers()
     }

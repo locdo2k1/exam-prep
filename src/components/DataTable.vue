@@ -2,7 +2,7 @@
   <div class="w-full">
     <!-- Mobile cards view -->
     <div class="sm:hidden space-y-3">
-      <div v-for="(item, index) in tableData" :key="index"
+      <div v-for="(item, index) in sortedData" :key="index"
         class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-100 dark:border-gray-700">
         <div class="flex justify-between items-start">
           <div class="flex-1 min-w-0">
@@ -90,16 +90,38 @@
                 </slot>
               </td>
               <td v-if="props.actions && props.actions.length > 0"
-                class="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                <div class="flex justify-end space-x-1">
-                  <div v-for="(action, actionIndex) in props.actions" :key="actionIndex">
-                    <button @click="action.handler(item)"
-                      class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
-                      :class="action.class" :title="action.label">
-                      <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
-                      <span class="sr-only">{{ action.label }}</span>
+                class="px-4 py-3 text-sm font-medium text-right">
+                <div class="relative inline-block text-left actions-dropdown-container">
+                  <div>
+                    <button @click="toggleActionMenu(rowIndex)" type="button"
+                      class="inline-flex items-center justify-center p-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-800 focus:ring-blue-500"
+                      aria-expanded="true" aria-haspopup="true">
+                      <span class="sr-only">Open options</span>
+                      <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        aria-hidden="true">
+                        <path
+                          d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
                     </button>
                   </div>
+                  <transition enter-active-class="transition ease-out duration-100"
+                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
+                    leave-to-class="transform opacity-0 scale-95">
+                    <div v-if="openActionMenu === rowIndex"
+                      class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 focus:outline-none z-10"
+                      role="menu" aria-orientation="vertical" tabindex="-1">
+                      <div class="py-1" role="none">
+                        <button v-for="(action, actionIndex) in props.actions" :key="actionIndex"
+                          @click="() => { action.handler(item); closeActionMenu(); }"
+                          :class="[action.class, 'flex items-center w-full px-4 py-2 text-sm text-left']"
+                          role="menuitem" tabindex="-1">
+                          <span v-if="typeof action.icon === 'string'" v-html="action.icon" class="mr-3 h-5 w-5"></span>
+                          <span>{{ action.label }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </transition>
                 </div>
               </td>
             </tr>
@@ -158,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeMount } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 
 // Icons
 const EditIcon = {
@@ -315,7 +337,32 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['sort', 'page-change']);
+const emit = defineEmits(['sort', 'page-change', 'search']);
+
+// Action menu state
+const openActionMenu = ref(null); // Will store the row index
+
+const toggleActionMenu = (rowIndex) => {
+  openActionMenu.value = openActionMenu.value === rowIndex ? null : rowIndex;
+};
+
+const closeActionMenu = () => {
+  openActionMenu.value = null;
+};
+
+const handleClickOutside = (event) => {
+  if (openActionMenu.value !== null && !event.target.closest('.actions-dropdown-container')) {
+    closeActionMenu();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 // Local state
 const tableData = computed(() => [...props.data]);
