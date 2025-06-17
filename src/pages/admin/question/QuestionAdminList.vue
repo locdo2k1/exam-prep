@@ -55,67 +55,173 @@
       <!-- Modal body with custom scrollbar -->
       <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar">
         <!-- Question Prompt -->
-        <div class="grid grid-cols-4 gap-4">
-          <div class="col-span-1 font-semibold text-gray-800 dark:text-gray-200">Question Prompt</div>
-          <div class="col-span-3 text-gray-600 dark:text-gray-400" v-html="selectedQuestion.prompt || '—'"></div>
+        <div class="grid grid-cols-4 gap-4 items-start">
+          <div class="col-span-1 flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z"></path>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <path d="M12 17h.01"></path>
+              <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z" stroke-opacity="0.2" stroke-dasharray="0 4"></path>
+            </svg>
+            <span class="font-semibold text-gray-800 dark:text-gray-200">Question Prompt</span>
+          </div>
+          <div class="col-span-3 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg" v-html="selectedQuestion.prompt || '—'"></div>
         </div>
 
         <!-- Details Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          <div class="grid grid-cols-2">
-            <span class="font-semibold text-gray-800 dark:text-gray-200">Category</span>
-            <span class="text-gray-600 dark:text-gray-400">{{ selectedQuestion.questionCategory?.name || '—' }}</span>
+          <div class="grid grid-cols-2 items-center">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.23A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+              </svg>
+              <span class="font-semibold text-gray-800 dark:text-gray-200">Category</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-gray-600 dark:text-gray-400">{{ selectedQuestion.questionCategory?.name || '—' }}</span>
+            </div>
           </div>
-          <div class="grid grid-cols-2">
-            <span class="font-semibold text-gray-800 dark:text-gray-200">Type</span>
-            <span class="text-gray-600 dark:text-gray-400">{{ selectedQuestion.questionType?.name || '—' }}</span>
+          
+          <div class="grid grid-cols-2 items-center">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path>
+              </svg>
+              <span class="font-semibold text-gray-800 dark:text-gray-200">Type</span>
+            </div>
+            <div class="flex items-center">
+              <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                {{ selectedQuestion.questionType?.name || '—' }}
+              </span>
+            </div>
           </div>
-          <div class="grid grid-cols-2">
-            <span class="font-semibold text-gray-800 dark:text-gray-200">Score</span>
-            <span class="text-gray-600 dark:text-gray-400">{{ selectedQuestion.score || '0' }}</span>
+          
+          <div class="grid grid-cols-2 items-center">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+              </svg>
+              <span class="font-semibold text-gray-800 dark:text-gray-200">Score</span>
+            </div>
+            <div class="flex items-center">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
+                  <circle cx="4" cy="4" r="3" />
+                </svg>
+                {{ selectedQuestion.score || '0' }} points
+              </span>
+            </div>
           </div>
-          <div class="grid grid-cols-2">
-            <span class="font-semibold text-gray-800 dark:text-gray-200">Audio</span>
-            <span class="text-gray-600 dark:text-gray-400">{{ selectedQuestion.questionAudios?.length ? 'Available' :
-              '—'
-              }}</span>
+          
+          <div class="grid grid-cols-2 items-center">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line>
+              </svg>
+              <span class="font-semibold text-gray-800 dark:text-gray-200">Audio</span>
+            </div>
+            <div class="flex items-center">
+              <span :class="{
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium': true,
+                'bg-green-100 text-green-800': selectedQuestion.questionAudios?.length,
+                'bg-gray-100 text-gray-800': !selectedQuestion.questionAudios?.length
+              }">
+                <svg :class="{
+                  '-ml-0.5 mr-1.5 h-2 w-2': true,
+                  'text-green-400': selectedQuestion.questionAudios?.length,
+                  'text-gray-400': !selectedQuestion.questionAudios?.length
+                }" fill="currentColor" viewBox="0 0 8 8">
+                  <circle cx="4" cy="4" r="3" />
+                </svg>
+                {{ selectedQuestion.questionAudios?.length ? 'Available' : 'Not Available' }}
+              </span>
+            </div>
           </div>
         </div>
 
         <!-- Options -->
-        <div class="grid grid-cols-4 gap-4">
-          <div class="col-span-1 font-semibold text-gray-800 dark:text-gray-200">Options</div>
-          <div class="col-span-3 text-gray-600 dark:text-gray-400">
-            <ul v-if="selectedQuestion.options?.length" class="list-disc list-inside space-y-1">
-              <li v-for="(option, index) in selectedQuestion.options" :key="index"
-                :class="{ 'font-bold text-green-600 dark:text-green-400': selectedQuestion.questionAnswers.includes(option.text) }">
-                {{ option.text }}
-              </li>
-            </ul>
-            <p v-else>—</p>
+        <div class="grid grid-cols-4 gap-4 items-start">
+          <div class="col-span-1 flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path><path d="M13 6h8"></path><path d="M13 12h8"></path><path d="M13 18h8"></path>
+            </svg>
+            <span class="font-semibold text-gray-800 dark:text-gray-200">Options</span>
+          </div>
+          <div class="col-span-3">
+            <div v-if="selectedQuestion.options?.length" class="space-y-2">
+              <div v-for="(option, index) in selectedQuestion.options" :key="index" 
+                   class="flex items-start p-2 rounded-lg transition-colors duration-200"
+                   :class="{
+                     'bg-green-50 dark:bg-green-900/20': option.correct,
+                     'hover:bg-gray-50 dark:hover:bg-gray-700/50': !option.correct
+                   }">
+                <div class="flex-shrink-0 mt-0.5">
+                  <div class="flex items-center justify-center w-5 h-5 rounded-full border-2"
+                       :class="{
+                         'border-green-500 bg-green-500': option.correct,
+                         'border-gray-300 dark:border-gray-500': !option.correct
+                       }">
+                    <svg v-if="option.correct" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium" :class="{
+                    'text-gray-900 dark:text-white': option.correct,
+                    'text-gray-700 dark:text-gray-300': !option.correct
+                  }">
+                    {{ option.text }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p v-else class="text-gray-500 dark:text-gray-400 italic">No options available</p>
           </div>
         </div>
 
         <!-- Correct Answers -->
         <div class="grid grid-cols-4 gap-4">
-          <div class="col-span-1 font-semibold text-gray-800 dark:text-gray-200">Correct Answers</div>
+          <div class="col-span-1 flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path>
+            </svg>
+            <span class="font-semibold text-gray-800 dark:text-gray-200">Correct Answers</span>
+          </div>
           <div class="col-span-3">
             <div v-if="selectedQuestion.questionAnswers?.length" class="flex flex-wrap gap-2">
               <span v-for="(answer, index) in selectedQuestion.questionAnswers" :key="index"
-                class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
+                <svg class="mr-1.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
                 {{ answer }}
               </span>
             </div>
-            <p v-else class="text-gray-600 dark:text-gray-400">—</p>
+            <div v-else class="flex items-center text-gray-500 dark:text-gray-400">
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              No correct answers specified
+            </div>
           </div>
         </div>
       </div>
       <!-- Modal footer -->
-      <div
-        class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b sticky bottom-0">
+      <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b sticky bottom-0 space-x-3">
         <button @click="closePopup"
-          class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800">
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 transition-colors duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>
+          </svg>
           Close
+        </button>
+        <button @click="editQuestion(selectedQuestion)"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 transition-colors duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path>
+          </svg>
+          Edit Question
         </button>
       </div>
     </div>
@@ -133,21 +239,26 @@ const { isPopupVisible, showPopup, hidePopup } = usePopup();
 
 // Icons for actions as strings
 const previewIcon = `
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4" stroke-width="1.5">
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 `;
 
 const editIcon = `
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4" stroke-width="1.5">
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="m15 5 4 4" />
   </svg>
 `;
 
 const deleteIcon = `
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4" stroke-width="1.5">
+    <path d="M3 6h18" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
   </svg>
 `;
 
@@ -157,14 +268,10 @@ const router = useRouter();
 
 const selectedQuestion = ref(null);
 
+
+
 // Table columns configuration
 const columns = [
-  {
-    key: 'id',
-    label: 'ID',
-    sortable: true,
-    hideOnMobile: true
-  },
   {
     key: 'prompt',
     label: 'Question',
@@ -353,36 +460,26 @@ const actions = [
   {
     label: 'Preview',
     icon: previewIcon,
-    handler: (item) => {
-      previewQuestion(item);
-    },
+    handler: (item) => previewQuestion(item),
     class: 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-900/30'
   },
   {
     label: 'Edit',
     icon: editIcon,
-    handler: (item) => {
-      editQuestion(item);
-    },
+    handler: (item) => editQuestion(item),
     class: 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'
   },
   {
     label: 'Delete',
     icon: deleteIcon,
-    handler: (item) => {
-      deleteQuestion(item);
-    },
+    handler: (item) => deleteQuestion(item),
     class: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
   }
 ];
 
-// Event handler for actions
-function handleAction({ action, item }) {
-  action.handler(item);
-}
-
 function previewQuestion(question) {
   selectedQuestion.value = question;
+  console.log(selectedQuestion.value);
   showPopup();
 }
 
@@ -392,9 +489,7 @@ function closePopup() {
 }
 
 function editQuestion(question) {
-  console.log('Editing question:', question);
-  // Navigate to edit page or open edit modal
-  // router.push(`/admin/questions/edit/${question.id}`);
+  router.push(`/admin/question-management/edit/${question.id}`);
 }
 
 function deleteQuestion(question) {
@@ -408,9 +503,7 @@ function deleteQuestion(question) {
 }
 
 function addNewQuestion() {
-  console.log('Adding new question');
-  // Navigate to add new question page or open add modal
-  // router.push('/admin/questions/new');
+  router.push('/admin/question-management/create');
 }
 </script>
 

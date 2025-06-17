@@ -13,7 +13,7 @@ interface FileInfoViewModel {
 interface OptionViewModel {
   id: string;
   text: string;
-  isCorrect: boolean;
+  correct: boolean;
 }
 
 interface QuestionTypeViewModel {
