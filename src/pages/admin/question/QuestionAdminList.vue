@@ -56,12 +56,11 @@
       <div class="p-6 space-y-6 overflow-y-auto custom-scrollbar">
         <!-- Question Prompt -->
         <div class="grid grid-cols-4 gap-4 items-start">
-          <div class="col-span-1 flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z"></path>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <path d="M12 17h.01"></path>
-              <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z" stroke-opacity="0.2" stroke-dasharray="0 4"></path>
+          <div class="col-span-1 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1 1.5 1.5 2.5"></path>
+              <path d="M9 18h6"></path>
+              <path d="M10 22h4"></path>
             </svg>
             <span class="font-semibold text-gray-800 dark:text-gray-200">Question Prompt</span>
           </div>

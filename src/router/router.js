@@ -9,6 +9,7 @@ import AdminLayout from '../components/admin/layout/AdminLayout.vue'
 import QuestionAdminCreate from '../pages/admin/question/QuestionAdminCreate.vue'
 import QuestionAdminEdit from '../pages/admin/question/QuestionAdminEdit.vue'
 import QuestionAdminList from '../pages/admin/question/QuestionAdminList.vue'
+import QuestionSet from '../components/question/QuestionSet.vue'
 
 const routes = [
    {
@@ -71,6 +72,12 @@ const routes = [
             path: 'question-management/edit/:id',
             component: QuestionAdminEdit,
             meta: { requiresAuth: true },
+         },
+         {
+            path: 'question-set',
+            name: 'admin-question-set',
+            component: QuestionSet,
+            meta: { requiresAuth: true }
          }
       ]
    },

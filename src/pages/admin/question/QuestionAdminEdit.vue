@@ -53,7 +53,12 @@
           <!-- the multiple choice options section -->
           <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.MULTIPLE_CHOICE"
             class="space-y-4">
-            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
+            <h5 :class="[
+              'text-sm font-medium text-gray-700 dark:text-gray-400',
+              { 'mb-0': question.options.length === 0 }
+            ]">
+              Options
+            </h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div
