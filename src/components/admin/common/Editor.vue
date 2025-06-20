@@ -1,15 +1,19 @@
 <template>
-  <div class="quill-formula-editor">
-    <div ref="editorRef" class="editor-container"></div>
-    <!-- <div class="actions" v-if="showActions">
-      <button @click="getContent" class="btn btn-primary">Get Content</button>
-      <button @click="insertFormula" class="btn btn-success">Insert Formula</button>
-    </div> -->
+  <div class="quill-editor-container dark:bg-gray-800 dark:border-gray-700">
+    <QuillEditor ref="quillEditor" v-model:content="content" :options="editorOptions" :placeholder="placeholder"
+      contentType="html" theme="snow" @update:content="handleContentUpdate" @ready="handleEditorReady" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { QuillEditor, Quill } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import 'katex/dist/katex.min.css'
+import katex from 'katex'
+window.katex = katex
+import ImageResize from 'quill-image-resize-vue'
+Quill.register('modules/imageResize', ImageResize)
 
 // Props
 const props = defineProps({
@@ -21,17 +25,28 @@ const props = defineProps({
     type: String,
     default: 'Start typing...'
   },
-  showActions: {
-    type: Boolean,
-    default: true
-  },
   height: {
     type: String,
-    default: '200px'
+    default: '300px'
   },
-  toolbar: {
-    type: Array,
-    default: () => [
+  readOnly: {
+    type: Boolean,
+    default: false
+  }
+})
+
+// Emits
+const emit = defineEmits(['update:modelValue', 'change', 'ready'])
+
+// Refs
+const quillEditor = ref(null)
+const content = ref(props.modelValue)
+
+// Editor options
+const editorOptions = {
+  theme: 'snow',
+  modules: {
+    toolbar: [
       ['bold', 'italic', 'underline', 'strike'],
       ['blockquote', 'code-block'],
       [{ 'header': 1 }, { 'header': 2 }],
@@ -40,220 +55,118 @@ const props = defineProps({
       [{ 'size': ['small', false, 'large', 'huge'] }],
       [{ 'color': [] }, { 'background': [] }],
       [{ 'align': [] }],
-      ['formula'], // Formula button
+      ['image', 'formula'],
       ['clean']
-    ]
-  }
-})
+    ],
+    formula: {
+      // KaTeX options
+      katex: katex
+    },
+    keyboard: {
+      bindings: {
+        handleEnter: {
+          key: 13,
+          handler: () => { /* Custom enter handler if needed */ }
+        }
+      }
+    },
+    imageResize: {}
+  },
+  placeholder: props.placeholder,
+  readOnly: props.readOnly,
+  theme: 'snow'
+}
 
-// Emits
-const emit = defineEmits(['update:modelValue', 'change', 'ready'])
-
-// Template refs
-const editorRef = ref(null)
-const quillInstance = ref(null)
-const isReady = ref(false)
-
-// Local script and CSS management
-const loadedResources = new Set()
-
-const loadResource = (url, type = 'script') => {
-  return new Promise((resolve, reject) => {
-    if (loadedResources.has(url)) {
-      resolve()
-      return
-    }
-
-    let element
-    if (type === 'script') {
-      element = document.createElement('script')
-      element.src = url
-    } else if (type === 'css') {
-      element = document.createElement('link')
-      element.rel = 'stylesheet'
-      element.href = url
-    }
-
-    element.onload = () => {
-      loadedResources.add(url)
-      resolve()
-    }
-    element.onerror = reject
-
-    document.head.appendChild(element)
+// Handle content updates
+const handleContentUpdate = (newContent) => {
+  emit('update:modelValue', newContent)
+  emit('change', {
+    html: newContent,
+    text: quillEditor.value?.getText() || '',
+    quill: quillEditor.value?.getQuill()
   })
 }
 
-// Initialize Quill with formula support
-const initQuill = async () => {
-  try {
-    // Load Quill and KaTeX resources
-    await Promise.all([
-      loadResource('https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.css', 'css'),
-      loadResource('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.18/katex.min.css', 'css'),
-      loadResource('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.18/katex.min.js'),
-      loadResource('https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js')
-    ])
-
-    // Wait for window.Quill to be available
-    if (!window.Quill) {
-      throw new Error('Quill failed to load')
-    }
-
-    // Create Quill instance
-    quillInstance.value = new window.Quill(editorRef.value, {
-      modules: {
-        toolbar: props.toolbar,
-        formula: true,
-        keyboard: {
-          bindings: {
-            // Add custom keyboard binding for backspace
-            backspace: {
-              key: 8,
-              handler(range) {
-                const format = this.quill.getFormat(range.index - 1, 1);
-                if (format.formula) {
-                  this.quill.deleteText(range.index - 1, 1);
-                  return false;
-                }
-                return true;
-              }
-            }
-          }
-        }
-      },
-      placeholder: props.placeholder,
-      theme: 'snow'
-    })
-
-    // Set initial content if provided
-    if (props.modelValue) {
-      setContent(props.modelValue, false)
-    }
-
-    // Listen for content changes
-    quillInstance.value.on('text-change', (delta, oldDelta, source) => {
-      if (source === 'user') {
-        const html = quillInstance.value.root.innerHTML
-        const isEmpty = quillInstance.value.getText().trim().length === 0
-
-        emit('update:modelValue', isEmpty ? '' : html)
-        emit('change', {
-          html: isEmpty ? '' : html,
-          delta: quillInstance.value.getContents(),
-          text: quillInstance.value.getText(),
-          source
-        })
-      }
-    })
-
-    // Listen for selection changes (optional)
-    quillInstance.value.on('selection-change', (range, oldRange, source) => {
-      // You can emit selection change events if needed
-    })
-
-    isReady.value = true
-    emit('ready', quillInstance.value)
-
-  } catch (error) {
-    console.error('Failed to initialize Quill editor:', error)
-  }
+// Handle editor ready event
+const handleEditorReady = (quill) => {
+  emit('ready', quill)
 }
 
-// Watch for external content changes
-watch(() => props.modelValue, (newValue) => {
-  if (isReady.value && quillInstance.value) {
-    const currentContent = quillInstance.value.root.innerHTML
-    if (newValue !== currentContent) {
-      setContent(newValue, false)
-    }
-  }
-})
+// Get Quill instance
+const getQuill = () => {
+  return quillEditor.value?.getQuill()
+}
 
-// Methods
+// Get content
 const getContent = () => {
-  if (!quillInstance.value) return null
-
-  const content = {
-    html: quillInstance.value.root.innerHTML,
-    delta: quillInstance.value.getContents(),
-    text: quillInstance.value.getText()
-  }
-
-  console.log('Current content:', content)
-  return content
-}
-
-const setContent = (content, emitChange = true) => {
-  if (!quillInstance.value) return
-
-  const oldEmitFlag = quillInstance.value.emitChangeEvents
-  if (!emitChange) {
-    quillInstance.value.emitChangeEvents = false
-  }
-
-  if (typeof content === 'string') {
-    if (content.trim() === '') {
-      quillInstance.value.setText('')
-    } else {
-      quillInstance.value.clipboard.dangerouslyPasteHTML(content)
-    }
-  } else {
-    quillInstance.value.setContents(content)
-  }
-
-  quillInstance.value.emitChangeEvents = oldEmitFlag
-}
-
-const insertFormula = () => {
-  if (!quillInstance.value) return
-
-  const formula = prompt('Enter LaTeX formula:', '\\frac{a}{b}')
-  if (formula && formula.trim()) {
-    const range = quillInstance.value.getSelection(true)
-    const index = range ? range.index : quillInstance.value.getLength()
-    quillInstance.value.insertEmbed(index, 'formula', formula, 'user')
-    quillInstance.value.setSelection(index + 1)
+  return {
+    html: content.value,
+    text: quillEditor.value?.getText() || '',
+    quill: quillEditor.value?.getQuill()
   }
 }
 
+// Insert text at current cursor position
+const insertText = (text) => {
+  const quill = getQuill()
+  if (quill) {
+    const range = quill.getSelection(true)
+    quill.insertText(range.index, text)
+    quill.setSelection(range.index + text.length)
+  }
+}
+
+// Insert formula at current cursor position
+const insertFormula = (formula) => {
+  const quill = getQuill()
+  if (quill) {
+    const range = quill.getSelection(true)
+    quill.insertEmbed(range.index, 'formula', formula, 'user')
+    quill.setSelection(range.index + 1)
+  }
+}
+
+// Focus the editor
 const focus = () => {
-  if (quillInstance.value) {
-    quillInstance.value.focus()
-  }
+  quillEditor.value?.focus()
 }
 
+// Blur the editor
 const blur = () => {
-  if (quillInstance.value) {
-    quillInstance.value.blur()
+  quillEditor.value?.blur()
+}
+
+// Set editor content
+const setContent = (newContent, emitEvent = true) => {
+  if (newContent !== content.value) {
+    content.value = newContent || ''
+    if (emitEvent) {
+      emit('update:modelValue', content.value)
+      emit('change', {
+        html: content.value,
+        text: quillEditor.value?.getText() || '',
+        quill: quillEditor.value?.getQuill()
+      })
+    }
   }
 }
 
-const insertText = (text, index = null) => {
-  if (!quillInstance.value) return
-
-  const insertIndex = index !== null ? index : quillInstance.value.getLength()
-  quillInstance.value.insertText(insertIndex, text, 'user')
-}
-
-const formatText = (index, length, format, value) => {
-  if (quillInstance.value) {
-    quillInstance.value.formatText(index, length, format, value, 'user')
+// Format text at the current selection or specified range
+const formatText = (format, value) => {
+  const quill = getQuill()
+  if (quill) {
+    const range = quill.getSelection(true)
+    if (range) {
+      quill.formatText(range.index, range.length, format, value, 'user')
+    }
   }
 }
 
-// Lifecycle
-onMounted(() => {
-  initQuill()
-})
-
-onUnmounted(() => {
-  if (quillInstance.value) {
-    quillInstance.value.off('text-change')
-    quillInstance.value.off('selection-change')
-    quillInstance.value = null
+// Watch for external modelValue changes
+watch(() => props.modelValue, (newValue) => {
+  if (newValue !== content.value) {
+    setContent(newValue, false)
   }
-  isReady.value = false
 })
 
 // Expose methods to parent component
@@ -271,46 +184,253 @@ defineExpose({
 </script>
 
 <style scoped>
-.quill-formula-editor {
-  width: 100%;
-}
-
-.editor-container {
-  min-height: v-bind(height);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: white;
-}
-
-.actions {
-  margin-top: 10px;
+.quill-editor-container {
+  height: v-bind('props.height');
+  min-height: 200px;
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Ensure the editor never exceeds its parent width and prevent horizontal scrolling */
+.quill-editor-container,
+:deep(.ql-container),
+:deep(.ql-container.ql-snow),
+:deep(.ql-editor) {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Make embedded images responsive */
+:deep(.ql-editor img) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent long code blocks from causing horizontal page scroll */
+:deep(pre.ql-syntax) {
+  white-space: pre-wrap !important; /* wrap long lines */
+  word-break: break-word;
+  overflow-x: auto; /* if still long, scroll within code block */
+}
+
+/* Ensure editor itself can have internal horizontal scroll without affecting the page */
+:deep(.ql-editor) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.dark .quill-editor-container {
+  background-color: #1f2937;
+  border-color: #4b5563;
+}
+
+/* Light theme */
+:deep(.ql-toolbar) {
+  background-color: #f8fafc;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.5rem;
+}
+
+:deep(.ql-container) {
+  border: none;
+  background-color: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex: 1;
+}
+
+.dark :deep(.ql-container) {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+:deep(.ql-editor) {
+  flex: 1;
+  min-height: 200px;
+  padding: 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1a202c;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark :deep(.ql-editor) {
+  color: #f3f4f6;
+  background-color: #1f2937;
+}
+
+:deep(.ql-editor.ql-blank::before) {
+  color: #a0aec0;
+}
+
+:deep(.ql-snow .ql-stroke) {
+  stroke: #4a5568;
+}
+
+:deep(.ql-snow .ql-fill),
+:deep(.ql-snow .ql-stroke.ql-fill) {
+  fill: #4a5568;
+}
+
+:deep(.ql-snow .ql-picker) {
+  color: #1a202c;
+}
+
+:deep(.ql-snow .ql-picker-options) {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.ql-snow .ql-picker-item) {
+  color: #1a202c;
+}
+
+:deep(.ql-snow .ql-picker-item:hover) {
+  background-color: #f7fafc;
+}
+
+:deep(.ql-snow .ql-picker-item:hover) .ql-picker-options {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.ql-snow .ql-picker-item) .ql-picker-options .ql-picker-item {
+  color: #1a202c;
+}
+
+.dark :deep(.ql-snow .ql-picker-item) .ql-picker-options .ql-picker-item {
+  color: #f7fafc;
+}
+
+:deep(.ql-snow .ql-picker-item) .ql-picker-options .ql-picker-item:hover {
+  background-color: #f3f4f6;
+}
+
+.dark :deep(.ql-snow .ql-picker-item) .ql-picker-options .ql-picker-item:hover {
+  background-color: #4b5563;
+}
+
+:deep(.ql-formula) {
+  background-color: #f3f4f6;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  margin: 0 0.125rem;
+  display: inline-block;
+}
+
+.dark :deep(.ql-formula) {
+  background-color: #4b5563;
+  color: #f9fafb;
+}
+
+:deep(.ql-formula.ql-active) {
+  background-color: #e5e7eb;
+}
+
+.dark :deep(.ql-formula.ql-active) {
+  background-color: #6b7280;
+}
+
+:deep(.ql-tooltip) {
+  z-index: 50;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
+}
+
+.dark :deep(.ql-tooltip) {
+  background-color: #1f2937;
+  border-color: #4b5563;
+}
+
+:deep(.ql-tooltip) input[type="text"] {
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.dark :deep(.ql-tooltip) input[type="text"] {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+:deep(.ql-tooltip) a.ql-preview {
+  color: #2563eb;
+}
+
+.dark :deep(.ql-tooltip) a.ql-preview {
+  color: #60a5fa;
+}
+
+:deep(.ql-tooltip) a.ql-action::after {
+  color: #2563eb;
+  margin-left: 0.5rem;
+}
+
+.dark :deep(.ql-tooltip) a.ql-action::after {
+  color: #60a5fa;
+}
+
+:deep(.ql-tooltip) a.ql-remove::before {
+  color: #dc2626;
+  margin-left: 0.5rem;
+}
+
+.dark :deep(.ql-tooltip) a.ql-remove::before {
+  color: #f87171;
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.375rem;
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .btn:hover {
-  opacity: 0.9;
   transform: translateY(-1px);
-}
-
-.btn:active {
-  transform: translateY(0);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .btn-primary {
-  background-color: #007bff;
-  color: white;
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.dark .btn-primary {
+  background-color: #1d4ed8;
+}
+
+.dark .btn-primary:hover {
+  background-color: #1e40af;
 }
 
 .btn-success {
