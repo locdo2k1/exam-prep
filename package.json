@@ -38,6 +38,8 @@
     "lucide-vue-next": "^0.474.0",
     "pinia": "^3.0.2",
     "quill": "^2.0.3",
+    "quill-image-drop-module": "^1.0.3",
+    "quill-image-resize-vue": "^1.0.4",
     "simple-datatables": "^10.0.0",
     "swiper": "^11.2.1",
     "vue": "^3.5.13",

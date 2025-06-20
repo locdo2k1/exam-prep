@@ -7,11 +7,13 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { QuillEditor } from '@vueup/vue-quill'
+import { QuillEditor, Quill } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import 'katex/dist/katex.min.css'
 import katex from 'katex'
 window.katex = katex
+import ImageResize from 'quill-image-resize-vue'
+Quill.register('modules/imageResize', ImageResize)
 
 // Props
 const props = defineProps({
@@ -53,7 +55,7 @@ const editorOptions = {
       [{ 'size': ['small', false, 'large', 'huge'] }],
       [{ 'color': [] }, { 'background': [] }],
       [{ 'align': [] }],
-      ['formula'],
+      ['image', 'formula'],
       ['clean']
     ],
     formula: {
@@ -67,7 +69,8 @@ const editorOptions = {
           handler: () => { /* Custom enter handler if needed */ }
         }
       }
-    }
+    },
+    imageResize: {}
   },
   placeholder: props.placeholder,
   readOnly: props.readOnly,
@@ -191,6 +194,37 @@ defineExpose({
   border-radius: 0.5rem;
   overflow: hidden;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Ensure the editor never exceeds its parent width and prevent horizontal scrolling */
+.quill-editor-container,
+:deep(.ql-container),
+:deep(.ql-container.ql-snow),
+:deep(.ql-editor) {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Make embedded images responsive */
+:deep(.ql-editor img) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent long code blocks from causing horizontal page scroll */
+:deep(pre.ql-syntax) {
+  white-space: pre-wrap !important; /* wrap long lines */
+  word-break: break-word;
+  overflow-x: auto; /* if still long, scroll within code block */
+}
+
+/* Ensure editor itself can have internal horizontal scroll without affecting the page */
+:deep(.ql-editor) {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .dark .quill-editor-container {
