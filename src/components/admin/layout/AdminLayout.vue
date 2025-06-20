@@ -1,16 +1,17 @@
 <template>
-  <div class="min-h-screen xl:flex">
+  <div class="min-h-screen flex">
     <app-sidebar />
     <Backdrop />
-            <div
-      class="relative flex-1 transition-all duration-300 ease-in-out"
-      :class="[
-        { 'h-screen overflow-hidden': isPopupVisible },
-        isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]'
-      ]" >
-      <app-header />
-      <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-        <router-view />
+    <div class="min-h-screen relative flex-1 transition-all duration-300 ease-in-out" :class="[
+      { 'h-screen overflow-hidden': isPopupVisible },
+      isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]'
+    ]">
+      <!-- Use CSS Grid: first row auto for header, second row 1fr for content -->
+      <div class="grid grid-rows-[auto_1fr] h-full">
+        <app-header />
+        <div class="overflow-auto p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 w-full">
+          <router-view />
+        </div>
       </div>
     </div>
   </div>
