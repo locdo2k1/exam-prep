@@ -76,28 +76,54 @@ interface Option {
   isCorrect: boolean;
 }
 
+interface QuestionFilter {
+  questionTypeId?: string;
+  categoryId?: string;
+  minScore?: number;
+  maxScore?: number;
+  clipNumber?: number;
+  prompt?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: "asc" | "desc";
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
 const BASE_URL = "/questions";
 
 export const questionApi = {
   /**
-   * Get all questions with pagination and search
+   * Get all questions with pagination and filtering
    */
-  getAll: async (params: {
-    page?: number;
-    size?: number;
-    sort?: string;
-    direction?: "asc" | "desc";
-    search?: string;
-  }) => {
-    return await apiClient.get<PageResponse<QuestionViewModel>>(BASE_URL, {
-      params: {
-        page: params.page || 0,
-        size: params.size || 10,
-        sort: params.sort || "id",
-        direction: params.direction || "asc",
-        search: params.search,
-      },
-    });
+  getAll: async (filter: QuestionFilter = {}) => {
+    const params = new URLSearchParams();
+    
+    // Add filter parameters if they exist
+    if (filter.questionTypeId) params.append('questionTypeId', filter.questionTypeId);
+    if (filter.categoryId) params.append('categoryId', filter.categoryId);
+    if (filter.minScore !== undefined) params.append('minScore', filter.minScore.toString());
+    if (filter.maxScore !== undefined) params.append('maxScore', filter.maxScore.toString());
+    if (filter.clipNumber !== undefined) params.append('clipNumber', filter.clipNumber.toString());
+    if (filter.prompt) params.append('prompt', filter.prompt);
+    
+    // Add pagination
+    if (filter.page !== undefined) params.append('page', filter.page.toString());
+    if (filter.size !== undefined) params.append('size', filter.size.toString());
+    
+    // Add sorting
+    if (filter.sort) {
+      const sortParam = filter.direction === 'desc' ? `${filter.sort},desc` : filter.sort;
+      params.append('sort', sortParam);
+    }
+
+    const response = await apiClient.get<ApiResponse<PageResponse<QuestionViewModel>>>(
+      `${BASE_URL}?${params.toString()}`
+    );
+    return response;
   },
 
   /**

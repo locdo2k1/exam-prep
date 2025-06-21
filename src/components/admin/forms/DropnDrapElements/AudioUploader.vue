@@ -1,5 +1,5 @@
 <template>
-   <div class="file-uploader dark:bg-gray-800 p-4 rounded-lg">
+   <div class="file-uploader dark:bg-gray-800 rounded-lg mb-4">
       <DragDropZone :accepted-types="['audio/*']" :max-files="maxFiles" :max-size="maxSize"
          placeholder-text="Drop audio files here" :subtext="`MP3, WAV, AAC up to ${maxSize}MB`" :disabled="disabled"
          class="dark:border-gray-700 dark:hover:border-primary" @files-dropped="handleFilesDropped"
