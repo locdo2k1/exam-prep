@@ -28,6 +28,7 @@
     "@vueup/vue-quill": "^1.0.0-beta.11",
     "apexcharts": "^4.4.0",
     "axios": "^1.8.4",
+    "dompurify": "^3.2.6",
     "dropzone": "^6.0.0-beta.2",
     "flatpickr": "^4.6.13",
     "flowbite": "^3.1.2",

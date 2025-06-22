@@ -32,9 +32,9 @@
                   </option>
                 </select>
                 <span
-                  class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
-                  <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.5"
+                  class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-2.5 top-1/2 dark:text-gray-400">
+                  <svg class="stroke-current w-3.5 h-3.5" viewBox="0 0 20 20" fill="none">
+                    <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.75"
                       stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </span>
@@ -45,15 +45,27 @@
               <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                 Category
               </label>
-              <SearchableSelect v-model="question.category" :options="questionCategories" :loading="loadingCategories"
-                :has-more="hasMore" placeholder="Search categories..." @search="handleCategorySearch"
-                @load-more="loadMore" />
+              <SearchableSelect 
+                v-model="question.category"
+                :options="questionCategories.map(c => ({ value: c.id, label: c.name }))"
+                :loading="loadingCategories"
+                :has-more="hasMoreCategories"
+                placeholder="Search categories..."
+                @search="handleCategorySearch"
+                @load-more="handleLoadMore"
+                @select="handleCategorySelect"
+              />
             </div>
           </div>
           <!-- the multiple choice options section -->
           <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.MULTIPLE_CHOICE"
             class="space-y-4">
-            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
+            <h5 :class="[
+              'text-sm font-medium text-gray-700 dark:text-gray-400',
+              { 'mb-0': question.options.length === 0 }
+            ]">
+              Options
+            </h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div
@@ -219,6 +231,11 @@ const question = ref({
 
 const questionCategories = ref([])
 const loadingCategories = ref(false)
+const hasMoreCategories = ref(true)
+const currentCategoryPage = ref(0)
+const categorySearchQuery = ref('')
+const itemsPerPage = 10
+
 const questionTypes = ref([])
 const loadingQuestionTypes = ref(false)
 
@@ -228,7 +245,8 @@ const validationErrors = ref({
   category: '',
   options: '',
   blanks: '',
-  audioFiles: ''
+  audioFiles: '',
+  score: '' // Add this line
 })
 
 const addOption = () => {
@@ -500,24 +518,64 @@ const handleAudioUploadError = (error) => {
   console.error('Audio upload error:', error)
 }
 
-const fetchQuestionCategories = async () => {
+const fetchQuestionCategories = async (isLoadMore = false) => {
+  if (loadingCategories.value) return
+  
+  loadingCategories.value = true
   try {
-    loadingCategories.value = true
     const response = await questionCategoryApi.getAll({
-      size: 10
+      page: currentCategoryPage.value,
+      size: itemsPerPage,
+      search: categorySearchQuery.value,
+      sort: 'name',
+      direction: 'asc'
     })
-    questionCategories.value = response.content.map(category => ({
-      value: category.id,
-      label: category.name
-    }))
+    
+    if (!response || !response.content) {
+      throw new Error('Invalid response from server')
+    }
+
+    if (isLoadMore) {
+      // Append new categories when loading more
+      questionCategories.value = [...questionCategories.value, ...(response.content || [])]
+    } else {
+      // Replace categories when searching or first load
+      questionCategories.value = response.content || []
+    }
+    
+    // Check if there are more items to load
+    hasMoreCategories.value = response.totalPages 
+      ? (currentCategoryPage.value + 1) < response.totalPages
+      : false
   } catch (error) {
-    toast.error('Failed to fetch categories', {
-      timeout: 3000,
-      position: "top-right",
-    })
     console.error('Error fetching categories:', error)
+    toast.error('Failed to load categories')
+    
+    // Reset to previous page if loading more fails
+    if (isLoadMore && currentCategoryPage.value > 0) {
+      currentCategoryPage.value--
+    }
   } finally {
     loadingCategories.value = false
+  }
+}
+
+const handleCategorySearch = async (query) => {
+  categorySearchQuery.value = query
+  currentCategoryPage.value = 0
+  await fetchQuestionCategories(false)
+}
+
+const handleLoadMore = async () => {
+  if (!hasMoreCategories.value || loadingCategories.value) return
+  
+  currentCategoryPage.value++
+  await fetchQuestionCategories(true)
+}
+
+const handleCategorySelect = (selected) => {
+  if (selected) {
+    question.value.category = selected.value
   }
 }
 
@@ -525,48 +583,6 @@ onMounted(() => {
   fetchQuestionCategories()
   fetchQuestionTypes()
 })
-
-const page = ref(0)
-const hasMore = ref(true)
-
-const loadMore = async (searchQuery) => {
-  const response = await questionCategoryApi.getAll({
-    size: 10,
-    page: page.value + 1,
-    search: searchQuery
-  })
-  questionCategories.value = [...questionCategories.value, ...response.content.map(category => ({
-    value: category.id,
-    label: category.name
-  }))]
-  page.value++
-  hasMore.value = response.content.length === 10
-}
-
-const handleCategorySearch = async (searchQuery) => {
-  try {
-    loadingCategories.value = true
-    const response = await questionCategoryApi.getAll({
-      search: searchQuery,
-      size: 10
-    })
-    questionCategories.value = response.content.map(category => ({
-      value: category.id,
-      label: category.name
-    }))
-    page.value = 0
-    hasMore.value = response.totalPages > 1
-  } catch (error) {
-    toast.error('Failed to search categories', {
-      timeout: 3000,
-      position: "top-right",
-    })
-    console.error('Error searching categories:', error)
-  } finally {
-    loadingCategories.value = false
-  }
-};
-
 </script>
 
 <style scoped>

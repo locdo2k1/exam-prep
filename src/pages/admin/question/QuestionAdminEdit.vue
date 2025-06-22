@@ -32,9 +32,9 @@
                   </option>
                 </select>
                 <span
-                  class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
-                  <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.5"
+                  class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-2.5 top-1/2 dark:text-gray-400">
+                  <svg class="stroke-current w-3.5 h-3.5" viewBox="0 0 20 20" fill="none">
+                    <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.75"
                       stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </span>
@@ -53,7 +53,12 @@
           <!-- the multiple choice options section -->
           <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.MULTIPLE_CHOICE"
             class="space-y-4">
-            <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Options</h5>
+            <h5 :class="[
+              'text-sm font-medium text-gray-700 dark:text-gray-400',
+              { 'mb-0': question.options.length === 0 }
+            ]">
+              Options
+            </h5>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div

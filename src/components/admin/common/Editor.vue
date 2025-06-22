@@ -89,6 +89,10 @@ const handleContentUpdate = (newContent) => {
 
 // Handle editor ready event
 const handleEditorReady = (quill) => {
+  // Set initial content when editor is ready
+  if (content.value) {
+    quill.clipboard.dangerouslyPasteHTML(content.value);
+  }
   emit('ready', quill)
 }
 
@@ -138,15 +142,27 @@ const blur = () => {
 
 // Set editor content
 const setContent = (newContent, emitEvent = true) => {
-  if (newContent !== content.value) {
-    content.value = newContent || ''
+  const contentToSet = newContent || '';
+  
+  // Only update if the content is different
+  if (contentToSet !== content.value) {
+    content.value = contentToSet;
+    
+    // If the editor is ready, set its content directly
+    if (quillEditor.value) {
+      const quill = quillEditor.value.getQuill();
+      if (quill) {
+        quill.clipboard.dangerouslyPasteHTML(contentToSet);
+      }
+    }
+    
     if (emitEvent) {
-      emit('update:modelValue', content.value)
+      emit('update:modelValue', contentToSet);
       emit('change', {
-        html: content.value,
+        html: contentToSet,
         text: quillEditor.value?.getText() || '',
         quill: quillEditor.value?.getQuill()
-      })
+      });
     }
   }
 }
@@ -185,15 +201,30 @@ defineExpose({
 
 <style scoped>
 .quill-editor-container {
-  height: v-bind('props.height');
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  width: 100%;
+}
+
+:deep(.ql-container) {
+  border: none !important;
+  min-height: 100px;
+  height: auto !important;
+  overflow: visible !important;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+:deep(.ql-editor) {
+  min-height: 100px;
+  height: auto !important;
+  overflow: visible !important;
+  padding: 0;
+}
+
+:deep(.ql-toolbar) {
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 8px 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* Ensure the editor never exceeds its parent width and prevent horizontal scrolling */

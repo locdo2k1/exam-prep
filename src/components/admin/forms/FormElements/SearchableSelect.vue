@@ -7,18 +7,21 @@
         :placeholder="placeholder" 
         @input="onInput"
         @focus="handleFocus"
-         class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
-      <span class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-4 top-1/2 dark:text-gray-400">
-         <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.5" stroke-linecap="round"
-               stroke-linejoin="round" />
+         class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-10 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
+      
+      <!-- Arrow icon (hidden when loading) -->
+      <span v-if="showArrow && !loading" class="absolute z-30 text-gray-500 -translate-y-1/2 pointer-events-none right-2.5 top-1/2 dark:text-gray-400">
+         <svg class="stroke-current w-3.5 h-3.5" viewBox="0 0 20 20" fill="none">
+            <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                  stroke-linejoin="round" />
          </svg>
       </span>
-      <!-- Loading indicator -->
-      <div v-if="loading" class="absolute right-3 top-1/2 -translate-y-1/2">
-         <div
-            class="w-5 h-5 border-2 border-t-transparent border-blue-500 rounded-full animate-spin dark:border-brand-400">
-         </div>
+      
+      <!-- Loading indicator (only shown when loading) -->
+      <div v-if="loading" class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center space-x-0.5">
+         <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-brand-400 rounded-full animate-bounce" style="animation-delay: -0.32s"></div>
+         <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-brand-400 rounded-full animate-bounce" style="animation-delay: -0.16s"></div>
+         <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-brand-400 rounded-full animate-bounce"></div>
       </div>
 
       <!-- Dropdown list -->
@@ -57,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
    modelValue: {
@@ -78,7 +81,7 @@ const props = defineProps({
    },
    loading: {
       type: Boolean,
-      default: false
+      default: true
    },
    hasMore: {
       type: Boolean,
@@ -150,6 +153,39 @@ const closeDropdown = () => {
    isOpen.value = false;
 };
 
+const reset = () => {
+   searchQuery.value = '';
+   previousValue.value = '';
+   emit('update:modelValue', '');
+   emit('search', '');
+};
+
+defineExpose({
+   reset
+});
+
+// Add this ref to control arrow visibility with delay
+const showArrow = ref(!props.loading);
+let timeoutId = null;
+
+// Watch for loading changes
+watch(() => props.loading, (isLoading) => {
+   if (timeoutId) clearTimeout(timeoutId);
+   
+   if (isLoading) {
+      showArrow.value = false;
+   } else {
+      timeoutId = setTimeout(() => {
+         showArrow.value = true;
+      }, 500);
+   }
+});
+
+// Clean up timeout on component unmount
+onUnmounted(() => {
+   if (timeoutId) clearTimeout(timeoutId);
+});
+
 // Click outside directive
 const vClickOutside = {
    mounted(el, binding) {
@@ -168,8 +204,6 @@ const vClickOutside = {
 watch(() => props.previousValue, (newVal) => {
    previousValue.value = newVal;
 });
-
-
 </script>
 
 <style scoped>
