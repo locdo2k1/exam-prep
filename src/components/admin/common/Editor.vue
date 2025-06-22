@@ -13,7 +13,10 @@ import 'katex/dist/katex.min.css'
 import katex from 'katex'
 window.katex = katex
 import ImageResize from 'quill-image-resize-vue'
-Quill.register('modules/imageResize', ImageResize)
+// Only register if not already registered
+if (!Quill.imports['modules/imageResize']) {
+  Quill.register('modules/imageResize', ImageResize.default || ImageResize)
+}
 
 // Props
 const props = defineProps({
@@ -62,14 +65,7 @@ const editorOptions = {
       // KaTeX options
       katex: katex
     },
-    keyboard: {
-      bindings: {
-        handleEnter: {
-          key: 13,
-          handler: () => { /* Custom enter handler if needed */ }
-        }
-      }
-    },
+    // keyboard bindings removed to allow default enter behavior
     imageResize: {}
   },
   placeholder: props.placeholder,
