@@ -267,8 +267,6 @@ const router = useRouter();
 
 const selectedQuestion = ref(null);
 
-
-
 // Table columns configuration
 const columns = [
   {
@@ -330,33 +328,63 @@ const columns = [
 const questions = ref([]);
 const loading = ref(false);
 const currentPage = ref(1);
-const itemsPerPage = ref(5);
+const itemsPerPage = ref(10); 
 const totalItems = ref(0);
-const sortBy = ref('id');
-const sortDirection = ref('asc');
+const sortBy = ref('insertedAt'); 
+const sortDirection = ref('desc'); 
 const searchQuery = ref('');
 
-// Fetch all questions from API
+/**
+ * Fetch questions with pagination and filtering
+ */
 const fetchQuestions = async () => {
   try {
     loading.value = true;
-    // Fetch all questions (empty search to get all)
-    const response = await questionApi.getAll({
-      page: 0,
-      size: 1000, // Large number to get all questions
+    
+    // Prepare filter parameters
+    const filter = {
+      page: currentPage.value - 1, // Convert to 0-based for the API
+      size: itemsPerPage.value,
       sort: sortBy.value,
       direction: sortDirection.value,
-      search: searchQuery.value || undefined
+      prompt: searchQuery.value ? searchQuery.value.trim() : undefined
+    };
+
+    // Remove undefined values
+    const cleanFilter = {};
+    Object.keys(filter).forEach(key => {
+      if (filter[key] !== undefined) {
+        cleanFilter[key] = filter[key];
+      }
     });
-
-    questions.value = response.content;
-    totalItems.value = response.totalElements;
-
-    console.log(response);
-
+    
+    console.log('Fetching questions with filter:', cleanFilter);
+    
+    // Make the API call
+    const response = await questionApi.getAll(cleanFilter);
+    
+    if (!response.success) {
+      console.warn('API request succeeded but returned with warning:', response.message);
+      // Optionally show a warning to the user
+      return;
+    }
+    
+    if (response.data) {
+      questions.value = response.data.content;
+      totalItems.value = response.data.totalElements;
+      
+      // Log the first few items for debugging
+      console.log('Fetched questions:', {
+        count: response.data.content.length,
+        total: response.data.totalElements,
+        page: response.data.number + 1,
+        totalPages: response.data.totalPages
+      });
+    }
   } catch (error) {
     console.error('Error fetching questions:', error);
-    // You might want to show an error notification here
+    // You might want to show an error notification to the user here
+    // For example: showErrorNotification('Failed to load questions. Please try again.');
   } finally {
     loading.value = false;
   }

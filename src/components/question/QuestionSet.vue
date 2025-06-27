@@ -485,35 +485,40 @@ export default {
     };
 
     const fetchCategories = async (isLoadMore = false) => {
-      if (loadingCategories.value) return;
+      if (isLoading.value) return; // Using existing isLoading instead of loadingCategories
 
-      loadingCategories.value = true;
+      isLoading.value = true; // Using existing isLoading
       try {
         const response = await questionCategoryApi.getAll({
-          page: currentPageCategories.value,
-          size: itemsPerPageCategories,
-          search: categorySearch.value,
+          page: currentPage.value, // Using existing currentPage
+          size: 10, // Using a fixed page size since itemsPerPageCategories doesn't exist
+          search: searchQuery.value, // Using existing searchQuery
           sort: 'name',
           direction: 'asc'
         });
 
-        // Check if response and response.content exist before destructuring
-        if (!response || !response.content) {
-          throw new Error('Invalid response from server');
+        // Check if response exists
+        if (!response) {
+          throw new Error('No response from server');
         }
+
+        // Map the response to the expected format if needed
+        const mappedCategories = response.content.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          // Add any other required properties
+        }));
 
         if (isLoadMore) {
           // Append new categories when loading more
-          categories.value = [...categories.value, ...(response.content || [])];
+          categories.value = [...categories.value, ...mappedCategories];
         } else {
           // Replace categories when searching or first load
-          categories.value = response.content || [];
+          categories.value = mappedCategories;
         }
 
-        // Check if there are more items to load
-        hasMoreCategories.value = response.totalPages
-          ? (currentPageCategories.value + 1) < response.totalPages
-          : false;
+        // Update pagination info if needed
+        totalPages.value = response.totalPages || 1;
       } catch (error) {
         console.error('Error fetching categories:', error);
         // Reset to previous page if loading more fails

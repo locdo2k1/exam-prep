@@ -234,68 +234,85 @@ const previousValue = ref('')
 // Fetch question details
 const fetchQuestion = async () => {
   try {
-    const response = await questionApi.getById(questionId.value)
-    if (response) {
+    isPageLoading.value = true;
+    const { data: responseData, success, message } = await questionApi.getById(questionId.value);
+    
+    if (!success) {
+      throw new Error(message || 'Failed to fetch question details');
+    }
+
+    if (responseData) {
       question.value = {
-        score: response.score,
-        prompt: response.prompt || '',
-        category: response.questionCategory ? response.questionCategory.id : null,
-        type: response.questionType ? response.questionType.id : null,
-        blanks: (response.questionAnswers || []).map(blank => ({
+        score: responseData.score,
+        prompt: responseData.prompt || '',
+        category: responseData.questionCategory ? responseData.questionCategory.id : null,
+        type: responseData.questionType ? responseData.questionType.id : null,
+        blanks: (responseData.questionAnswers || []).map(blank => ({
           answer: blank || ''
         })),
-        options: (response.options || []).map(option => ({
+        options: (responseData.options || []).map(option => ({
           ...option,
           isCorrect: option.correct || false
         })),
-        audioFiles: (response.questionAudios || []).map(audio => ({
+        audioFiles: (responseData.questionAudios || []).map(audio => ({
           id: audio.id,
           name: audio.fileName,
           size: audio.fileSize,
           type: audio.fileType,
           originalName: audio.fileName,
-          uploaded: true, // Mark as already uploaded
-          progress: 100 // Set to 100% for existing files
+          uploaded: true,
+          progress: 100
         }))
-      }
+      };
 
-      previousValue.value = response.questionCategory.name
+      previousValue.value = responseData.questionCategory?.name || '';
 
       // Initialize options or blanks based on question type
-      if (response.type === 'multiple_choice') {
-        question.value.options = response.options || [];
-      } else if (response.type === 'fill_in_blank') {
-        question.value.blanks = response.answers || [];
+      if (responseData.type === 'multiple_choice') {
+        question.value.options = responseData.options || [];
+      } else if (responseData.type === 'fill_in_blank') {
+        question.value.blanks = responseData.answers || [];
       }
-
-      isPageLoading.value = false
     }
   } catch (error) {
-    console.error('Error fetching question:', error)
-    toast.error('Failed to load question details')
-    isPageLoading.value = false
+    console.error('Error fetching question:', error);
+    toast.error(error.message || 'Failed to load question details', {
+      timeout: 3000,
+      position: 'top-right'
+    });
+  } finally {
+    isPageLoading.value = false;
   }
 }
 
 // Fetch question types
 const fetchQuestionTypes = async () => {
   try {
-    loadingQuestionTypes.value = true
-    const response = await questionTypeApi.getAll({
-      size: 100 // Fetch all types since we typically won't have too many
-    })
-    questionTypes.value = response.content.map(type => ({
-      value: type.id,
-      label: type.name
-    }))
+    loadingQuestionTypes.value = true;
+    const { data: responseData, success, message } = await questionTypeApi.getAll({
+      size: 100,
+      sort: 'name',
+      direction: 'asc'
+    });
+    
+    if (!success) {
+      throw new Error(message || 'Failed to fetch question types');
+    }
+
+    if (responseData && Array.isArray(responseData.content)) {
+      questionTypes.value = responseData.content.map(type => ({
+        value: type.id,
+        label: type.name
+      }));
+    }
   } catch (error) {
-    toast.error('Failed to fetch question types', {
+    console.error('Error fetching question types:', error);
+    toast.error(error.message || 'Failed to fetch question types', {
       timeout: 3000,
-      position: "top-right",
-    })
-    console.error('Error fetching question types:', error)
+      position: 'top-right'
+    });
   } finally {
-    loadingQuestionTypes.value = false
+    loadingQuestionTypes.value = false;
   }
 }
 
@@ -303,23 +320,34 @@ const fetchQuestionTypes = async () => {
 // Fetch question categories
 const fetchQuestionCategories = async () => {
   try {
-    loadingCategories.value = true
-    const response = await questionCategoryApi.getAll({
+    loadingCategories.value = true;
+    const { data: responseData, success, message } = await questionCategoryApi.getAll({
       search: previousValue.value,
-      size: 10
-    })
-    questionCategories.value = response.content.map(category => ({
-      value: category.id,
-      label: category.name
-    }))
+      size: 10,
+      sort: 'name',
+      direction: 'asc'
+    });
+    
+    if (!success) {
+      throw new Error(message || 'Failed to fetch categories');
+    }
+
+    if (responseData && Array.isArray(responseData.content)) {
+      questionCategories.value = responseData.content.map(category => ({
+        value: category.id,
+        label: category.name
+      }));
+      
+      hasMore.value = responseData.totalPages > 1;
+    }
   } catch (error) {
-    toast.error('Failed to fetch categories', {
+    console.error('Error fetching categories:', error);
+    toast.error(error.message || 'Failed to fetch categories', {
       timeout: 3000,
-      position: "top-right",
-    })
-    console.error('Error fetching categories:', error)
+      position: 'top-right'
+    });
   } finally {
-    loadingCategories.value = false
+    loadingCategories.value = false;
   }
 }
 
@@ -328,46 +356,80 @@ const hasMore = ref(true)
 // Handle category search
 const handleCategorySearch = async (searchQuery) => {
   try {
-    loadingCategories.value = true
-    const response = await questionCategoryApi.getAll({
+    loadingCategories.value = true;
+    const { data: responseData, success, message } = await questionCategoryApi.getAll({
       search: searchQuery,
-      size: 10
-    })
-    questionCategories.value = response.content.map(category => ({
-      value: category.id,
-      label: category.name
-    }))
-    page.value = 0
-    hasMore.value = response.totalPages > 1
+      size: 10,
+      sort: 'name',
+      direction: 'asc'
+    });
+    
+    if (!success) {
+      throw new Error(message || 'Failed to search categories');
+    }
+
+    if (responseData && Array.isArray(responseData.content)) {
+      questionCategories.value = responseData.content.map(category => ({
+        value: category.id,
+        label: category.name
+      }));
+      
+      page.value = 0;
+      hasMore.value = responseData.totalPages > 1;
+    }
   } catch (error) {
-    toast.error('Failed to search categories', {
+    console.error('Error searching categories:', error);
+    toast.error(error.message || 'Failed to search categories', {
       timeout: 3000,
-      position: "top-right",
-    })
-    console.error('Error searching categories:', error)
+      position: 'top-right'
+    });
   } finally {
-    loadingCategories.value = false
+    loadingCategories.value = false;
   }
 };
 
 // Load more categories (pagination)
 const loadMore = async (searchQuery) => {
-  const response = await questionCategoryApi.getAll({
-    size: 10,
-    page: page.value + 1,
-    search: searchQuery
-  })
-  questionCategories.value = [...questionCategories.value, ...response.content.map(category => ({
-    value: category.id,
-    label: category.name
-  }))]
-  page.value++
-  hasMore.value = response.content.length === 10
+  try {
+    loadingCategories.value = true;
+    const { data: responseData, success, message } = await questionCategoryApi.getAll({
+      size: 10,
+      page: page.value + 1,
+      search: searchQuery,
+      sort: 'name',
+      direction: 'asc'
+    });
+    
+    if (!success) {
+      throw new Error(message || 'Failed to load more categories');
+    }
+
+    if (responseData && Array.isArray(responseData.content)) {
+      questionCategories.value = [
+        ...questionCategories.value, 
+        ...responseData.content.map(category => ({
+          value: category.id,
+          label: category.name
+        }))
+      ];
+      
+      page.value++;
+      hasMore.value = responseData.content.length === 10;
+    }
+  } catch (error) {
+    console.error('Error loading more categories:', error);
+    toast.error(error.message || 'Failed to load more categories', {
+      timeout: 3000,
+      position: 'top-right'
+    });
+  } finally {
+    loadingCategories.value = false;
+  }
 }
 
 // Handle form submission
 const updateQuestion = async () => {
-  if (!validateForm()) return
+  if (!validateForm()) return;
 
   try {
     const payload = {
@@ -381,15 +443,25 @@ const updateQuestion = async () => {
       deletedFileIds: deletedFiles.value
     };
 
-    await questionApi.update(questionId.value, payload)
-    toast.success('Question updated successfully')
-    // router.push({ name: 'admin-question-list' })
-
-
+    const { success, message, data } = await questionApi.update(questionId.value, payload);
     
+    if (!success) {
+      throw new Error(message || 'Failed to update question');
+    }
+
+    toast.success(message || 'Question updated successfully', {
+      timeout: 3000,
+      position: 'top-right'
+    });
+    
+    // Uncomment when ready to navigate
+    // router.push({ name: 'admin-question-list' });
   } catch (error) {
-    console.error('Error updating question:', error)
-    toast.error(error.response?.data?.message || 'Failed to update question')
+    console.error('Error updating question:', error);
+    toast.error(error.message || 'Failed to update question', {
+      timeout: 3000,
+      position: 'top-right'
+    });
   }
 }
 
