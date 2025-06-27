@@ -89,8 +89,15 @@ interface QuestionFilter {
   direction?: "asc" | "desc";
 }
 
-interface ApiResponse<T> {
+/**
+ * Standard API response format from our axios interceptor
+ */
+interface ApiResponse<T = any> {
   data: T;
+  message?: string;
+  success: boolean;
+  status?: number;
+  errors?: Record<string, string[]>;
 }
 
 const BASE_URL = "/questions";
@@ -99,7 +106,10 @@ export const questionApi = {
   /**
    * Get all questions with pagination and filtering
    */
-  getAll: async (filter: QuestionFilter = {}) => {
+  /**
+   * Get all questions with pagination and filtering
+   */
+  getAll: async (filter: QuestionFilter = {}): Promise<ApiResponse<PageResponse<QuestionViewModel>>> => {
     const params = new URLSearchParams();
     
     // Add filter parameters if they exist
@@ -110,33 +120,41 @@ export const questionApi = {
     if (filter.clipNumber !== undefined) params.append('clipNumber', filter.clipNumber.toString());
     if (filter.prompt) params.append('prompt', filter.prompt);
     
-    // Add pagination
-    if (filter.page !== undefined) params.append('page', filter.page.toString());
-    if (filter.size !== undefined) params.append('size', filter.size.toString());
+    // Add pagination with defaults
+    params.append('page', (filter.page ?? 0).toString());
+    params.append('size', (filter.size ?? 10).toString());
     
-    // Add sorting
-    if (filter.sort) {
-      const sortParam = filter.direction === 'desc' ? `${filter.sort},desc` : filter.sort;
-      params.append('sort', sortParam);
-    }
+    // Add sorting with defaults
+    const sortParam = filter.sort 
+      ? (filter.direction === 'desc' ? `${filter.sort},desc` : filter.sort)
+      : 'id,asc';
+    params.append('sort', sortParam);
 
-    const response = await apiClient.get<ApiResponse<PageResponse<QuestionViewModel>>>(
+    const response = await apiClient.get<PageResponse<QuestionViewModel>>(
       `${BASE_URL}?${params.toString()}`
-    );
+    ) as unknown as ApiResponse<PageResponse<QuestionViewModel>>;
+    
     return response;
   },
 
   /**
    * Get a question by ID
    */
-  getById: async (id: string) => {
-    return await apiClient.get<QuestionViewModel>(`${BASE_URL}/${id}`);
+  /**
+   * Get a question by ID
+   */
+  getById: async (id: string): Promise<ApiResponse<QuestionViewModel>> => {
+    const response = await apiClient.get<QuestionViewModel>(`${BASE_URL}/${id}`) as unknown as ApiResponse<QuestionViewModel>;
+    return response;
   },
 
   /**
    * Create a new question with form data
    */
-  create: async (createQuestionViewModel: CreateQuestionViewModel) => {
+  /**
+   * Create a new question
+   */
+  create: async (createQuestionViewModel: CreateQuestionViewModel): Promise<ApiResponse<QuestionViewModel>> => {
     const { prompt, questionTypeId, categoryId, options, blankAnswers, audios, score } = createQuestionViewModel;
 
     const formData = new FormData();
@@ -176,13 +194,29 @@ export const questionApi = {
       }
     });
 
-    return await apiClient.post<Question>(BASE_URL, formData);
+    const response = await apiClient.post<QuestionViewModel>(
+      BASE_URL, 
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    ) as unknown as ApiResponse<QuestionViewModel>;
+    
+    return response;
   },
 
   /**
    * Update an existing question
    */
-  update: async (id: string, updateQuestionViewModel: UpdateQuestionViewModel) => {
+  /**
+   * Update an existing question
+   */
+  update: async (
+    id: string, 
+    updateQuestionViewModel: UpdateQuestionViewModel
+  ): Promise<ApiResponse<QuestionViewModel>> => {
     const { prompt, questionTypeId, categoryId, options, blanks, audios, score, deletedFileIds = [] } = updateQuestionViewModel;
 
     const formData = new FormData();
@@ -227,13 +261,27 @@ export const questionApi = {
       formData.append("deletedAudiosIds", JSON.stringify(deletedFileIds));
     }
 
-    return await apiClient.put<Question>(`${BASE_URL}/${id}`, formData);
+    const response = await apiClient.put<QuestionViewModel>(
+      `${BASE_URL}/${id}`, 
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    ) as unknown as ApiResponse<QuestionViewModel>;
+    
+    return response;
   },
 
   /**
    * Delete a question by ID
    */
-  delete: async (id: string) => {
-    return await apiClient.delete(`${BASE_URL}/${id}`);
+  /**
+   * Delete a question by ID
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    const response = await apiClient.delete<void>(`${BASE_URL}/${id}`) as unknown as ApiResponse<void>;
+    return response;
   },
 };

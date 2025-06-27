@@ -306,19 +306,31 @@ const currentPageTitle = ref('Create Question for Exam Bank')
 const fetchQuestionTypes = async () => {
   try {
     loadingQuestionTypes.value = true
-    const response = await questionTypeApi.getAll({
-      size: 100 // Fetch all types since we typically won't have too many
+    const { data: responseData, success, message } = await questionTypeApi.getAll({
+      size: 100, // Fetch all types since we typically won't have too many
+      sort: 'name',
+      direction: 'asc'
     })
-    questionTypes.value = response.content.map(type => ({
+    
+    if (!success) {
+      throw new Error(message || 'Failed to fetch question types')
+    }
+    
+    if (!responseData || !Array.isArray(responseData.content)) {
+      throw new Error('Invalid response format from server')
+    }
+
+    questionTypes.value = (responseData.content || []).map(type => ({
       value: type.id,
       label: type.name
     }))
+    
   } catch (error) {
-    toast.error('Failed to fetch question types', {
-      timeout: 3000,
-      position: "top-right",
-    })
     console.error('Error fetching question types:', error)
+    toast.error(error.message || 'Failed to fetch question types', {
+      timeout: 3000,
+      position: 'top-right'
+    })
   } finally {
     loadingQuestionTypes.value = false
   }
@@ -523,7 +535,7 @@ const fetchQuestionCategories = async (isLoadMore = false) => {
   
   loadingCategories.value = true
   try {
-    const response = await questionCategoryApi.getAll({
+    const { data: responseData, success, message } = await questionCategoryApi.getAll({
       page: currentCategoryPage.value,
       size: itemsPerPage,
       search: categorySearchQuery.value,
@@ -531,25 +543,34 @@ const fetchQuestionCategories = async (isLoadMore = false) => {
       direction: 'asc'
     })
     
-    if (!response || !response.content) {
-      throw new Error('Invalid response from server')
+    if (!success) {
+      throw new Error(message || 'Failed to fetch categories')
     }
 
+    if (!responseData || !Array.isArray(responseData.content)) {
+      throw new Error('Invalid response format from server')
+    }
+
+    const categories = responseData.content || []
+    
     if (isLoadMore) {
       // Append new categories when loading more
-      questionCategories.value = [...questionCategories.value, ...(response.content || [])]
+      questionCategories.value = [...questionCategories.value, ...categories]
     } else {
       // Replace categories when searching or first load
-      questionCategories.value = response.content || []
+      questionCategories.value = categories
     }
     
     // Check if there are more items to load
-    hasMoreCategories.value = response.totalPages 
-      ? (currentCategoryPage.value + 1) < response.totalPages
+    hasMoreCategories.value = responseData.totalPages 
+      ? (currentCategoryPage.value + 1) < responseData.totalPages
       : false
   } catch (error) {
     console.error('Error fetching categories:', error)
-    toast.error('Failed to load categories')
+    toast.error(error.message || 'Failed to load categories', {
+      timeout: 3000,
+      position: 'top-right'
+    })
     
     // Reset to previous page if loading more fails
     if (isLoadMore && currentCategoryPage.value > 0) {

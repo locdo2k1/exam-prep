@@ -518,8 +518,12 @@
         return selectedQuestions.value.some(q => q.id === questionId);
       };
   
-      // Load data functions
+      /**
+       * Loads question types from the API
+       * @returns {Promise<void>}
+       */
       const loadQuestionTypes = async () => {
+        loadingQuestionTypes.value = true;
         try {
           const response = await questionTypeApi.getAll({
             page: 0,
@@ -527,56 +531,92 @@
             sort: 'name',
             direction: 'asc'
           });
-          questionTypes.value = response.content.map(type => ({
-            value: type.id,
-            label: type.name
-          }));
+
+          // Check if the response is successful and contains data
+          if (response?.success && response.data?.content) {
+            questionTypes.value = response.data.content.map(type => ({
+              value: type.id,
+              label: type.name,
+              ...(type.description && { description: type.description })
+            }));
+          } else {
+            console.warn('Unexpected response format when loading question types:', response);
+            // Optionally show a user-friendly error message
+            // errorMessage.value = response?.message || 'Failed to load question types';
+          }
         } catch (error) {
           console.error('Failed to load question types:', error);
+          // Optionally show a user-friendly error message
+          // errorMessage.value = 'Failed to load question types. Please try again.';
+        } finally {
+          loadingQuestionTypes.value = false;
         }
       };
   
-      const fetchCategories = async (isLoadMore = false) => {
+      /**
+       * Fetches categories from the API with pagination and search support
+       * @param {boolean} isLoadMore - Whether to append results to existing categories
+       * @returns {Promise<void>}
+       */
+      const getCategories = async (isLoadMore = false) => {
+        // Prevent multiple simultaneous requests
         if (loadingCategories.value) return;
   
         loadingCategories.value = true;
+        
         try {
-          const response = await questionCategoryApi.getAll({
+          // Prepare API parameters
+          const params = {
             page: currentPageCategories.value,
             size: itemsPerPageCategories,
-            search: categorySearch.value,
+            search: categorySearch.value.trim() || undefined, // Only include search if not empty
             sort: 'name',
             direction: 'asc'
-          });
+          };
+          
+          // Make the API call
+          const response = await questionCategoryApi.getAll(params);
   
-          // Check if response and response.content exist before destructuring
-          if (!response || !response.content) {
+          // Validate response
+          if (!response?.data?.content) {
             throw new Error('Invalid response from server');
           }
+          
+          const responseData = response.data;
   
+          // Update categories based on whether we're loading more or doing a fresh load
           if (isLoadMore) {
             // Append new categories when loading more
-            categories.value = [...categories.value, ...(response.content || [])];
+            categories.value = [...categories.value, ...(responseData.content || [])];
           } else {
             // Replace categories when searching or first load
-            categories.value = response.content || [];
+            categories.value = responseData.content || [];
           }
   
-          // Check if there are more items to load
-          hasMoreCategories.value = response.totalPages
-            ? (currentPageCategories.value + 1) < response.totalPages
+          // Update pagination state
+          hasMoreCategories.value = responseData.totalPages
+            ? (currentPageCategories.value + 1) < responseData.totalPages
             : false;
+            
+          // Log successful fetch for debugging
+          console.log(`Fetched ${responseData.content.length} categories, has more: ${hasMoreCategories.value}`);
+            
         } catch (error) {
           console.error('Error fetching categories:', error);
           // Reset to previous page if loading more fails
           if (isLoadMore && currentPageCategories.value > 0) {
             currentPageCategories.value--;
           }
+          // You might want to show a user-friendly error message here
+          // errorMessage.value = 'Failed to load categories. Please try again.';
         } finally {
           loadingCategories.value = false;
         }
       };
   
+      /**
+       * Load questions based on current filters and pagination
+       */
       const loadQuestions = async () => {
         try {
           isLoading.value = true;
@@ -587,28 +627,38 @@
             categoryId: filters.value.categoryId || undefined,
             minScore: filters.value.minScore || undefined,
             maxScore: filters.value.maxScore || undefined,
-            prompt: filters.value.prompt || undefined,
+            prompt: filters.value.prompt?.trim() || undefined,
             page: filters.value.page,
-            size: filters.value.size
+            size: filters.value.size,
+            sort: 'insertedAt,desc' // Default sorting by creation date
           };
 
           // Remove undefined values
           Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
           console.log('Fetching questions with params:', params);
-          const response = await questionApi.getAll(params);
+          const { data: responseData, success, message } = await questionApi.getAll(params);
           
-          availableQuestions.value = response.content.map(question => ({
+          if (!success) {
+            console.warn('API request succeeded but returned with warning:', message);
+            // Optionally show a warning to the user
+            // errorMessage.value = message || 'Failed to load questions. Please try again.';
+            return;
+          }
+          
+          if (responseData) {
+            availableQuestions.value = responseData.content.map(question => ({
               ...question,
               isSelected: selectedQuestionsSet.value.has(question.id)
             }));
-   
-            totalQuestions.value = response.totalElements;
-            totalPages.value = response.totalPages;
-            currentPage.value = response.number;
+            
+            totalQuestions.value = responseData.totalElements;
+            totalPages.value = responseData.totalPages;
+            currentPage.value = responseData.number;
             
             // Emit the selected questions
             emit('update:selectedQuestions', selectedQuestions.value);
+          }
         } catch (error) {
           console.error('Error loading questions:', error);
         } finally {
@@ -688,7 +738,7 @@
           // Load initial data
           await Promise.all([
             loadQuestionTypes(),
-            fetchCategories(false)
+            getCategories(false)
           ]);
           
           // Load questions after initial data is loaded
@@ -733,14 +783,14 @@
       const handleCategorySearch = async (query) => {
         categorySearch.value = query;
         currentPageCategories.value = 0; // Reset to first page for new search
-        await fetchCategories(false);
+        await getCategories(false);
       };
   
       const handleLoadMoreCategories = async () => {
         if (!hasMoreCategories.value || loadingCategories.value) return;
   
         currentPageCategories.value++;
-        await fetchCategories(true);
+        await getCategories(true);
       };
   
       const selectCategory = (selected) => {
