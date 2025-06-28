@@ -95,16 +95,7 @@
               </div>
 
               <!-- Description/Content Editor -->
-              <div class="flex-1 flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                <QuillEditor 
-                  ref="quillEditor" 
-                  v-model:content="questionContent" 
-                  :options="editorOptions"
-                  contentType="html" 
-                  class="flex-1 overflow-hidden" 
-                  placeholder="Enter question set description (optional)..."
-                />
-              </div>
+              <Editor placeholder="Write your question here..." />
             </div>
           </div>
         </div>
@@ -112,7 +103,7 @@
         <!-- Right Column - Question Selection List -->
         <div class="w-full lg:w-1/2 bg-gray-50 dark:bg-gray-800 p-6 flex flex-col min-h-0">
           <div class="flex-1 overflow-auto">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-200 dark:border-gray-600">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white">Questions</h3>
               <span class="text-sm text-gray-500 dark:text-gray-400">
                 {{ selectedCount }} selected
@@ -121,7 +112,7 @@
 
             <!-- Search and Filter Section -->
             <div
-              class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-0 border-gray-200 dark:border-gray-700">
+              class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border-0 border-gray-200 dark:border-gray-700">
               <div class="flex flex-col space-y-4">
                 <!-- Header with Title and Reset -->
                 <div class="flex items-center justify-between">
@@ -190,7 +181,7 @@
                 </div>
 
               </div>
-              <div class="border-gray-200 dark:border-gray-700 px-4 py-2">
+              <div class="border-gray-200 dark:border-gray-600 px-4 py-2">
                 <div class="flex justify-end">
                   <div class="text-sm text-gray-500 dark:text-gray-400">
                     {{ totalQuestions }} questions found
@@ -262,7 +253,7 @@
                       <!-- Question Content -->
                       <div class="flex-1 min-w-0 break-words" @click.stop>
                         <div
-                          class="text-sm font-medium text-gray-800 dark:text-gray-200 ql-editor"
+                          class="text-sm font-medium text-gray-800 dark:text-gray-200"
                           v-html="question.prompt ? sanitizeHtml(question.prompt) : ''"
                           style="padding: 0;"
                         ></div>
@@ -336,33 +327,26 @@
 
   <script>
   import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue';
-  import { QuillEditor } from '@vueup/vue-quill';
+  import { useToast } from 'vue-toastification';
   import DOMPurify from 'dompurify';
   import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
-  import '@vueup/vue-quill/dist/vue-quill.snow.css';
-  import { Quill } from '@vueup/vue-quill';
-  import ImageResize from 'quill-image-resize-vue';
+  import Editor from '../admin/common/Editor.vue';
   import { questionApi } from '@/api/admin/question/questionApi';
   import { questionTypeApi } from '@/api/admin/question-type/questionTypeApi';
   import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi';
   import { questionSetApi } from '@/api/questionSet';
 
-  // Register the image resize module with Quill
-  Quill.register('modules/imageResize', ImageResize.default || ImageResize);
-
   export default {
     name: 'QuestionSet',
     components: {
-      QuillEditor,
-      SearchableSelect,
+      Editor,
+      SearchableSelect
     },
     emits: ['questions-selected'],
     setup(props, { emit }) {
+      const toast = useToast();
+      // Cleanup function to remove the styles when component is unmounted
       // Reactive state
-      const questionSetTitle = ref('');
-      const questionContent = ref('');
-      const selectedQuestionsSet = ref(new Set());
-      const availableQuestions = ref([]);
       const totalQuestions = ref(0);
       const totalPages = ref(1); // Initialize with 1 to prevent undefined access
       const isLoading = ref(false);
@@ -372,31 +356,40 @@
       const showAdvancedFilters = ref(false);
       const questionTypes = ref([]);
       const categories = ref([]);
-      const isDark = ref(document.documentElement.classList.contains('dark'));
-      const isMobile = ref(window.innerWidth < 1024);
-      const quillEditor = ref(null);
-      const loadingQuestionTypes = ref(false);
-  
-      // Editor options
+      const questionSetTitle = ref('');
+      const questionContent = ref('');
+      const selectedQuestionsSet = ref(new Set());
+      const availableQuestions = ref([]);
+      const isSaving = ref(false);
+      
+      // Quill editor options
       const editorOptions = ref({
         modules: {
           toolbar: [
             ['bold', 'italic', 'underline', 'strike'],
             ['blockquote', 'code-block'],
-            [{ header: 1 }, { header: 2 }],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['link', 'image'],
+            [{ 'header': 1 }, { 'header': 2 }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'script': 'sub'}, { 'script': 'super' }],
+            [{ 'indent': '-1'}, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'font': [] }],
+            [{ 'align': [] }],
             ['clean'],
-          ],
-          imageResize: {
-            displaySize: true,
-            modules: ['Resize', 'DisplaySize', 'Toolbar'],
-          },
+            ['link', 'image', 'video']
+          ]
         },
-        placeholder: 'Type your content here...',
-        theme: 'snow',
+        placeholder: 'Type your question set content here...',
+        theme: 'snow'
       });
-  
+      const isDark = ref(document.documentElement.classList.contains('dark'));
+      const isMobile = ref(window.innerWidth < 1024);
+      const quillEditor = ref(null);
+      const loadingQuestionTypes = ref(false);
+
       // Filters
       const filters = ref({
         questionTypeId: null,
@@ -657,7 +650,7 @@
             currentPage.value = responseData.number;
             
             // Emit the selected questions
-            emit('update:selectedQuestions', selectedQuestions.value);
+            emit('questions-selected', selectedQuestions.value);
           }
         } catch (error) {
           console.error('Error loading questions:', error);
@@ -794,7 +787,6 @@
       };
   
       const selectCategory = (selected) => {
-        console.log('selectCategory called with:', selected);
         if (selected) {
           filters.value.categoryId = selected.value;
         } else {
@@ -805,14 +797,12 @@
       };
   
       const selectType = (selected) => {
-        console.log('selectType called with:', selected);
         if (selected) {
           filters.value.questionTypeId = selected.value;
         } else {
           filters.value.questionTypeId = null;
         }
         filters.value.page = 0; // Reset to first page when filter changes
-        console.log('Updated filters:', JSON.parse(JSON.stringify(filters.value)));
       };
   
       // Update search values when filters change externally
@@ -850,24 +840,56 @@
         });
       };
   
+      // Validate question set title
+      const validateTitle = (title) => {
+        const trimmedTitle = title?.trim() || '';
+        if (!trimmedTitle) {
+          toast.error('Question set title is required');
+          return false;
+        }
+        if (trimmedTitle.length < 3) {
+          toast.error('Title must be at least 3 characters long');
+          return false;
+        }
+        if (trimmedTitle.length > 255) {
+          toast.error('Title cannot exceed 255 characters');
+          return false;
+        }
+        return true;
+      };
+
+      // Validate question set description
+      const validateDescription = (description) => {
+        if (!description) return true; // Description is optional
+        const strippedDescription = description.replace(/<[^>]*>/g, '').trim();
+        if (strippedDescription.length > 2000) {
+          toast.error('Description cannot exceed 2000 characters');
+          return false;
+        }
+        return true;
+      };
+
       // Save question set
       const saveQuestionSet = async () => {
-        console.group('=== Before Submission ===');
-        console.log('Selected Questions:', JSON.parse(JSON.stringify(selectedQuestions.value)));
-        console.log('Question Set Title:', questionSetTitle.value);
-        console.log('Question Set Description:', questionContent.value);
-        console.log('Selected Question IDs:', selectedQuestions.value.map(q => q.id));
+        if (isSaving.value) return;
         
+        isSaving.value = true;
+        // Validate selected questions
         if (selectedQuestions.value.length === 0) {
-          console.error('❌ Please select at least one question');
-          console.groupEnd();
+          toast.error('Please select at least one question');
+          isSaving.value = false;
           return;
         }
 
-        if (!questionSetTitle.value?.trim()) {
-          console.error('❌ Please enter a title for the question set');
-          // You might want to show an error message to the user here
-          console.groupEnd();
+        // Validate title
+        if (!validateTitle(questionSetTitle.value)) {
+          isSaving.value = false;
+          return;
+        }
+
+        // Validate description
+        if (!validateDescription(questionContent.value)) {
+          isSaving.value = false;
           return;
         }
 
@@ -879,14 +901,19 @@
             order: 0
           };
           
-          console.log('Preparing to submit:', questionSetData);
-          console.groupEnd();
-
-          const response = await questionSetApi.create(questionSetData);
+          // Show loading state
+          const loadingToast = toast.info('Creating question set...', { timeout: false });
           
-          console.group('=== After Submission ===');
+          let response;
+          try {
+            response = await questionSetApi.create(questionSetData);
+            toast.dismiss(loadingToast);
+          } catch (error) {
+            toast.dismiss(loadingToast);
+            throw error;
+          }
+          
           if (response.success) {
-            console.log('✅ Question set created successfully:', response.data);
             // Reset form
             questionSetTitle.value = '';
             questionContent.value = '';
@@ -894,22 +921,40 @@
             // Emit event to parent if needed
             emit('saved', response.data);
             
-            // Show success message (you can replace this with a toast notification)
-            alert('Question set created successfully!');
+            // Show success toast
+            toast.success('Question set created successfully!');
           } else {
-            console.error('❌ Failed to create question set:', response.message);
-            // Show error message to user
-            alert(`Failed to create question set: ${response.message}`);
+            // Show error toast
+            toast.error(`Failed to create question set: ${response.message}`);
           }
         } catch (error) {
-          console.error('❌ Error creating question set:', error);
-          // Show error message to user
-          alert('An error occurred while creating the question set. Please try again.');
+          // Show error toast with more details
+          let errorMessage = 'An unexpected error occurred. Please try again.';
+          if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          toast.error(`Error: ${errorMessage}`, { timeout: 5000 });
           console.groupEnd();
+          isSaving.value = false;
           throw error; // Re-throw to allow error handling up the chain
+        } finally {
+          isSaving.value = false;
         }
       };
   
+      // Watch for changes in title to clear validation errors
+      watch(questionSetTitle, (newVal) => {
+        if (newVal?.trim().length > 0 && newVal.length <= 255) {
+          // Clear any title-related error toasts when user starts typing
+          const toastToRemove = document.querySelector('.Vue-Toastification__toast--error');
+          if (toastToRemove && toastToRemove.textContent?.includes('title')) {
+            toast.dismiss(toastToRemove.getAttribute('toast-id'));
+          }
+        }
+      });
+
       // Expose to template
       return {
         // Refs
@@ -918,6 +963,7 @@
         selectedQuestionsSet,
         availableQuestions,
         isLoading,
+        isSaving,
         searchQuery,
         currentPage,
         totalQuestions,
@@ -980,75 +1026,6 @@
   /* For Firefox */
   input[type='number'] {
     -moz-appearance: textfield;
-  }
-  
-  /* Quill Editor Styles */
-  :deep(.ql-container.ql-snow) {
-    border: none;
-    background-color: transparent;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-radius: 0;
-    min-height: 400px;
-  }
-  
-  :deep(.ql-toolbar.ql-snow) {
-    border: none;
-    border-bottom: 1px solid rgb(229 231 235);
-    margin-bottom: 0;
-    background-color: white;
-    border-radius: 0;
-  }
-  
-  .dark :deep(.ql-toolbar.ql-snow) {
-    background-color: rgb(31 41 55);
-    border-bottom-color: rgb(55 65 81);
-  }
-  
-  :deep(.ql-editor) {
-    flex: 1;
-    background-color: white;
-    color: rgb(17 24 39);
-  }
-  
-  .dark :deep(.ql-editor) {
-    background-color: rgb(31 41 55);
-    color: rgb(229 231 235);
-  }
-  
-  :deep(.ql-snow .ql-stroke) {
-    stroke: rgb(75 85 99);
-  }
-  
-  .dark :deep(.ql-snow .ql-stroke) {
-    stroke: rgb(156 163 175);
-  }
-  
-  :deep(.ql-snow .ql-fill),
-  :deep(.ql-snow .ql-stroke.ql-fill) {
-    fill: rgb(75 85 99);
-  }
-  
-  .dark :deep(.ql-snow .ql-fill),
-  .dark :deep(.ql-snow .ql-stroke.ql-fill) {
-    fill: rgb(156 163 175);
-  }
-  
-  :deep(.ql-snow.ql-toolbar button:hover .ql-stroke) {
-    stroke: rgb(59 130 246);
-  }
-  
-  .dark :deep(.ql-snow.ql-toolbar button:hover .ql-stroke) {
-    stroke: rgb(96 165 250);
-  }
-  
-  :deep(.ql-snow.ql-toolbar button.ql-active .ql-stroke) {
-    stroke: rgb(37 99 235);
-  }
-  
-  .dark :deep(.ql-snow.ql-toolbar button.ql-active .ql-stroke) {
-    stroke: rgb(59 130 246);
   }
   
   /* Custom scrollbar */
