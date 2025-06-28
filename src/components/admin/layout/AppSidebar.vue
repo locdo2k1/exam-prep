@@ -66,22 +66,26 @@
                     },
                   ]" />
                 </button>
-                <router-link v-else-if="item.path" :to="item.path" :class="[
-                  'menu-item group',
-                  {
-                    'menu-item-active': isActive(item.path),
-                    'menu-item-inactive': !isActive(item.path),
-                  },
-                ]">
-                  <span :class="[
-                    isActive(item.path)
-                      ? 'menu-item-icon-active'
-                      : 'menu-item-icon-inactive',
-                  ]">
-                    <component :is="item.icon" />
-                  </span>
-                  <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text">{{ item.name }}</span>
-                </router-link>
+                <template v-else>
+                  <div :class="[
+                    'menu-item group',
+                    {
+                      'menu-item-active': item.path && isActive(item.path),
+                      'menu-item-inactive': !item.path || !isActive(item.path),
+                      'cursor-default': !item.path,
+                      'cursor-pointer': !!item.path
+                    },
+                  ]" @click="item.path && $router.push(item.path)">
+                    <span :class="[
+                      (item.path && isActive(item.path))
+                        ? 'menu-item-icon-active'
+                        : 'menu-item-icon-inactive',
+                    ]">
+                      <component :is="item.icon" />
+                    </span>
+                    <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text">{{ item.name }}</span>
+                  </div>
+                </template>
                 <transition @enter="startTransition" @after-enter="endTransition" @before-leave="startTransition"
                   @after-leave="endTransition">
                   <div v-show="isSubmenuOpen(groupIndex, index) &&
@@ -183,37 +187,37 @@ const menuGroups = [
       {
         icon: QuestionBankIcon,
         name: "Question Bank",
-        path: "/calendar",
+        path: "",
       },
       {
         icon: UserCircleIcon,
         name: "User Profiles",
-        path: "/profile",
+        path: "",
       },
       {
         name: "Test Exam",
         icon: ListIcon,
-        path: "/test-exam",
+        path: "",
       },
       {
         name: "Question Set",
         icon: TableIcon,
-        path: "/question-set",
+        path: "",
       },
       {
         name: "Type and Cateogry",
         icon: CategoryIcon,
-        path: "/type-category",
+        path: "",
       },
       {
         name: "Certificate",
         icon: StaredIcon,
-        path: "/certificate",
+        path: "",
       },
       {
         name: "Settings",
         icon: SettingsIcon,
-        path: "/settings",
+        path: "",
       },
     ],
   },
