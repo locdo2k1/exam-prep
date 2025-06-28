@@ -120,7 +120,7 @@
                   <button @click="resetFilters"
                     class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     Reset All
@@ -533,12 +533,10 @@
               ...(type.description && { description: type.description })
             }));
           } else {
-            console.warn('Unexpected response format when loading question types:', response);
             // Optionally show a user-friendly error message
             // errorMessage.value = response?.message || 'Failed to load question types';
           }
         } catch (error) {
-          console.error('Failed to load question types:', error);
           // Optionally show a user-friendly error message
           // errorMessage.value = 'Failed to load question types. Please try again.';
         } finally {
@@ -591,11 +589,7 @@
             ? (currentPageCategories.value + 1) < responseData.totalPages
             : false;
             
-          // Log successful fetch for debugging
-          console.log(`Fetched ${responseData.content.length} categories, has more: ${hasMoreCategories.value}`);
-            
         } catch (error) {
-          console.error('Error fetching categories:', error);
           // Reset to previous page if loading more fails
           if (isLoadMore && currentPageCategories.value > 0) {
             currentPageCategories.value--;
@@ -629,11 +623,10 @@
           // Remove undefined values
           Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
-          console.log('Fetching questions with params:', params);
+          // Fetching questions with current filters
           const { data: responseData, success, message } = await questionApi.getAll(params);
           
           if (!success) {
-            console.warn('API request succeeded but returned with warning:', message);
             // Optionally show a warning to the user
             // errorMessage.value = message || 'Failed to load questions. Please try again.';
             return;
@@ -653,7 +646,6 @@
             emit('questions-selected', selectedQuestions.value);
           }
         } catch (error) {
-          console.error('Error loading questions:', error);
         } finally {
           isLoading.value = false;
         }
@@ -676,7 +668,6 @@
             label: type.name
           }));
         } catch (error) {
-          console.error('Failed to search question types:', error);
         } finally {
           loadingQuestionTypes.value = false;
         }
@@ -704,7 +695,6 @@
         (newVal, oldVal) => {
           // Only trigger if there's an actual change
           if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
-            console.log('Filters changed, loading questions...', JSON.parse(JSON.stringify(filters.value)));
             loadQuestions();
           }
         },
@@ -750,7 +740,6 @@
             cleanup();
           };
         } catch (error) {
-          console.error('Error initializing component:', error);
         }
       });
       
@@ -793,7 +782,7 @@
           filters.value.categoryId = null;
         }
         filters.value.page = 0; // Reset to first page when filter changes
-        console.log('Updated filters:', JSON.parse(JSON.stringify(filters.value)));
+        loadQuestions();
       };
   
       const selectType = (selected) => {
