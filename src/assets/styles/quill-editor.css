@@ -1,0 +1,68 @@
+/* Force styles to apply with !important to ensure they override Quill's defaults */
+:deep(.ql-container.ql-snow) {
+  border: none !important;
+  background-color: transparent !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 0 !important;
+  min-height: 400px !important;
+}
+
+:deep(.ql-toolbar.ql-snow) {
+  border: none !important;
+  border-bottom: 1px solid rgb(229 231 235) !important;
+  margin-bottom: 0 !important;
+  background-color: white !important;
+  border-radius: 0 !important;
+}
+
+.dark :deep(.ql-toolbar.ql-snow) {
+  background-color: rgb(31 41 55) !important;
+  border-bottom-color: rgb(55 65 81) !important;
+}
+
+:deep(.ql-editor) {
+  flex: 1 !important;
+  background-color: white !important;
+  color: rgb(17 24 39) !important;
+}
+
+.dark :deep(.ql-editor) {
+  background-color: rgb(31 41 55) !important;
+  color: rgb(229 231 235) !important;
+}
+
+:deep(.ql-snow .ql-stroke) {
+  stroke: rgb(75 85 99) !important;
+}
+
+.dark :deep(.ql-snow .ql-stroke) {
+  stroke: rgb(156 163 175) !important;
+}
+
+:deep(.ql-snow .ql-fill),
+:deep(.ql-snow .ql-stroke.ql-fill) {
+  fill: rgb(75 85 99) !important;
+}
+
+.dark :deep(.ql-snow .ql-fill),
+.dark :deep(.ql-snow .ql-stroke.ql-fill) {
+  fill: rgb(156 163 175) !important;
+}
+
+:deep(.ql-snow.ql-toolbar button:hover .ql-stroke) {
+  stroke: rgb(59 130 246) !important;
+}
+
+.dark :deep(.ql-snow.ql-toolbar button:hover .ql-stroke) {
+  stroke: rgb(96 165 250) !important;
+}
+
+:deep(.ql-snow.ql-toolbar button.ql-active .ql-stroke) {
+  stroke: rgb(37 99 235) !important;
+}
+
+.dark :deep(.ql-snow.ql-toolbar button.ql-active .ql-stroke) {
+  stroke: rgb(59 130 246) !important;
+}

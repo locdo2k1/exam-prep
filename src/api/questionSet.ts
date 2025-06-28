@@ -72,16 +72,14 @@ export const questionSetApi = {
       params.append('sort', sortParam);
     }
 
-    const response = await apiClient.get(`${BASE_URL}?${params.toString()}`);
-    return response.data.data;
+    return await apiClient.get(`${BASE_URL}?${params.toString()}`);
   },
 
   /**
    * Get a question set by ID
    */
   getById: async (id: string): Promise<QuestionSetViewModel> => {
-    const response = await apiClient.get(`${BASE_URL}/${id}`);
-    return response.data.data;
+    return await apiClient.get(`${BASE_URL}/${id}`);
   },
 
   /**
@@ -122,7 +120,7 @@ export const questionSetApi = {
       formData.append('order', questionSetData.order.toString());
     }
     
-    const response = await apiClient.post(
+    return await apiClient.post(
       BASE_URL,
       formData,
       {
@@ -131,8 +129,6 @@ export const questionSetApi = {
         },
       }
     );
-    
-    return response.data.data;
   },
 
   /**
@@ -172,7 +168,7 @@ export const questionSetApi = {
       });
     }
     
-    const response = await apiClient.put(
+    return await apiClient.put(
       `${BASE_URL}/${id}`,
       formData,
       {
@@ -181,22 +177,20 @@ export const questionSetApi = {
         },
       }
     );
-    
-    return response.data.data;
   },
 
   /**
    * Delete a question set by ID
    */
-  delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`${BASE_URL}/${id}`);
+  delete: async (id: string) => {
+    return await apiClient.delete(`${BASE_URL}/${id}`);
   },
 
   /**
    * Remove a file from a question set
    */
-  removeFile: async (questionSetId: string, fileId: string): Promise<void> => {
-    await apiClient.delete(
+  removeFile: async (questionSetId: string, fileId: string) => {
+    return await apiClient.delete(
       `${BASE_URL}/${questionSetId}/files/${fileId}`
     );
   },
@@ -207,10 +201,10 @@ export const questionSetApi = {
   reorderQuestions: async (
     questionSetId: string, 
     questionOrders: Array<{ id: string; order: number }>
-  ): Promise<void> => {
-    await apiClient.put(
-      `${BASE_URL}/${questionSetId}/reorder`,
-      questionOrders
+  ): Promise<ApiResponse<void>> => {
+    return await apiClient.put(
+      `${BASE_URL}/${questionSetId}/reorder-questions`,
+      { questionOrders }
     );
   },
 };

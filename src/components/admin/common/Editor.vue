@@ -62,14 +62,6 @@ const editorOptions = {
       // KaTeX options
       katex: katex
     },
-    keyboard: {
-      bindings: {
-        handleEnter: {
-          key: 13,
-          handler: () => { /* Custom enter handler if needed */ }
-        }
-      }
-    },
     imageResize: {}
   },
   placeholder: props.placeholder,
@@ -202,22 +194,31 @@ defineExpose({
 <style scoped>
 .quill-editor-container {
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Needed for proper flex layout */
 }
 
 :deep(.ql-container) {
   border: none !important;
   min-height: 100px;
-  height: auto !important;
-  overflow: visible !important;
+  height: 100% !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   font-size: 16px;
   line-height: 1.5;
+  overflow: auto;
 }
 
 :deep(.ql-editor) {
   min-height: 100px;
-  height: auto !important;
-  overflow: visible !important;
-  padding: 0;
+  flex: 1;
+  height: 100% !important;
+  overflow-y: auto;
+  padding: 12px 0;
+  width: 100%;
 }
 
 :deep(.ql-toolbar) {
