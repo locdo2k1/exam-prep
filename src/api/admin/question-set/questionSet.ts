@@ -14,14 +14,46 @@ export interface QuestionSetItem {
   order: number;
 }
 
+export interface QuestionCategoryViewModel {
+  id: string;
+  name: string;
+  // Add other category properties as needed
+}
+
+export interface QuestionTypeViewModel {
+  id: string;
+  name: string;
+  // Add other type properties as needed
+}
+
+export interface OptionViewModel {
+  id: string;
+  content: string;
+  isCorrect: boolean;
+  // Add other option properties as needed
+}
+
+export interface QuestionViewModel {
+  id: string;
+  prompt: string;
+  questionCategory: QuestionCategoryViewModel;
+  questionType: QuestionTypeViewModel;
+  score: number;
+  questionAnswers: string[];
+  options: OptionViewModel[];
+  questionAudios: FileInfoViewModel[];
+}
+
 export interface QuestionSetViewModel {
   id: string;
   title: string;
   description?: string;
-  order: number;
   imageUrl?: string;
-  questionSetItems: QuestionSetItem[];
-  files: FileInfoViewModel[];
+  order: number;
+  questions: QuestionViewModel[];
+  totalQuestions: number;
+  totalScore: number;
+  files?: FileInfoViewModel[];
 }
 
 export interface ApiResponse<T> {
@@ -32,8 +64,13 @@ export interface ApiResponse<T> {
 
 export interface QuestionSetFilter {
   title?: string;
+  search?: string;        // General search term (searches in title and description)
   minOrder?: number;
   maxOrder?: number;
+  minQuestions?: number;  // Filter by minimum number of questions
+  maxQuestions?: number;  // Filter by maximum number of questions
+  minScore?: number;      // Filter by minimum total score
+  maxScore?: number;      // Filter by maximum total score
   page?: number;
   size?: number;
   sort?: string;
@@ -59,20 +96,26 @@ export const questionSetApi = {
     
     // Add filter parameters if they exist
     if (filter.title) params.append('title', filter.title);
+    if (filter.search) params.append('search', filter.search);
     if (filter.minOrder !== undefined) params.append('minOrder', filter.minOrder.toString());
     if (filter.maxOrder !== undefined) params.append('maxOrder', filter.maxOrder.toString());
+    if (filter.minQuestions !== undefined) params.append('minQuestions', filter.minQuestions.toString());
+    if (filter.maxQuestions !== undefined) params.append('maxQuestions', filter.maxQuestions.toString());
+    if (filter.minScore !== undefined) params.append('minScore', filter.minScore.toString());
+    if (filter.maxScore !== undefined) params.append('maxScore', filter.maxScore.toString());
     
-    // Add pagination
-    if (filter.page !== undefined) params.append('page', filter.page.toString());
-    if (filter.size !== undefined) params.append('size', filter.size.toString());
+    // Add pagination with defaults
+    params.append('page', (filter.page ?? 0).toString());
+    params.append('size', (filter.size ?? 10).toString());
     
-    // Add sorting
-    if (filter.sort) {
-      const sortParam = filter.direction === 'desc' ? `${filter.sort},desc` : filter.sort;
-      params.append('sort', sortParam);
-    }
+    // Add sorting with defaults
+    const sortParam = filter.sort 
+      ? (filter.direction === 'desc' ? `${filter.sort},desc` : filter.sort)
+      : 'order,asc';
+    params.append('sort', sortParam);
 
-    return await apiClient.get(`${BASE_URL}?${params.toString()}`);
+    const response = await apiClient.get<PaginatedResponse<QuestionSetViewModel>>(`${BASE_URL}?${params.toString()}`);
+    return response.data;
   },
 
   /**
