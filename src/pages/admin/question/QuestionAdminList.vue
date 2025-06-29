@@ -16,13 +16,29 @@
       </button>
     </div>
 
-    <DataTable :columns="columns" :data="questions" :showPagination="true" :currentPage="currentPage"
-      :perPage="itemsPerPage" @page-change="handlePageChange" :actions="actions" :primaryColumn="'question'"
-      @sort="handleSort" :searchable="true" :searchPlaceholder="'Search questions...'" :loading="loading"
-      @search="handleSearch" :loadingText="'Loading questions...'" :emptyStateText="'No questions found'" class="mt-6"
+    <DataTable 
+      :columns="columns" 
+      :data="questions" 
+      :showPagination="true" 
+      :currentPage="currentPage"
+      :itemsPerPage="itemsPerPage"
+      :totalItems="totalItems"
+      @page-change="handlePageChange" 
+      :actions="actions" 
+      :primaryColumn="'prompt'"
+      @sort="handleSort" 
+      :searchable="true" 
+      :searchPlaceholder="'Search questions...'" 
+      :loading="loading"
+      @search="handleSearch" 
+      :loadingText="'Loading questions...'" 
+      :emptyStateText="'No questions found'" 
+      class="mt-6"
       :mobile-card-class="'bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-100 dark:border-gray-700'"
       :mobile-card-title-class="'font-medium text-gray-900 dark:text-white text-base'"
-      :mobile-card-meta-class="'flex flex-col gap-1 mt-1 text-sm text-gray-600 dark:text-gray-300'">
+      :mobile-card-meta-class="'flex flex-col gap-1 mt-1 text-sm text-gray-600 dark:text-gray-300'"
+      :serverSidePagination="true"
+    >
       <template #cell-status="{ value }">
         <span :class="{
           'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
@@ -358,13 +374,10 @@ const fetchQuestions = async () => {
       }
     });
     
-    console.log('Fetching questions with filter:', cleanFilter);
-    
     // Make the API call
     const response = await questionApi.getAll(cleanFilter);
     
     if (!response.success) {
-      console.warn('API request succeeded but returned with warning:', response.message);
       // Optionally show a warning to the user
       return;
     }
@@ -372,14 +385,6 @@ const fetchQuestions = async () => {
     if (response.data) {
       questions.value = response.data.content;
       totalItems.value = response.data.totalElements;
-      
-      // Log the first few items for debugging
-      console.log('Fetched questions:', {
-        count: response.data.content.length,
-        total: response.data.totalElements,
-        page: response.data.number + 1,
-        totalPages: response.data.totalPages
-      });
     }
   } catch (error) {
     console.error('Error fetching questions:', error);
@@ -405,39 +410,43 @@ onMounted(() => {
 // Handle page change
 const handlePageChange = (page) => {
   currentPage.value = page;
+  fetchQuestions();
 };
 
 // Handle sorting
-const handleSort = ({ sortBy: newSortBy, sortDirection: newSortDirection }) => {
-  sortBy.value = newSortBy;
-  sortDirection.value = newSortDirection;
-  currentPage.value = 1; // Reset to first page when sorting changes
-  fetchQuestions(); // Re-fetch to get sorted data
+const handleSort = (sortEvent) => {
+  // Handle both object (from DataTable) and string (direct call) parameters
+  if (typeof sortEvent === 'object' && sortEvent !== null) {
+    sortBy.value = sortEvent.sortBy;
+    sortDirection.value = sortEvent.sortDirection;
+  } else {
+    // Fallback for direct string parameter (for backward compatibility)
+    const key = sortEvent;
+    if (sortBy.value === key) {
+      // Toggle sort direction if same column is clicked
+      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    } else {
+      // New column, default to ascending
+      sortBy.value = key;
+      sortDirection.value = 'asc';
+    }
+  }
+  fetchQuestions();
 };
 
 // Handle search with debounce for better performance
 let searchTimeout = null;
 const handleSearch = (query) => {
-  // Clear any existing timeout
+  searchQuery.value = query;
+  
+  // Clear previous timeout
   if (searchTimeout) {
     clearTimeout(searchTimeout);
   }
-
-  // Set a new timeout to execute the search after 300ms of inactivity
+  
+  // Set a new timeout to fetch after user stops typing
   searchTimeout = setTimeout(() => {
-    searchQuery.value = query.trim().toLowerCase();
-    currentPage.value = 1; // Reset to first page when search changes
-
-    // If search query is empty, fetch all questions
-    if (!searchQuery.value) {
-      fetchQuestions();
-      return;
-    }
-
-    // For client-side searching (if you want to switch to this approach)
-    // filterQuestions();
-
-    // For server-side searching (current implementation)
+    currentPage.value = 1; // Reset to first page when searching
     fetchQuestions();
   }, 300);
 };
@@ -506,7 +515,6 @@ const actions = [
 
 function previewQuestion(question) {
   selectedQuestion.value = question;
-  console.log(selectedQuestion.value);
   showPopup();
 }
 

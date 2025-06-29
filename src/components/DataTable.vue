@@ -136,12 +136,12 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="props.showPagination && tableData.length > 0"
+      <div v-if="props.showPagination && totalItems > 0"
         class="mt-4 flex flex-col sm:flex-row items-center justify-between px-2">
         <div class="text-sm text-gray-700 dark:text-gray-400 mb-2 sm:mb-0">
           Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to
-          <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, tableData.length) }}</span> of
-          <span class="font-medium">{{ tableData.length }}</span> results
+          <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, totalItems) }}</span> of
+          <span class="font-medium">{{ totalItems }}</span> results
         </div>
         <div class="flex space-x-1">
           <button @click="changePage(1)" :disabled="currentPage === 1"
@@ -331,6 +331,18 @@ const props = defineProps({
     type: Number,
     default: 10
   },
+  totalItems: {
+    type: Number,
+    default: 0
+  },
+  currentPage: {
+    type: Number,
+    default: 1
+  },
+  serverSidePagination: {
+    type: Boolean,
+    default: false
+  },
   actions: {
     type: Array,
     default: () => []
@@ -368,7 +380,7 @@ onBeforeUnmount(() => {
 const tableData = computed(() => [...props.data]);
 const sortBy = ref('');
 const sortDirection = ref('asc');
-const currentPage = ref(1);
+const currentPage = ref(props.currentPage);
 const itemsPerPage = ref(10);
 const searchQuery = ref('');
 
@@ -381,6 +393,7 @@ const handleSearch = (event) => {
 
 // Filter data based on search query
 const filteredData = computed(() => {
+  if (props.serverSidePagination) return tableData.value; // Skip client-side filtering for server-side mode
   if (!searchQuery.value) return tableData.value;
 
   const query = searchQuery.value.toLowerCase();
@@ -422,15 +435,17 @@ const sortedData = computed(() => {
 });
 
 const paginatedData = computed(() => {
-  const dataToPaginate = searchQuery.value ? filteredData.value : sortedData.value;
+  if (props.serverSidePagination) {
+    return tableData.value; // Server already paginated the data
+  }
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return dataToPaginate.slice(start, end);
+  return filteredData.value.slice(start, end);
 });
 
 const totalPages = computed(() => {
-  const dataToCount = searchQuery.value ? filteredData.value : sortedData.value;
-  return Math.ceil(dataToCount.length / itemsPerPage.value) || 1; // Ensure at least 1 page
+  const total = props.serverSidePagination ? props.totalItems : filteredData.value.length;
+  return Math.ceil(total / itemsPerPage.value);
 });
 
 // Methods
@@ -447,13 +462,23 @@ const handleSort = (key) => {
 const changePage = (page) => {
   if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
+  emit('update:current-page', page);
   emit('page-change', page);
 };
 
 // Watch for data changes
 watch(() => props.data, () => {
-  currentPage.value = 1; // Reset to first page when data changes
+  if (!props.serverSidePagination) {
+    currentPage.value = 1; // Only reset for client-side pagination
+  }
 }, { deep: true });
+
+// Sync currentPage prop with local ref
+watch(() => props.currentPage, (newPage) => {
+  if (newPage !== currentPage.value) {
+    currentPage.value = newPage;
+  }
+});
 
 
 

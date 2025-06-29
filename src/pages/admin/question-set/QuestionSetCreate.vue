@@ -330,11 +330,11 @@
   import { useToast } from 'vue-toastification';
   import DOMPurify from 'dompurify';
   import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
-  import Editor from '../admin/common/Editor.vue';
+  import Editor from '@/components/admin/common/Editor.vue';
   import { questionApi } from '@/api/admin/question/questionApi';
   import { questionTypeApi } from '@/api/admin/question-type/questionTypeApi';
   import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi';
-  import { questionSetApi } from '@/api/questionSet';
+  import { questionSetApi } from '@/api/admin/question-set/questionSet';
 
   export default {
     name: 'QuestionSet',
