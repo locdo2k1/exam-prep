@@ -12,6 +12,7 @@ import QuestionAdminList from '../pages/admin/question/QuestionAdminList.vue'
 import QuestionSet from '../components/question/QuestionSet.vue'
 import QuestionSetList from '../pages/admin/question-set/QuestionSetList.vue'
 import QuestionSetCreate from '../pages/admin/question-set/QuestionSetCreate.vue'
+import QuestionSetEdit from '../pages/admin/question-set/QuestionSetEdit.vue'
 
 const routes = [
    {
@@ -85,6 +86,12 @@ const routes = [
             path: 'question-sets/create',
             name: 'admin-question-sets-create',
             component: QuestionSetCreate,
+            meta: { requiresAuth: true },
+         },
+         {
+            path: 'question-sets/edit/:id',
+            name: 'admin-question-sets-edit',
+            component: QuestionSetEdit,
             meta: { requiresAuth: true },
          },
          {

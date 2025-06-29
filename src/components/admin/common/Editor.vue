@@ -12,11 +12,10 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import 'katex/dist/katex.min.css'
 import katex from 'katex'
 window.katex = katex
+import { ImageDrop } from 'quill-image-drop-module'
 import ImageResize from 'quill-image-resize-vue'
-// Only register if not already registered
-if (!Quill.imports['modules/imageResize']) {
-  Quill.register('modules/imageResize', ImageResize.default || ImageResize)
-}
+Quill.register('modules/imageDrop', ImageDrop)
+Quill.register('modules/imageResize', ImageResize)
 
 // Props
 const props = defineProps({
@@ -65,8 +64,10 @@ const editorOptions = {
       // KaTeX options
       katex: katex
     },
-    // keyboard bindings removed to allow default enter behavior
-    imageResize: {}
+    imageDrop: true,
+    imageResize: {
+      modules: ['Resize', 'DisplaySize', 'Toolbar']
+    }
   },
   placeholder: props.placeholder,
   readOnly: props.readOnly,
