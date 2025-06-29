@@ -234,10 +234,68 @@
         <button @click="editQuestion(selectedQuestion)"
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 transition-colors duration-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path>
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+            <path d="m15 5 4 4"></path>
           </svg>
           Edit Question
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div v-if="showDeleteModal" class="fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click.self="cancelDelete"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl dark:bg-gray-800 overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:h-10 sm:w-10">
+              <svg class="h-6 w-6 text-red-600 dark:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="ml-4 flex-1">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                {{ deleteError ? 'Cannot Delete Question' : 'Delete Question' }}
+              </h3>
+              <div class="mt-2 text-sm">
+                <div v-if="deleteError" class="text-red-600 dark:text-red-400">
+                  <p>{{ deleteError }}</p>
+                </div>
+                <div v-else>
+                  <p class="text-gray-500 dark:text-gray-400">Are you sure you want to delete this question?</p>
+                  <p v-if="questionToDelete" class="mt-1 font-medium text-gray-700 dark:text-gray-300 truncate">
+                    {{ questionToDelete.prompt?.substring(0, 50) }}{{ questionToDelete.prompt?.length > 50 ? '...' : '' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 flex justify-end space-x-3">
+          <button
+            type="button"
+            @click="cancelDelete"
+            :disabled="deleting"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            {{ deleteError ? 'Close' : 'Cancel' }}
+          </button>
+          <button
+            v-if="!deleteError"
+            type="button"
+            @click="confirmDelete"
+            :disabled="deleting"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <svg v-if="deleting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ deleting ? 'Deleting...' : 'Delete' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -342,6 +400,10 @@ const columns = [
 
 // Questions data
 const questions = ref([]);
+const showDeleteModal = ref(false);
+const deleting = ref(false);
+const questionToDelete = ref(null);
+const deleteError = ref('');
 const loading = ref(false);
 const currentPage = ref(1);
 const itemsPerPage = ref(10); 
@@ -527,14 +589,55 @@ function editQuestion(question) {
   router.push(`/admin/question-management/edit/${question.id}`);
 }
 
+// Delete question function
 function deleteQuestion(question) {
-  if (confirm(`Are you sure you want to delete the question: ${question.question}?`)) {
-    // Here you would typically make an API call to delete the question
-    const index = questions.value.findIndex(q => q.id === question.id);
+  questionToDelete.value = question;
+  deleteError.value = ''; // Reset error message when opening the modal
+  showDeleteModal.value = true;
+}
+
+async function confirmDelete() {
+  if (!questionToDelete.value) return;
+  
+  try {
+    deleting.value = true;
+    // Call the API to delete the question
+    await questionApi.delete(questionToDelete.value.id);
+    
+    // Remove the question from the local state
+    const index = questions.value.findIndex(q => q.id === questionToDelete.value.id);
     if (index !== -1) {
       questions.value.splice(index, 1);
     }
+    
+    showDeleteModal.value = false;
+    // You might want to show a success message here
+    console.log('Question deleted successfully');
+  } catch (error) {
+    console.error('Error deleting question:', error);
+    // Set user-friendly error message based on the error type
+    const errorMessage = error?.response?.data?.message || '';
+    if (typeof errorMessage === 'string' && errorMessage.toLowerCase().includes('being used')) {
+      deleteError.value = 'This question is currently being used in one or more question sets and cannot be deleted.\n\nPlease remove it from all question sets before attempting to delete it.';
+    } else if (error?.response?.status === 403) {
+      deleteError.value = 'You do not have permission to delete this question.\n\nPlease contact an administrator if you believe this is an error.';
+    } else if (error?.response?.status === 404) {
+      deleteError.value = 'The question could not be found. It may have already been deleted.';
+    } else if (!navigator.onLine) {
+      deleteError.value = 'No internet connection.\n\nPlease check your network and try again.';
+    } else {
+      deleteError.value = 'An unexpected error occurred while trying to delete the question.\n\nPlease try again later or contact support if the problem persists.';
+    }
+  } finally {
+    deleting.value = false;
+    questionToDelete.value = null;
   }
+}
+
+function cancelDelete() {
+  showDeleteModal.value = false;
+  questionToDelete.value = null;
+  deleteError.value = ''; // Clear error when closing
 }
 
 function addNewQuestion() {
