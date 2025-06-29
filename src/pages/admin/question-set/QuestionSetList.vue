@@ -1,5 +1,5 @@
 <template>
-    <div class="container mx-auto px-4 py-6">
+    <div class="relative w-full px-4 py-6">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Question Sets</h1>
             <router-link to="/admin/question-sets/create"
@@ -29,14 +29,59 @@
         </div>
 
         <!-- Delete Confirmation Modal -->
-        <ConfirmationModal :show="showDeleteModal" title="Delete Question Set"
-            message="Are you sure you want to delete this question set? This action cannot be undone."
-            confirm-text="Delete" cancel-text="Cancel" :processing="deleting" @confirm="confirmDelete"
-            @cancel="cancelDelete" />
+        <div v-if="showDeleteModal" class="fixed inset-0 z-50">
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click.self="cancelDelete"></div>
+            <div class="absolute inset-0 flex items-center justify-center p-4">
+                <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl dark:bg-gray-800 overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600 dark:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">
+                                Delete Question Set
+                            </h3>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-500 dark:text-gray-300">
+                                Are you sure you want to delete this question set? This action cannot be undone.
+                            </p>
+                        </div>
+                        <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                            <button
+                                type="button"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
+                                :disabled="deleting"
+                                @click="confirmDelete"
+                            >
+                                <span v-if="deleting" class="flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Deleting...
+                                </span>
+                                <span v-else>Delete</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                                :disabled="deleting"
+                                @click="cancelDelete"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Question Set Preview Modal -->
-        <div v-if="isModalOpen && previewData" class="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto z-[99999]" @click.self="closeModal">
-            <div class="fixed inset-0 h-full w-full bg-gray-900/50 backdrop-blur-sm" @click="closeModal"></div>
+        <div v-if="isModalOpen && previewData" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" @click.self="closeModal">
+            <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" @click="closeModal"></div>
             <div class="relative w-full max-w-4xl bg-white rounded-xl shadow-xl dark:bg-gray-800 overflow-hidden">
                 <!-- Header -->
                 <div class="border-b border-gray-200 dark:border-gray-700">
@@ -161,7 +206,7 @@
                                 Close
                             </button>
                             <button v-if="previewData?.id"
-                                @click="$router.push(`/admin/question-sets/${previewData.id}/edit`)" type="button"
+                                @click="$router.push({ name: 'admin-question-sets-edit', params: { id: previewData.id } })" type="button"
                                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -182,14 +227,13 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import DataTable from '@/components/DataTable.vue';
-import ConfirmationModal from '@/components/ConfirmationModal.vue';
+
 import { questionSetApi } from '@/api/admin/question-set/questionSet';
 
 export default {
     name: 'QuestionSetList',
     components: {
         DataTable,
-        ConfirmationModal,
         PlusIcon
     },
     setup() {
@@ -338,7 +382,7 @@ export default {
                 label: 'Edit',
                 icon: editIcon,
                 handler: (item) => {
-                    router.push(`/admin/question-sets/${item.id}/edit`);
+                    router.push({ name: 'admin-question-sets-edit', params: { id: item.id } });
                 },
                 class: 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30',
             },
