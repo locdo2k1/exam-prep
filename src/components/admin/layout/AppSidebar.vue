@@ -92,47 +92,51 @@
                     (isExpanded || isHovered || isMobileOpen)
                     ">
                     <ul class="mt-2 space-y-1 ml-9">
-                      <li v-for="subItem in item.subItems" :key="subItem.name">
-                        <router-link :to="subItem.path" :class="[
-                          'menu-dropdown-item',
+                      <li v-for="(subItem, subIndex) in item.subItems" :key="subItem.name">
+                        <!-- First level submenu item -->
+                        <div v-if="subItem.subItems && subItem.subItems.length" class="space-y-1">
+                          <div @click.stop="toggleSubmenu(groupIndex, index, subIndex)" :class="[
+                            'menu-dropdown-item cursor-pointer',
+                            {
+                              'menu-dropdown-item-active': isAnySubmenuActive(subItem),
+                              'menu-dropdown-item-inactive': !isAnySubmenuActive(subItem),
+                            },
+                          ]">
+                            {{ subItem.name }}
+                            <ChevronDownIcon :class="[
+                              'ml-auto w-4 h-4 transition-transform duration-200',
+                              {
+                                'rotate-180': isSubmenuOpen(groupIndex, index, subIndex),
+                              },
+                            ]" />
+                          </div>
+                          <!-- Second level submenu -->
+                          <transition @enter="startTransition" @after-enter="endTransition" @before-leave="startTransition"
+                            @after-leave="endTransition">
+                            <ul v-show="isSubmenuOpen(groupIndex, index, subIndex)" class="mt-1 space-y-1 ml-4">
+                              <li v-for="nestedItem in subItem.subItems" :key="nestedItem.name">
+                                <router-link :to="nestedItem.path" :class="[
+                                  'menu-dropdown-item block',
+                                  {
+                                    'menu-dropdown-item-active': isActive(nestedItem.path),
+                                    'menu-dropdown-item-inactive': !isActive(nestedItem.path),
+                                  },
+                                ]">
+                                  {{ nestedItem.name }}
+                                </router-link>
+                              </li>
+                            </ul>
+                          </transition>
+                        </div>
+                        <!-- Regular submenu item (no nested submenu) -->
+                        <router-link v-else :to="subItem.path" :class="[
+                          'menu-dropdown-item block',
                           {
-                            'menu-dropdown-item-active': isActive(
-                              subItem.path
-                            ),
-                            'menu-dropdown-item-inactive': !isActive(
-                              subItem.path
-                            ),
+                            'menu-dropdown-item-active': isActive(subItem.path),
+                            'menu-dropdown-item-inactive': !isActive(subItem.path),
                           },
                         ]">
                           {{ subItem.name }}
-                          <span class="flex items-center gap-1 ml-auto">
-                            <span v-if="subItem.new" :class="[
-                              'menu-dropdown-badge',
-                              {
-                                'menu-dropdown-badge-active': isActive(
-                                  subItem.path
-                                ),
-                                'menu-dropdown-badge-inactive': !isActive(
-                                  subItem.path
-                                ),
-                              },
-                            ]">
-                              new
-                            </span>
-                            <span v-if="subItem.pro" :class="[
-                              'menu-dropdown-badge',
-                              {
-                                'menu-dropdown-badge-active': isActive(
-                                  subItem.path
-                                ),
-                                'menu-dropdown-badge-inactive': !isActive(
-                                  subItem.path
-                                ),
-                              },
-                            ]">
-                              pro
-                            </span>
-                          </span>
                         </router-link>
                       </li>
                     </ul>
@@ -187,7 +191,36 @@ const menuGroups = [
       {
         icon: QuestionBankIcon,
         name: "Question Bank",
-        path: "",
+        subItems: [
+          {
+            name: "Questions",
+            path: "/admin/question-management",
+            subItems: [
+              {
+                name: "List Questions",
+                path: "/admin/question-management"
+              },
+              {
+                name: "Create Question",
+                path: "/admin/question-management/create"
+              }
+            ]
+          },
+          {
+            name: "Question Sets",
+            path: "/admin/question-sets",
+            subItems: [
+              {
+                name: "List Sets",
+                path: "/admin/question-sets"
+              },
+              {
+                name: "Create Set",
+                path: "/admin/question-sets/create"
+              }
+            ]
+          }
+        ]
       },
       {
         icon: UserCircleIcon,
@@ -225,29 +258,50 @@ const menuGroups = [
 
 const isActive = (path) => route.path === path;
 
-const toggleSubmenu = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
-  openSubmenu.value = openSubmenu.value === key ? null : key;
+const isAnySubmenuActive = (item) => {
+  if (isActive(item.path)) return true;
+  if (item.subItems) {
+    return item.subItems.some(subItem => isAnySubmenuActive(subItem));
+  }
+  return false;
 };
 
-const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.some((group) =>
-    group.items.some(
-      (item) =>
-        item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
-    )
-  );
-});
+const toggleSubmenu = (groupIndex, itemIndex, subIndex = null) => {
+  if (subIndex !== null) {
+    const key = `${groupIndex}-${itemIndex}-${subIndex}`;
+    openSubmenu.value = openSubmenu.value === key ? null : key;
+  } else {
+    const key = `${groupIndex}-${itemIndex}`;
+    openSubmenu.value = openSubmenu.value === key ? null : key;
+  }
+};
 
-const isSubmenuOpen = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
-  return (
-    openSubmenu.value === key ||
-    (isAnySubmenuRouteActive.value &&
-      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
-        isActive(subItem.path)
-      ))
-  );
+const isSubmenuOpen = (groupIndex, itemIndex, subIndex = null) => {
+  if (subIndex !== null) {
+    const key = `${groupIndex}-${itemIndex}-${subIndex}`;
+    const item = menuGroups[groupIndex].items[itemIndex];
+    const subItem = item.subItems?.[subIndex];
+    
+    if (!subItem) return false;
+    
+    return (
+      openSubmenu.value === key ||
+      (subItem.subItems?.some(nestedItem => isActive(nestedItem.path)))
+    );
+  } else {
+    const key = `${groupIndex}-${itemIndex}`;
+    const item = menuGroups[groupIndex].items[itemIndex];
+    
+    if (!item.subItems) return false;
+    
+    return (
+      openSubmenu.value === key ||
+      item.subItems.some(subItem => 
+        isActive(subItem.path) || 
+        (subItem.subItems?.some(nestedItem => isActive(nestedItem.path)))
+      )
+    );
+  }
 };
 
 const startTransition = (el) => {
