@@ -61,37 +61,20 @@ const routes = [
       path: '/admin',
       component: AdminLayout,
       children: [
+         // Legacy routes (keep for backward compatibility)
          {
             path: 'question-management',
-            component: QuestionAdminList,
+            redirect: '/admin/question-bank/questions',
             meta: { requiresAuth: true },
          },
          {
             path: 'question-management/create',
-            component: QuestionAdminCreate,
+            redirect: '/admin/question-bank/questions/create',
             meta: { requiresAuth: true },
          },
          {
             path: 'question-management/edit/:id',
-            component: QuestionAdminEdit,
-            meta: { requiresAuth: true },
-         },
-         {
-            path: 'question-sets',
-            name: 'admin-question-sets',
-            component: QuestionSetList,
-            meta: { requiresAuth: true },
-         },
-         {
-            path: 'question-sets/create',
-            name: 'admin-question-sets-create',
-            component: QuestionSetCreate,
-            meta: { requiresAuth: true },
-         },
-         {
-            path: 'question-sets/edit/:id',
-            name: 'admin-question-sets-edit',
-            component: QuestionSetEdit,
+            redirect: to => ({ path: `/admin/question-bank/questions/edit/${to.params.id}` }),
             meta: { requiresAuth: true },
          },
          {
@@ -100,13 +83,61 @@ const routes = [
             component: QuestionSet,
             meta: { requiresAuth: true }
          },
+         
+         // New Question Bank routes
+         {
+            path: 'question-bank',
+            redirect: '/admin/question-bank/question-sets',
+            meta: { requiresAuth: true },
+            children: [
+               // Question Sets
+               {
+                  path: 'question-sets',
+                  name: 'admin-question-bank-question-sets',
+                  component: QuestionSetList,
+                  meta: { requiresAuth: true },
+               },
+               {
+                  path: 'question-sets/create',
+                  name: 'admin-question-bank-question-sets-create',
+                  component: QuestionSetCreate,
+                  meta: { requiresAuth: true },
+               },
+               {
+                  path: 'question-sets/edit/:id',
+                  name: 'admin-question-bank-question-sets-edit',
+                  component: QuestionSetEdit,
+                  meta: { requiresAuth: true },
+               },
+               
+               // Questions
+               {
+                  path: 'questions',
+                  name: 'admin-question-bank-questions',
+                  component: QuestionAdminList,
+                  meta: { requiresAuth: true },
+               },
+               {
+                  path: 'questions/create',
+                  name: 'admin-question-bank-questions-create',
+                  component: QuestionAdminCreate,
+                  meta: { requiresAuth: true },
+               },
+               {
+                  path: 'questions/edit/:id',
+                  name: 'admin-question-bank-questions-edit',
+                  component: QuestionAdminEdit,
+                  meta: { requiresAuth: true },
+               },
+            ]
+         },
       ]
    },
    {
       path: '/admin/login',
       component: AdminLogin,
       beforeEnter: (to, from, next) => {
-         // If user is already authenticated, redirect to /user
+         // If user is already authenticated, redirect to /admin
          if (isAuthenticated()) {
             next('/admin')
          } else {
