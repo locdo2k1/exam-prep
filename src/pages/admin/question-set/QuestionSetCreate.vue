@@ -113,7 +113,7 @@
             <!-- Search and Filter Section -->
             <div
               class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border-0 border-gray-200 dark:border-gray-700">
-              <div class="flex flex-col space-y-4">
+              <div class="flex flex-col space-y-4 p-4">
                 <!-- Header with Title and Reset -->
                 <div class="flex items-center justify-between">
                   <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filter Questions</h3>
