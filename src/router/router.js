@@ -13,6 +13,7 @@ import QuestionSet from '../components/question/QuestionSet.vue'
 import QuestionSetList from '../pages/admin/question-set/QuestionSetList.vue'
 import QuestionSetCreate from '../pages/admin/question-set/QuestionSetCreate.vue'
 import QuestionSetEdit from '../pages/admin/question-set/QuestionSetEdit.vue'
+import TestCreate from '../pages/admin/test/TestCreate.vue'
 
 const routes = [
    {
@@ -83,7 +84,13 @@ const routes = [
             component: QuestionSet,
             meta: { requiresAuth: true }
          },
-         
+         // Tests
+         {
+            path: 'tests/create',
+            name: 'admin-question-bank-tests-create',
+            component: TestCreate,
+            meta: { requiresAuth: true, title: 'Create New Test' },
+         },
          // New Question Bank routes
          {
             path: 'question-bank',
@@ -109,7 +116,7 @@ const routes = [
                   component: QuestionSetEdit,
                   meta: { requiresAuth: true },
                },
-               
+
                // Questions
                {
                   path: 'questions',

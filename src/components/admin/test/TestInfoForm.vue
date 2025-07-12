@@ -1,0 +1,442 @@
+<template>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 h-full flex flex-col border border-gray-100 dark:border-gray-700/50 transition-all duration-200 hover:shadow-md dark:hover:border-gray-600">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
+        <DocumentTextIcon class="h-5 w-5 mr-2.5 text-blue-500" />
+        Test Information
+      </h2>
+    </div>
+    
+    <div class="space-y-6 flex-1">
+      <!-- Title Input -->
+      <div class="group relative">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+          Test Title
+          <span class="text-red-500 ml-0.5">*</span>
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input
+            v-model="testData.title"
+            type="text"
+            required
+            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
+            placeholder="e.g., IELTS Practice Test 2023"
+          />
+        </div>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A clear and descriptive title for your test</p>
+      </div>
+      
+      <!-- Duration Input -->
+      <div class="group relative w-full">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+          Duration (minutes)
+          <span class="text-red-500 ml-0.5">*</span>
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <input
+            v-model.number="testData.duration"
+            type="number"
+            min="1"
+            required
+            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
+            placeholder="e.g., 60"
+          />
+        </div>
+      </div>
+      
+      <!-- Audio File Input -->
+      <div class="group relative mt-6">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200">
+          Audio File
+          <span class="text-gray-400 text-xs ml-1">(Optional)</span>
+        </label>
+        <div class="relative">
+          <input
+            type="file"
+            ref="audioFileInput"
+            class="hidden"
+            accept="audio/*"
+            @change="handleFileUpload"
+          >
+          <div class="flex items-stretch">
+            <button
+              type="button"
+              @click="$refs.audioFileInput.click()"
+              class="inline-flex items-center px-4 py-2.5 rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+              </svg>
+              Choose File
+            </button>
+            <div class="flex-1 flex items-center px-4 py-2.5 rounded-r-lg border border-l-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-500 dark:text-gray-400 truncate">
+              <div class="flex-1 truncate">
+                {{ testData.audioFile?.name || 'No file selected' }}
+              </div>
+              <button 
+                v-if="testData.audioFile"
+                @click.stop="testData.audioFile = null"
+                class="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+                aria-label="Remove file"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Supported formats: MP3, WAV, OGG</p>
+      </div>
+      
+      <!-- Description Textarea -->
+      <div class="group relative">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+          Description
+          <span class="text-gray-400 text-xs ml-1">(Optional)</span>
+        </label>
+        <div class="relative">
+          <textarea
+            v-model="testData.description"
+            rows="6"
+            class="w-full px-4 py-3 pr-10 text-base rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200 resize-none min-h-[150px] leading-relaxed"
+            placeholder="Enter a detailed description of the test..."
+            maxlength="500"
+          ></textarea>
+          <div class="absolute bottom-2 right-2 text-xs text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-gray-800/80 px-1.5 py-0.5 rounded">
+            {{ testData.description ? testData.description.length : 0 }}/500
+          </div>
+        </div>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Provide additional details about this test</p>
+      </div>
+      
+      <!-- Add Content Section -->
+      <div class="pt-6 mt-4 border-t border-gray-100 dark:border-gray-700/50">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Content
+          </h3>
+          <span class="text-xs text-gray-400 dark:text-gray-500">Select content type</span>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            type="button"
+            @click="openAddPartModal"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200"
+          >
+            <div class="w-10 h-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-lg mb-2 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Add Part</span>
+            <span class="text-xs text-gray-400 mt-0.5">Group questions into parts</span>
+          </button>
+          
+          <button
+            type="button"
+            @click="$emit('add-question', 0)"  
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+          >
+            <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-lg mb-2 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Add Question</span>
+            <span class="text-xs text-gray-400 mt-0.5">Single question</span>
+          </button>
+          
+          <button
+            type="button"
+            @click="$emit('add-question-set')"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200"
+          >
+            <div class="w-10 h-10 flex items-center justify-center bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-lg mb-2 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Question Set</span>
+            <span class="text-xs text-gray-400 mt-0.5">Multiple questions</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Save Button -->
+      <div class="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700/50">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            <p>Make sure all required fields are filled</p>
+            <p v-if="!isFormValid" class="text-amber-500 text-xs mt-1 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 100 2v3a1 1 0 102 0v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              Please complete all required fields
+            </p>
+          </div>
+          <button
+            type="button"
+            @click="$emit('save')"
+            :disabled="!isFormValid"
+            class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          >
+            <svg v-if="isSaving" class="animate-spin mr-1.5 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            {{ isSaving ? 'Saving...' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Part Modal -->
+    <div v-if="showPartModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click.self="showPartModal = false">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 relative">
+        <button 
+          @click="showPartModal = false" 
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          aria-label="Close modal"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Part to Add</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Search Parts
+            </label>
+            <SearchableSelect
+              :model-value="selectedPart?.id"
+              :options="availableParts"
+              value-key="id"
+              label-key="title"
+              placeholder="Search parts..."
+              :loading="false"
+              @search="handleSearch"
+              @select="handleSelectPart"
+              @update:modelValue="(val) => selectedPart = availableParts.find(p => p.id === val)"
+            />
+          </div>
+
+          <!-- Selected Part Preview -->
+          <div v-if="selectedPart" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50">
+            <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-1">{{ selectedPart.title }}</h4>
+            <p v-if="selectedPart.description" class="text-sm text-blue-700 dark:text-blue-300">{{ selectedPart.description }}</p>
+            <p v-else class="text-xs text-blue-600/70 dark:text-blue-400/70 italic">No additional description available</p>
+          </div>
+          
+          <div class="flex justify-end space-x-3 pt-2">
+            <button
+              type="button"
+              @click="showPartModal = false"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="addSelectedPart"
+              :disabled="!selectedPart"
+              :class="[
+                'px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
+                !selectedPart ? 'opacity-50 cursor-not-allowed' : ''
+              ]"
+            >
+              Add Selected Part
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, watch, computed } from 'vue';
+import { DocumentTextIcon } from '@heroicons/vue/24/outline';
+import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
+
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: () => ({
+      title: '',
+      duration: 60,
+      audioFile: null,
+      description: ''
+    })
+  },
+  isSaving: {
+    type: Boolean,
+    default: false
+  }
+});
+
+const emit = defineEmits([
+  'update:modelValue', 
+  'add-part', 
+  'add-question', 
+  'add-question-set', 
+  'save'
+]);
+
+const testData = ref({...props.modelValue});
+const showPartModal = ref(false);
+const selectedPart = ref(null);
+const availableParts = ref([
+  { id: '1', title: 'Part 1: Listening Section' },
+  { id: '2', title: 'Part 2: Reading Section' },
+  { id: '3', title: 'Part 3: Writing Section' },
+  { id: '4', title: 'Part 4: Speaking Section' },
+  { id: '5', title: 'Part 5: Grammar Section' },
+]);
+
+const openAddPartModal = () => {
+  selectedPart.value = null;
+  showPartModal.value = true;
+};
+
+const handleSearch = (query) => {
+  // In a real app, you would fetch parts based on the search query
+  console.log('Searching for parts:', query);
+};
+
+const handleSelectPart = (part) => {
+  selectedPart.value = part;
+};
+
+const addSelectedPart = () => {
+  if (!selectedPart.value) return;
+  
+  emit('add-part', {
+    ...selectedPart.value,
+    questions: []
+  });
+  showPartModal.value = false;
+};
+
+// Form validation
+const isFormValid = computed(() => {
+  return testData.value.title.trim() !== '' && 
+         testData.value.duration > 0;
+});
+
+// Watch for changes in the form data
+watch(testData, (newValue) => {
+  emit('update:modelValue', newValue);
+}, { deep: true });
+
+// Handle file upload
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    // Check file type
+    const validTypes = ['audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mpeg'];
+    if (!validTypes.includes(file.type)) {
+      // Show error or handle invalid file type
+      console.error('Invalid file type. Please upload an audio file (MP3, WAV, or OGG)');
+      return;
+    }
+    
+    // Check file size (e.g., 10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      console.error('File is too large. Maximum size is 10MB');
+      return;
+    }
+    
+    testData.value.audioFile = file;
+  }
+};
+
+// Handle save with validation
+const handleSave = () => {
+  if (isFormValid.value) {
+    emit('save');
+  }
+};
+</script>
+
+<style scoped>
+/* Hide number input spinner */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Textarea placeholder */
+textarea::placeholder {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Custom scrollbar for textarea */
+textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* gray-300 */
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* gray-400 */
+}
+
+/* Dark mode scrollbar styles */n.dark textarea::-webkit-scrollbar-thumb {
+  background: #4b5563; /* gray-600 */
+}
+
+.dark textarea::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* gray-500 */
+}
+
+/* Firefox scrollbar */
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent; /* gray-300 */
+}
+
+.dark textarea {
+  scrollbar-color: #4b5563 transparent; /* gray-600 */
+}
+</style>
