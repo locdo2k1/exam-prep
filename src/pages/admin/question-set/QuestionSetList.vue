@@ -382,7 +382,7 @@ export default {
                 label: 'Edit',
                 icon: editIcon,
                 handler: (item) => {
-                    router.push({ name: 'admin-question-sets-edit', params: { id: item.id } });
+                    router.push({ name: 'admin-question-bank-question-sets-edit', params: { id: item.id } });
                 },
                 class: 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30',
             },
