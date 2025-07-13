@@ -145,7 +145,7 @@
                   <!-- Category Filter -->
                   <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                    <SearchableSelect v-model="filters.categoryId"
+                    <SearchableSelect ref="categorySelect" v-model="filters.categoryId"
                       :options="categories.map(c => ({ value: c.id, label: c.name }))" :loading="loadingCategories"
                       :has-more="hasMoreCategories" placeholder="Search categories..." @search="handleCategorySearch"
                       @load-more="handleLoadMoreCategories" />
@@ -154,7 +154,7 @@
                   <!-- Question Type Filter -->
                   <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question Type</label>
-                    <SearchableSelect v-model="filters.questionTypeId" :options="questionTypes"
+                    <SearchableSelect ref="typeSelect" v-model="filters.questionTypeId" :options="questionTypes"
                       :loading="loadingQuestionTypes" placeholder="Search types..." @search="handleTypeSearch" />
                   </div>
                 </div>
@@ -816,7 +816,6 @@
       // Refs for SearchableSelect components
       const categorySelect = ref(null);
       const typeSelect = ref(null);
-  
       // Sanitize HTML function
       const sanitizeHtml = (html) => {
         if (!html) return '';

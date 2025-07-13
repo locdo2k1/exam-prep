@@ -116,7 +116,7 @@
             <!-- Search and Filter Section -->
             <div
               class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border-0 border-gray-200 dark:border-gray-700">
-              <div class="flex flex-col space-y-4">
+              <div class="flex flex-col space-y-4 p-4">
                 <!-- Header with Title and Reset -->
                 <div class="flex items-center justify-between">
                   <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filter Questions</h3>
@@ -148,7 +148,9 @@
                   <!-- Category Filter -->
                   <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                    <SearchableSelect v-model="filters.categoryId"
+                    <SearchableSelect 
+                      ref="categorySelect"
+                      v-model="filters.categoryId"
                       :options="categories.map(c => ({ value: c.id, label: c.name }))" :loading="loadingCategories"
                       :has-more="hasMoreCategories" placeholder="Search categories..." @search="handleCategorySearch"
                       @load-more="handleLoadMoreCategories" />
@@ -157,8 +159,13 @@
                   <!-- Question Type Filter -->
                   <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question Type</label>
-                    <SearchableSelect v-model="filters.questionTypeId" :options="questionTypes"
-                      :loading="loadingQuestionTypes" placeholder="Search types..." @search="handleTypeSearch" />
+                    <SearchableSelect 
+                      ref="typeSelect"
+                      v-model="filters.questionTypeId" 
+                      :options="questionTypes"
+                      :loading="loadingQuestionTypes" 
+                      placeholder="Search types..." 
+                      @search="handleTypeSearch" />
                   </div>
                 </div>
 
@@ -464,9 +471,6 @@
         // Reset pagination
         currentPage.value = 0;
         searchQuery.value = '';
-  
-        // Wait for the next tick to ensure the refs are updated
-        await nextTick();
   
         // Reset the SearchableSelect components
         if (categorySelect.value) {
@@ -885,7 +889,7 @@
       // Refs for SearchableSelect components
       const categorySelect = ref(null);
       const typeSelect = ref(null);
-  
+
       // Sanitize HTML function
       const sanitizeHtml = (html) => {
         if (!html) return '';
