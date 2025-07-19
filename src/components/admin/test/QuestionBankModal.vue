@@ -1,188 +1,233 @@
 <template>
-  <fwb-modal v-if="isOpen" @close="closeModal" size="5xl" class="max-w-5xl">
+  <fwb-modal v-if="isOpen" @close="closeModal" size="5xl" class="max-w-5xl [&>div]:[&>div]:overflow-hidden">
     <template #header>
       <div class="flex items-center text-lg font-medium text-gray-900 dark:text-white">
         Question Bank
       </div>
     </template>
-    
+
     <template #body>
-      <div class="w-full flex flex-col h-[70vh]">
+      <!-- Toggle Button -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filter Questions</h3>
+        <div class="flex items-center">
+          <span v-if="selectedCount > 0" class="text-sm font-medium text-blue-600 dark:text-blue-400 mr-4">
+            {{ selectedCount }} selected
+          </span>
+          <button @click.stop="toggleFilters"
+            class="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            :aria-expanded="isFiltersExpanded" type="button">
+            <span class="relative inline-flex items-center h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-200"
+              :class="isFiltersExpanded ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'">
+              <span class="sr-only">Toggle filters</span>
+              <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200"
+                :class="{ 'translate-x-4': isFiltersExpanded, 'translate-x-0.5': !isFiltersExpanded }">
+              </span>
+            </span>
+            <span class="ml-2">{{ isFiltersExpanded ? 'Filters On' : 'Filters Off' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex w-full h-[50vh] gap-6">
         <!-- Search and Filter Section -->
-        <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border-0 border-gray-200 dark:border-gray-700">
-          <div class="flex flex-col space-y-4 p-4">
-            <!-- Header with Title and Reset -->
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filter Questions</h3>
-              <button @click="resetFilters"
-                class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Reset All
-              </button>
-            </div>
+        <div v-show="isFiltersExpanded" class="w-1/3 flex flex-col transition-all duration-200">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col h-full">
 
-            <!-- Search Bar -->
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input v-model="searchQuery" @input="handleSearchInput" type="text"
-                class="block w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
-                placeholder="Search questions by prompt, content, or tags...">
-            </div>
-
-            <!-- Main Filters Grid -->
-            <div class="grid grid-cols-2 gap-4 w-full">
-              <!-- Category Filter -->
-              <div class="space-y-1">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                <SearchableSelect 
-                  v-model="selectedCategory"
-                  :options="categories.map(c => ({ value: c.id, label: c.name }))"
-                  :loading="loadingStates.categories"
-                  :disabled="loadingStates.categories"
-                  placeholder="Select category..." 
-                  @search="handleCategorySearch" />
-              </div>
-
-              <!-- Question Type Filter -->
-              <div class="space-y-1">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question Type</label>
-                <SearchableSelect 
-                  v-model="selectedQuestionType" 
-                  :options="questionTypeOptions"
-                  :loading="loadingStates.questionTypes"
-                  :disabled="loadingStates.questionTypes"
-                  placeholder="Select question type..." 
-                  @search="handleTypeSearch" />
-              </div>
-            </div>
-
-            <!-- Secondary Filters Row -->
-            <div class="rounded-lg mt-2 space-y-4">
-              <!-- Score Range -->
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="minScore" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min
-                    Score</label>
-                  <input id="minScore" v-model.number="minScore" type="number" min="0"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Min score">
+            <!-- Collapsible Content -->
+            <div v-show="isFiltersExpanded"
+              class="border-t border-gray-200 dark:border-gray-700 flex-1 overflow-y-auto">
+              <div class="flex flex-col space-y-4 p-4">
+                <!-- Header with Title and Reset -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between w-full">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Refine Results</h4>
+                    <button @click="resetAllFilters"
+                      class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Reset All
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label for="maxScore" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max
-                    Score</label>
-                  <input id="maxScore" v-model.number="maxScore" type="number" min="0"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Max score">
+
+                <!-- Search Bar -->
+                <div class="relative mb-2.5">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input v-model="searchQuery" @input="handleSearchInput" type="text"
+                    class="block w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+                    placeholder="Search questions by prompt, content, or tags...">
+                </div>
+
+                <!-- Main Filters Grid -->
+                <div class="grid grid-cols-2 gap-4 w-full mb-0">
+                  <!-- Category Filter -->
+                  <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                    <SearchableSelect ref="categorySelect" v-model="selectedCategory"
+                      :options="categories.map(c => ({ value: c.id, label: c.name }))"
+                      :loading="loadingStates.categories" :disabled="loadingStates.categories"
+                      placeholder="Select category..." @search="handleCategorySearch" />
+                  </div>
+
+                  <!-- Question Type Filter -->
+                  <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Question Type</label>
+                    <SearchableSelect ref="typeSelect" v-model="selectedQuestionType" :options="questionTypeOptions"
+                      :loading="loadingStates.questionTypes" :disabled="loadingStates.questionTypes"
+                      placeholder="Select question type..." @search="handleTypeSearch" />
+                  </div>
+                </div>
+
+                <!-- Secondary Filters Row -->
+                <div class="rounded-lg mt-2 space-y-4">
+                  <!-- Score Range -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label for="minScore"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min
+                        Score</label>
+                      <input id="minScore" v-model.number="minScore" type="number" min="0"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="Min score">
+                    </div>
+                    <div>
+                      <label for="maxScore"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max
+                        Score</label>
+                      <input id="maxScore" v-model.number="maxScore" type="number" min="0"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="Max score">
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div class="border-t border-gray-200 dark:border-gray-600 px-4 py-2">
-            <div class="flex justify-between items-center">
-              <div class="text-sm text-gray-500 dark:text-gray-400">
-                {{ totalQuestions }} questions found
-              </div>
-              <div v-if="selectedCount > 0" class="text-sm font-medium text-blue-600 dark:text-blue-400">
-                {{ selectedCount }} selected
+              <div class="border-t border-gray-200 dark:border-gray-600 px-4 py-2 mt-auto flex-shrink-0">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ totalQuestions }} questions found
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Questions List -->
-        <div class="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-          <!-- Empty State -->
-          <div v-if="!loadingStates.questions && questions.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            No questions found matching your criteria.
-          </div>
-          <div v-else-if="loadingStates.questions" class="flex flex-col items-center justify-center py-8 space-y-4">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-            <p class="text-gray-500 dark:text-gray-400">Loading questions...</p>
-          </div>
+        <!-- Questions List Section -->
+        <div :class="['flex-1 flex flex-col transition-all duration-200', { 'w-full': !isFiltersExpanded }]">
+          <div
+            class="flex-1 overflow-auto bg-transparent p-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 scrollbar-thumb-rounded-full transition-colors duration-200">
+            <!-- Empty State -->
+            <div v-if="!loadingStates.questions && questions.length === 0"
+              class="text-center py-8 text-gray-500 dark:text-gray-400">
+              No questions found matching your criteria.
+            </div>
+            <div v-else-if="loadingStates.questions" class="flex flex-col items-center justify-center py-8 space-y-4">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400">
+              </div>
+              <p class="text-gray-500 dark:text-gray-400">Loading questions...</p>
+            </div>
 
-          <!-- Questions List -->
-          <div class="space-y-3">
-            <div v-for="(question, index) in filteredQuestions" :key="question.id"
-              class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-              :class="{ 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20': isQuestionSelected(question.id) }"
-              @click="toggleQuestion(question)">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 mt-1">
-                  <div class="flex items-center h-5">
-                    <input type="checkbox" :checked="isQuestionSelected(question.id)"
-                      class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      @click.stop>
+            <!-- Questions List -->
+            <div class="space-y-3">
+              <div v-for="(question, index) in filteredQuestions" :key="question.id"
+                class="p-4 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-sm transition-all duration-200 cursor-pointer"
+                :class="{
+                  'ring-2 ring-blue-500 bg-blue-50/80 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800': isQuestionSelected(question.id),
+                  'hover:bg-gray-50 dark:hover:bg-gray-700/70': !isQuestionSelected(question.id)
+                }"
+                @click="toggleQuestion(question)">
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 mt-1">
+                    <div class="flex items-center h-5">
+                      <input type="checkbox" :checked="isQuestionSelected(question.id)"
+                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" @click.stop>
+                    </div>
                   </div>
-                </div>
-                <div class="ml-3 flex-1 min-w-0">
-                  <div class="flex items-center justify-between space-x-2">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      <span v-html="question.prompt || 'Untitled Question'"></span>
-                    </h4>
-                    <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                      {{ question.type || QUESTION_TYPES.MULTIPLE_CHOICE }}
-                    </span>
-                  </div>
-                  
-                  <!-- Question Options / Answers -->
-                  <div v-if="question.type === QUESTION_TYPES.MULTIPLE_CHOICE && question.options && question.options.length > 0" class="mt-2 space-y-1.5">
-                    <!-- Multiple Choice Options -->
-                    <div v-for="(option, oIndex) in question.options" :key="option.id" 
-                      class="flex items-start text-sm text-gray-700 dark:text-gray-300">
-                      <span class="font-medium mr-2 mt-0.5">{{ String.fromCharCode(65 + oIndex) }}.</span>
-                      <div class="flex-1 flex items-baseline flex-nowrap gap-2">
-                        <span v-html="option.text || 'No content'" class="whitespace-nowrap"></span>
-                        <span v-if="option.correct" class="inline-flex items-center text-xs text-green-600 dark:text-green-400 whitespace-nowrap">
-                          <svg class="h-3 w-3 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                          </svg>
-                          <span>Correct Answer</span>
-                        </span>
+                  <div class="ml-3 flex-1 min-w-0">
+                    <div class="flex items-center justify-between space-x-2">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <span v-html="question.prompt || 'Untitled Question'"></span>
+                      </h4>
+                      <span
+                        class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                        {{ question.type || QUESTION_TYPES.MULTIPLE_CHOICE }}
+                      </span>
+                    </div>
+
+                    <!-- Question Options / Answers -->
+                    <div
+                      v-if="question.type === QUESTION_TYPES.MULTIPLE_CHOICE && question.options && question.options.length > 0"
+                      class="mt-2 space-y-1.5">
+                      <!-- Multiple Choice Options -->
+                      <div v-for="(option, oIndex) in question.options" :key="option.id"
+                        class="flex items-start text-sm text-gray-700 dark:text-gray-300">
+                        <span class="font-medium mr-2 mt-0.5">{{ String.fromCharCode(65 + oIndex) }}.</span>
+                        <div class="flex-1 flex items-baseline flex-nowrap gap-2">
+                          <span v-html="option.text || 'No content'" class="whitespace-nowrap"></span>
+                          <span v-if="option.correct"
+                            class="inline-flex items-center text-xs text-green-600 dark:text-green-400 whitespace-nowrap">
+                            <svg class="h-3 w-3 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd" />
+                            </svg>
+                            <span>Correct Answer</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div v-else-if="question.type === QUESTION_TYPES.FILL_IN_BLANK && question.questionAnswers && question.questionAnswers.length > 0" class="mt-2 space-y-1.5">
-                    <!-- Fill in the Blank Answers -->
-                    <div class="text-sm text-gray-700 dark:text-gray-300">
-                      <div class="font-medium mb-1 text-blue-600 dark:text-blue-400">Possible Answers:</div>
-                      <div class="flex flex-wrap gap-2">
-                        <span v-for="(answer, aIndex) in question.questionAnswers" :key="aIndex"
-                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                          {{ answer }}
-                        </span>
+                    <div
+                      v-else-if="question.type === QUESTION_TYPES.FILL_IN_BLANK && question.questionAnswers && question.questionAnswers.length > 0"
+                      class="mt-2 space-y-1.5">
+                      <!-- Fill in the Blank Answers -->
+                      <div class="text-sm text-gray-700 dark:text-gray-300">
+                        <div class="font-medium mb-1 text-blue-600 dark:text-blue-400">Possible Answers:</div>
+                        <div class="flex flex-wrap gap-2">
+                          <span v-for="(answer, aIndex) in question.questionAnswers" :key="aIndex"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                            {{ answer }}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div v-else-if="question.type === QUESTION_TYPES.ESSAY" class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
-                    Essay question - No specific answer options
-                  </div>
-                  
-                  <div class="mt-2.5 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
-                    <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
-                      <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span class="font-medium text-gray-700 dark:text-gray-300">{{ question.duration || 0 }}s</span>
+                    <div v-else-if="question.type === QUESTION_TYPES.ESSAY"
+                      class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
+                      Essay question - No specific answer options
                     </div>
-                    <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
-                      <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span class="font-medium text-gray-700 dark:text-gray-300">{{ question.points || 0 }} pts</span>
-                    </div>
-                    <div v-if="question.category" class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
-                      <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                      <span class="truncate max-w-[120px]">{{ question.category }}</span>
+
+                    <div class="mt-2.5 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
+                      <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 p-1">
+                        <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ question.duration || 0
+                          }}s</span>
+                      </div>
+                      <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
+                        <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ question.points || 0 }} pts</span>
+                      </div>
+                      <div v-if="question.category"
+                        class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
+                        <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span class="truncate max-w-[120px]">{{ question.category }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -192,31 +237,25 @@
         </div>
       </div>
     </template>
-    
+
     <template #footer>
       <div class="flex justify-between w-full">
         <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
           {{ selectedCount }} questions selected
         </div>
         <div>
-          <fwb-button 
-            @click="closeModal" 
-            color="alternative" 
-            class="mr-2"
-            :disabled="loadingStates.saving"
-          >
+          <fwb-button @click="closeModal" color="alternative" class="mr-2" :disabled="loadingStates.saving">
             Cancel
           </fwb-button>
-          <fwb-button 
-            @click="saveSelected" 
-            color="blue"
-            :disabled="loadingStates.saving || selectedCount === 0"
-            :class="{ 'opacity-50 cursor-not-allowed': loadingStates.saving || selectedCount === 0 }"
-          >
+          <fwb-button @click="saveSelected" color="blue" :disabled="loadingStates.saving || selectedCount === 0"
+            :class="{ 'opacity-50 cursor-not-allowed': loadingStates.saving || selectedCount === 0 }">
             <span v-if="loadingStates.saving" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
               </svg>
               Adding...
             </span>
@@ -232,6 +271,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+
+// State
+const isFiltersExpanded = ref(true);
+
+// Toggle filters section
+const toggleFilters = () => {
+  isFiltersExpanded.value = !isFiltersExpanded.value;
+};
 
 // Question type constants
 const QUESTION_TYPES = {
@@ -261,7 +308,7 @@ interface Question extends Omit<QuestionViewModel, 'questionCategory' | 'questio
   questionAudios?: any[];
 }
 
-interface Category extends QuestionCategory {}
+interface Category extends QuestionCategory { }
 
 interface QuestionTypeOption {
   value: string;
@@ -313,7 +360,7 @@ const fetchCount = ref(0);
 const fetchQuestions = async () => {
   const callId = ++fetchCount.value;
   console.log(`[${callId}] fetchQuestions called`);
-  
+
   try {
     loadingStates.value.questions = true;
     const response = await questionApi.getAll({
@@ -325,10 +372,10 @@ const fetchQuestions = async () => {
       minScore: minScore.value || undefined,
       prompt: searchQuery.value || undefined
     });
-    
+
     // Log raw question data for inspection
     console.log('Raw question data from API:', response.data.content);
-    
+
     // Transform API response to match our component's expected format
     questions.value = response.data.content.map(q => {
       const question = {
@@ -343,7 +390,7 @@ const fetchQuestions = async () => {
       console.log('Processed question:', question);
       return question;
     });
-    
+
     totalQuestions.value = response.data.totalElements;
   } catch (error) {
     console.error('Error fetching questions:', error);
@@ -383,7 +430,7 @@ const fetchQuestionTypes = async () => {
       sort: 'name',
       direction: 'asc'
     });
-    
+
     questionTypeOptions.value = response.data.content.map(type => ({
       value: type.id,
       label: type.name
@@ -403,17 +450,17 @@ const isInitializing = ref(false);
 // Initialize data
 const initializeData = async () => {
   if (initialLoadDone.value || isInitializing.value) return;
-  
+
   isInitializing.value = true;
   console.log('Initial data loading started');
-  
+
   try {
     // First load categories and question types
     await Promise.all([
       fetchCategories(),
       fetchQuestionTypes()
     ]);
-    
+
     // Then fetch questions after initial data is loaded
     console.log('Initial data loaded, fetching questions');
     await fetchQuestions();
@@ -448,25 +495,33 @@ watch([selectedCategory, selectedQuestionType, minScore, maxScore], () => {
 // Selected questions
 const selectedQuestions = ref<Set<string>>(new Set());
 
+// Refs for SearchableSelect components
+interface SearchableSelectMethods {
+  reset: () => void;
+}
+
+const categorySelect = ref<SearchableSelectMethods | null>(null);
+const typeSelect = ref<SearchableSelectMethods | null>(null);
+
 // Reset all filters and clear selections
 const resetAllFilters = () => {
-  // Only update values that actually changed to prevent unnecessary re-fetches
-  if (searchQuery.value !== '') searchQuery.value = '';
-  if (selectedCategory.value !== '') selectedCategory.value = '';
-  if (selectedQuestionType.value !== '') selectedQuestionType.value = '';
-  if (minScore.value !== 0) minScore.value = 0;
-  if (maxScore.value !== 10) maxScore.value = 10;
+  console.log('Resetting all filters');
   
+  // Reset all filter values
+  searchQuery.value = '';
+  selectedCategory.value = '';
+  selectedQuestionType.value = '';
+  minScore.value = 0;
+  maxScore.value = 10;
+  
+  // Clear selected questions
   selectedQuestions.value.clear();
   
-  // Only fetch if we actually changed any filter values
-  if (searchQuery.value === '' && 
-      selectedCategory.value === '' && 
-      selectedQuestionType.value === '' && 
-      minScore.value === 0 && 
-      maxScore.value === 10) {
-    fetchQuestions();
-  }
+  // Reset SearchableSelect components if they exist
+  if (categorySelect.value) categorySelect.value.reset();
+  if (typeSelect.value) typeSelect.value.reset();
+  
+  // Refetch questions with reset filters
 };
 
 // Reset filters (alias for resetAllFilters for template compatibility)
@@ -582,3 +637,42 @@ watch(questions, (newQuestions) => {
   totalQuestions.value = newQuestions.length;
 }, { immediate: true });
 </script>
+
+<style scoped>
+/* Custom scrollbar for WebKit browsers (Chrome, Safari, etc) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(209 213 219);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(75 85 99);
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background-color: rgb(156 163 175);
+}
+
+.dark .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background-color: rgb(107 114 128);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(107 114 128);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(156 163 175);
+}
+</style>

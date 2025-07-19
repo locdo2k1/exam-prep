@@ -232,18 +232,20 @@
               :model-value="selectedPart?.id"
               :options="availableParts"
               value-key="id"
-              label-key="title"
+              label-key="name"
               placeholder="Search parts..."
-              :loading="false"
+              :loading="isLoading"
+              :has-more="hasMore"
               @search="handleSearch"
               @select="handleSelectPart"
+              @load-more="handleLoadMore"
               @update:modelValue="(val) => selectedPart = availableParts.find(p => p.id === val)"
             />
           </div>
 
           <!-- Selected Part Preview -->
           <div v-if="selectedPart" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50">
-            <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-1">{{ selectedPart.title }}</h4>
+            <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-1">{{ selectedPart.name }}</h4>
             <p v-if="selectedPart.description" class="text-sm text-blue-700 dark:text-blue-300">{{ selectedPart.description }}</p>
             <p v-else class="text-xs text-blue-600/70 dark:text-blue-400/70 italic">No additional description available</p>
           </div>
@@ -275,9 +277,10 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { DocumentTextIcon } from '@heroicons/vue/24/outline';
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
+import { partApi } from '@/api/admin/part/partApi';
 
 const props = defineProps({
   modelValue: {
@@ -306,22 +309,58 @@ const emit = defineEmits([
 const testData = ref({...props.modelValue});
 const showPartModal = ref(false);
 const selectedPart = ref(null);
-const availableParts = ref([
-  { id: '1', title: 'Part 1: Listening Section' },
-  { id: '2', title: 'Part 2: Reading Section' },
-  { id: '3', title: 'Part 3: Writing Section' },
-  { id: '4', title: 'Part 4: Speaking Section' },
-  { id: '5', title: 'Part 5: Grammar Section' },
-]);
+const availableParts = ref([]);
+const isLoading = ref(false);
+const error = ref(null);
+const currentPage = ref(0);
+const totalPages = ref(1);
+const hasMore = computed(() => currentPage.value < totalPages.value - 1);
+const searchQuery = ref('');
+
+const fetchParts = async (page = 0, search = '') => {
+  try {
+    isLoading.value = true;
+    const response = await partApi.getAllParts(search, { 
+      page, 
+      size: 10, // Adjust page size as needed
+      sort: 'name,asc' // Default sort
+    });
+    
+    if (page === 0) {
+      availableParts.value = response.content;
+    } else {
+      availableParts.value = [...availableParts.value, ...response.content];
+    }
+    
+    totalPages.value = response.totalPages;
+    currentPage.value = page;
+  } catch (err) {
+    console.error('Failed to fetch parts:', err);
+    error.value = 'Failed to load parts. Please try again later.';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Initial load
+onMounted(() => {
+  fetchParts();
+});
+
+const handleSearch = (query) => {
+  searchQuery.value = query;
+  fetchParts(0, query);
+};
+
+const handleLoadMore = () => {
+  if (!isLoading.value && hasMore.value) {
+    fetchParts(currentPage.value + 1, searchQuery.value);
+  }
+};
 
 const openAddPartModal = () => {
   selectedPart.value = null;
   showPartModal.value = true;
-};
-
-const handleSearch = (query) => {
-  // In a real app, you would fetch parts based on the search query
-  console.log('Searching for parts:', query);
 };
 
 const handleSelectPart = (part) => {
