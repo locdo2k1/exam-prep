@@ -144,19 +144,13 @@
                 }"
                 @click="toggleQuestion(question)">
                 <div class="flex items-start">
-                  <div class="flex-shrink-0 mt-1">
-                    <div class="flex items-center h-5">
-                      <input type="checkbox" :checked="isQuestionSelected(question.id)"
-                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" @click.stop>
-                    </div>
-                  </div>
-                  <div class="ml-3 flex-1 min-w-0">
-                    <div class="flex items-center justify-between space-x-2">
-                      <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white break-words w-full">
                         <span v-html="question.prompt || 'Untitled Question'"></span>
                       </h4>
                       <span
-                        class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                        class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 whitespace-nowrap">
                         {{ question.type || QUESTION_TYPES.MULTIPLE_CHOICE }}
                       </span>
                     </div>
@@ -318,7 +312,6 @@ interface QuestionTypeOption {
 interface QuestionBankModalProps {
   isOpen: boolean;
   selectedQuestions: Question[];
-  questionTypes: Array<{ value: string; label: string }>;
 }
 
 interface QuestionBankModalEmits {
@@ -327,8 +320,7 @@ interface QuestionBankModalEmits {
 }
 
 const props = withDefaults(defineProps<QuestionBankModalProps>(), {
-  selectedQuestions: () => [],
-  questionTypes: () => []
+  selectedQuestions: () => []
 });
 
 const emit = defineEmits<QuestionBankModalEmits>();

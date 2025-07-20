@@ -77,6 +77,11 @@ export interface QuestionSetFilter {
   direction?: 'asc' | 'desc';
 }
 
+export interface QuestionSetSimpleVM {
+  id: string;
+  title: string;
+}
+
 interface PaginatedResponse<T> {
   content: T[];
   totalElements: number;
@@ -249,5 +254,37 @@ export const questionSetApi = {
       `${BASE_URL}/${questionSetId}/reorder-questions`,
       { questionOrders }
     );
+  },
+
+  /**
+   * Get a simplified list of question sets with pagination and search
+   * @param page Page number (0-based)
+   * @param size Number of items per page
+   * @param sort Field to sort by (default: 'title')
+   * @param direction Sort direction ('asc' or 'desc')
+   * @param search Optional search term to filter by title or description
+   */
+  getSimpleQuestionSets: async (
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'title',
+    direction: 'asc' | 'desc' = 'asc',
+    search?: string
+  ): Promise<PaginatedResponse<QuestionSetSimpleVM>> => {
+    const params = new URLSearchParams({
+      page: Math.max(0, page).toString(),
+      size: Math.max(1, size).toString(),
+      sort,
+      direction
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await apiClient.get<PaginatedResponse<QuestionSetSimpleVM>>(
+      `${BASE_URL}/simple?${params.toString()}`
+    );
+    return response.data;
   },
 };

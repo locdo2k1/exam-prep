@@ -163,7 +163,7 @@
           
           <button
             type="button"
-            @click="$emit('add-question-set')"
+            @click="openQuestionSetModal"
             class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200"
           >
             <div class="w-10 h-10 flex items-center justify-center bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-lg mb-2 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
@@ -273,6 +273,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Question Set Modal -->
+    <QuestionSetModal 
+      :isOpen="showQuestionSetModal"
+      @close="showQuestionSetModal = false"
+      @save="handleQuestionSetSave"
+    />
   </div>
 </template>
 
@@ -281,6 +288,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { DocumentTextIcon } from '@heroicons/vue/24/outline';
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
 import { partApi } from '@/api/admin/part/partApi';
+import QuestionSetModal from './QuestionSetModal.vue';
 
 const props = defineProps({
   modelValue: {
@@ -308,8 +316,19 @@ const emit = defineEmits([
 
 const testData = ref({...props.modelValue});
 const showPartModal = ref(false);
+const showQuestionSetModal = ref(false);
 const selectedPart = ref(null);
 const availableParts = ref([]);
+
+// Question Set Methods
+const openQuestionSetModal = () => {
+  showQuestionSetModal.value = true;
+};
+
+const handleQuestionSetSave = (questionSet) => {
+  emit('add-question-set', questionSet);
+  showQuestionSetModal.value = false;
+};
 const isLoading = ref(false);
 const error = ref(null);
 const currentPage = ref(0);

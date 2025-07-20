@@ -10,15 +10,21 @@
         <!-- Left Panel - Test Parts & Questions -->
         <div class="lg:col-span-2">
           <TestPartList 
-            v-model="test.parts"
+            v-model="test.listPart"
             @select-question="handleSelectQuestion"
+            @active-part-change="handleActivePartChange"
           />
         </div>
         
         <!-- Right Panel - Test Information -->
         <div class="lg:col-span-1">
           <TestInfoForm 
-            v-model="test.info"
+            :test-title="test.title"
+            :test-category-id="test.testCategoryId"
+            :skill-ids="test.skillIds"
+            @update:test-title="test.title = $event"
+            @update:test-category-id="test.testCategoryId = $event"
+            @update:skill-ids="test.skillIds = $event"
             @add-part="handleAddPart"
             @add-question="handleAddQuestion"
             @add-question-set="handleAddQuestionSet"
@@ -41,30 +47,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, Ref } from 'vue';
+import { ref, computed, inject, Ref, watch } from 'vue';
 
 interface Question {
-  id: number | string;
+  id: string;
   type: string;
   question: string;
-  options: string[];
-  correctAnswer: number;
+  category: string;
+  content: string;
+  prompt: string;
   points: number;
+  duration?: number;
+  options?: Array<{
+    id: string;
+    text: string;
+    correct: boolean;
+  }>;
+  correctAnswer?: number;
+  questionAnswers?: string[];
+  questionAudios?: any[];
   [key: string]: any; // For any additional properties
 }
 
-interface TestPart {
-  name: string;
-  questions: Question[];
-  [key: string]: any; // For any additional properties
-}
-
-interface TestInfo {
+interface TestPartVM {
+  id?: string;
   title: string;
   description: string;
+  instruction?: string;
+  order: number;
   duration: number;
-  [key: string]: any; // For any additional properties
+  questionSets: any[]; // Replace with proper type when available
+  questions: Question[];
 }
+
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import TestPartList from '@/components/admin/test/TestPartList.vue';
@@ -75,37 +90,36 @@ const router = useRouter();
 const toast = useToast();
 
 // Track selected questions for the question bank
-const selectedQuestionsForBank = ref<{id: string | number; [key: string]: any}[]>([]);
+const selectedQuestionsForBank = ref<Question[]>([]);
 
 // Handle questions selected from the question bank
 const handleQuestionsSelected = (questions: any[]) => {
-  if (!currentQuestionIndex.value || currentQuestionIndex.value.partIndex === null) {
-    showQuestionBank.value = false;
-    return;
-  }
-  
-  const partIndex = currentQuestionIndex.value.partIndex;
+  const partIndex = activePartIndex.value;
   
   // Ensure the part exists
-  if (!test.value.parts[partIndex]) {
+  if (!test.value.listPart[partIndex]) {
+    console.error('Invalid part index:', partIndex);
     showQuestionBank.value = false;
     return;
   }
   
   // Ensure the part has a questions array
-  if (!test.value.parts[partIndex].questions) {
-    test.value.parts[partIndex].questions = [];
+  if (!test.value.listPart[partIndex].questions) {
+    test.value.listPart[partIndex].questions = [];
   }
   
   // Add the selected questions to the current part with proper defaults
   questions.forEach(question => {
-    test.value.parts[partIndex].questions.push({
+    test.value.listPart[partIndex].questions.push({
       ...question,
       // Ensure required fields have default values if not provided
       type: question.type || 'multiple_choice',
-      options: question.options || ['', '', '', ''],
-      correctAnswer: question.correctAnswer ?? 0,
-      points: question.points ?? 1
+      category: question.category || '',
+      content: question.content || '',
+      prompt: question.prompt || '',
+      points: question.points ?? 1,
+      options: question.options || [],
+      correctAnswer: question.correctAnswer ?? []
     });
   });
   
@@ -122,74 +136,80 @@ const { isDarkMode } = inject('theme', {
 const showQuestionBank = ref(false);
 
 const test = ref<{
-  info: TestInfo;
-  parts: TestPart[];
+  title: string;
+  listPart: TestPartVM[];
+  listQuestionSet: any[]; // Replace any with proper type when available
+  listQuestion: any[];    // Replace any with proper type when available
+  skillIds: string[];
+  testCategoryId: string | null;
+  files: File[];
 }>({
-  info: {
-    title: '',
-    description: '',
-    duration: 30, // in minutes
+  title: '',
+  listPart: [],
+  listQuestionSet: [],
+  listQuestion: [],
+  skillIds: [],
+  testCategoryId: null,
+  files: []
+});
+
+// Watch for changes to the test object
+watch(
+  () => test.value,
+  (newValue) => {
+    console.log('Test data:', newValue);
   },
-  parts: [],
-}); // Start with no parts
+  { deep: true, immediate: true }
+);
 
 // Question editor state
 const showQuestionEditor = ref(false);
 const currentQuestionIndex = ref<{ partIndex: number; questionIndex: number | null } | null>(null);
+const activePartIndex = ref<number>(0); // Track the currently active part index
 
 // Handlers
-const handleAddPart = (partData?: TestPart) => {
+const handleAddPart = (partData?: TestPartVM) => {
   if (partData) {
-    test.value.parts.push(partData);
+    test.value.listPart.push(partData);
   } else {
-    // Default new part
-    test.value.parts.push({
-      name: `Part ${test.value.parts.length + 1}`,
+    test.value.listPart.push({
+      title: `Part ${test.value.listPart.length + 1}`,
+      description: '',
+      order: test.value.listPart.length + 1,
+      duration: 0,
+      questionSets: [],
       questions: []
     });
   }
-  
-  // Auto-expand the new part
+  // Update current question index to the new part
   currentQuestionIndex.value = {
-    partIndex: test.value.parts.length - 1,
+    partIndex: test.value.listPart.length - 1,
     questionIndex: null
   };
 };
 
 const handleAddQuestion = (partIndex: number | null = null) => {
-  // If no part exists, create one first
-  if (test.value.parts.length === 0) {
-    handleAddPart();
-    return;
+  // If no part index is provided, add to the first part or create a new part
+  let targetPartIndex = partIndex;
+  
+  if (targetPartIndex === null) {
+    if (test.value.listPart.length === 0) {
+      // If no parts exist, create one first
+      handleAddPart();
+      targetPartIndex = 0;
+    } else {
+      // Default to the first part
+      targetPartIndex = 0;
+    }
   }
   
-  // Determine target part index
-  const targetPart = partIndex !== null ? partIndex : test.value.parts.length - 1;
-  
-  // Ensure the part exists
-  if (!test.value.parts[targetPart]) {
-    return; // Shouldn't happen due to the check above
-  }
-  
-  // Ensure the part has a questions array
-  if (!test.value.parts[targetPart].questions) {
-    test.value.parts[targetPart].questions = [];
-  }
-  
-  const newQuestion: Question = {
-    id: Date.now(),
-    type: 'multiple_choice',
-    question: '',
-    options: ['', '', '', ''],
-    correctAnswer: 0,
-    points: 1
+  // Set the current part index for question selection
+  currentQuestionIndex.value = {
+    partIndex: targetPartIndex,
+    questionIndex: null
   };
   
-  test.value.parts[targetPart].questions.push(newQuestion);
-  currentQuestionIndex.value = { 
-    partIndex: targetPart, 
-    questionIndex: test.value.parts[targetPart].questions.length - 1 
-  };
+  // Show the question bank modal
   showQuestionBank.value = true;
 };
 
@@ -198,9 +218,16 @@ const handleAddQuestionSet = () => {
   toast.info('Adding question set functionality will be implemented here');
 };
 
+// Handle when the active part changes in the TestPartList
+const handleActivePartChange = (partIndex: number) => {
+  console.log('Active part changed to index:', partIndex);
+  activePartIndex.value = partIndex;
+  // You can add any additional logic here when the active part changes
+};
+
 const handleSelectQuestion = ({ partIndex, questionIndex }: { partIndex: number; questionIndex: number }) => {
   // Ensure the part and question exist before setting the current question index
-  if (test.value.parts[partIndex]?.questions?.[questionIndex] !== undefined) {
+  if (test.value.listPart[partIndex]?.questions?.[questionIndex] !== undefined) {
     currentQuestionIndex.value = { 
       partIndex, 
       questionIndex 
@@ -222,14 +249,14 @@ const handleSaveQuestion = (updatedQuestion: Question) => {
   const { partIndex, questionIndex } = currentQuestionIndex.value;
   
   // Ensure the part and question exist
-  if (!test.value.parts[partIndex] || !test.value.parts[partIndex].questions) {
+  if (!test.value.listPart[partIndex] || !test.value.listPart[partIndex].questions) {
     showQuestionEditor.value = false;
     return;
   }
   
   // Update the question
-  test.value.parts[partIndex].questions[questionIndex] = {
-    ...test.value.parts[partIndex].questions[questionIndex],
+  test.value.listPart[partIndex].questions[questionIndex] = {
+    ...test.value.listPart[partIndex].questions[questionIndex],
     ...updatedQuestion
   };
   
@@ -238,8 +265,38 @@ const handleSaveQuestion = (updatedQuestion: Question) => {
 
 const handleSave = async () => {
   try {
+    // Validate required fields
+    if (!test.value.title) {
+      toast.error('Test title is required');
+      return;
+    }
+    
+    if (!test.value.testCategoryId) {
+      toast.error('Please select a test category');
+      return;
+    }
+    
+    if (test.value.listPart.length === 0) {
+      toast.error('Please add at least one part to the test');
+      return;
+    }
+    
+    // Prepare the payload
+    const payload = {
+      title: test.value.title,
+      testCategoryId: test.value.testCategoryId,
+      skillIds: test.value.skillIds,
+      listPart: test.value.listPart.map(part => ({
+        ...part,
+        // Ensure all required fields are included
+        questionSets: part.questionSets || [],
+        questions: part.questions || []
+      })),
+      files: test.value.files || []
+    };
+    
     // Here you would typically make an API call to save the test
-    console.log('Saving test:', test.value);
+    console.log('Saving test:', payload);
     
     // Show success message
     toast.success('Test saved successfully!');
