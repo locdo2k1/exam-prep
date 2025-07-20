@@ -9,12 +9,55 @@
   >
     <div class="flex items-start justify-between">
       <div class="flex-1">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-1">
-          Question {{ questionNumber }}
-        </h4>
-        <p class="text-sm text-gray-600 dark:text-gray-300">
-          {{ question.preview || 'Click to edit question' }}
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+            Question {{ questionNumber }}
+          </h4>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            {{ formatQuestionType(question.type) }}
+          </span>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+          {{ question.question || question.content || question.prompt || 'Click to edit question' }}
         </p>
+        
+        <!-- Show options for multiple choice questions -->
+        <div v-if="shouldShowOptions" class="mt-2 space-y-1">
+          <template v-if="hasOptions">
+            <div 
+              v-for="(option, index) in question.options" 
+              :key="index"
+              class="flex items-center text-xs text-gray-600 dark:text-gray-400"
+            >
+              <span class="font-medium w-4 mr-1">{{ String.fromCharCode(65 + index) }}.</span>
+              <span class="truncate">{{ option.text || 'Empty option' }}</span>
+              <span 
+                v-if="option.correct" 
+                class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+              >
+                Correct
+              </span>
+            </div>
+          </template>
+          <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic">
+            No options available
+          </div>
+        </div>
+        
+        <!-- Show answer for non-multiple choice questions -->
+        <div v-else-if="shouldShowAnswer" class="mt-1">
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            <span class="font-medium">Answer:</span> 
+            <span class="ml-1" :class="{ 'italic text-gray-400': !hasAnswer }">
+              {{ formatAnswer(question) }}
+            </span>
+          </p>
+        </div>
+        <div v-else class="mt-1">
+          <p class="text-xs text-gray-400 dark:text-gray-500 italic">
+            No answer provided
+          </p>
+        </div>
       </div>
       <button 
         v-if="showRemove"
@@ -31,6 +74,8 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   question: {
     type: Object,
@@ -49,6 +94,73 @@ const props = defineProps({
     default: true
   }
 });
+
+const formatQuestionType = (type) => {
+  if (!type) return 'Question';
+  
+  // Normalize the type for comparison
+  const normalizedType = type.toLowerCase().replace(/[ -]/g, '_');
+  
+  const types = {
+    'multiple_choice': 'Multiple Choice',
+    'true_false': 'True/False',
+    'short_answer': 'Short Answer',
+    'essay': 'Essay',
+    'matching': 'Matching',
+    'fill_blank': 'Fill in the Blank'
+  };
+  
+  return types[normalizedType] || type || 'Question';
+};
+
+const hasOptions = computed(() => {
+  return Array.isArray(props.question?.options) && 
+         props.question.options.length > 0 && 
+         props.question.options.some(opt => opt.text);
+});
+
+const hasAnswer = computed(() => {
+  return props.question?.answer || 
+         props.question?.correctAnswer !== undefined ||
+         props.question?.questionAnswers?.length > 0;
+});
+
+const shouldShowOptions = computed(() => {
+  const type = props.question?.type?.toLowerCase().replace(/[ -]/g, '_');
+  return ['multiple_choice', 'true_false', 'matching'].includes(type);
+});
+
+const shouldShowAnswer = computed(() => {
+  // Show answer for non-multiple choice questions that have an answer
+  return !shouldShowOptions.value && 
+        (props.question.answer || 
+         props.question.correctAnswer !== undefined ||
+         props.question.questionAnswers?.length > 0);
+});
+
+const formatAnswer = (question) => {
+  console.log('Question data:', JSON.stringify(question, null, 2)); // Debug log
+  
+  // Handle questionAnswers array
+  if (question.questionAnswers?.length) {
+    return question.questionAnswers.join(', ');
+  }
+  
+  // Handle single answer
+  if (question.answer) {
+    return question.answer;
+  }
+  
+  // Handle correctAnswer index (for multiple choice)
+  if (question.correctAnswer !== undefined) {
+    if (Array.isArray(question.options) && question.options[question.correctAnswer]) {
+      return `${String.fromCharCode(65 + question.correctAnswer)}. ${question.options[question.correctAnswer]?.text || 'No text'}`;
+    }
+    return `Option ${question.correctAnswer + 1}`;
+  }
+  
+  return 'No answer provided';
+};
 
 defineEmits(['select', 'remove']);
 </script>

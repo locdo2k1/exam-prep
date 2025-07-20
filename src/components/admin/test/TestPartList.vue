@@ -20,7 +20,6 @@
           :key="part.id"
           :name="`part-${index}`"
           :title="part.title || part.name || `Part ${index + 1}`"
-          @click="() => console.log('Tab clicked:', part)"
         >
           <template #title>
             <div class="flex items-center min-w-[80px]" @dblclick.stop="startEditing(index)">
@@ -144,7 +143,8 @@ const emit = defineEmits([
   'remove-part', 
   'remove-question',
   'add-question',
-  'add-questions'
+  'add-questions',
+  'active-part-change' // Add new event for active part changes
 ]);
 
 // Get dark mode state from ThemeProvider
@@ -247,6 +247,7 @@ watch(parts, (newParts) => {
 const currentQuestions = computed(() => {
   const partIndex = getCurrentPartIndex();
   const part = parts.value[partIndex];
+  console.log(part);
   return (part && part.questions) || [];
 });
 
@@ -255,7 +256,18 @@ const getCurrentPartIndex = () => {
 };
 
 watch(activePart, (newVal, oldVal) => {
+  console.log('Tab changed to:', newVal);
   selectedQuestion.value = null;
+  
+  // Emit the active part index to parent
+  const activeIndex = newVal ? parseInt(newVal.replace('part-', '')) : -1;
+  emit('active-part-change', activeIndex);
+  
+  // If you need to access the part data, you can do it like this:
+  const partIndex = parseInt(newVal.replace('part-', ''));
+  if (!isNaN(partIndex) && parts.value[partIndex]) {
+    console.log('Selected part:', parts.value[partIndex]);
+  }
 });
 
 const addPart = () => {
