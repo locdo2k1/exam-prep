@@ -266,43 +266,22 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 
-// State
-const isFiltersExpanded = ref(true);
-
-// Toggle filters section
-const toggleFilters = () => {
-  isFiltersExpanded.value = !isFiltersExpanded.value;
-};
-
-// Question type constants
-const QUESTION_TYPES = {
-  MULTIPLE_CHOICE: 'Multiple Choice',
-  FILL_IN_BLANK: 'Fill in the Blank',
-  ESSAY: 'Essay'
-} as const;
 import { FwbModal, FwbButton } from 'flowbite-vue';
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
 import { questionApi, type QuestionViewModel } from '@/api/admin/question/questionApi';
 import { questionCategoryApi, type QuestionCategory } from '@/api/admin/question-category/questionCategoryApi';
 import { questionTypeApi } from '@/api/admin/question-type/questionTypeApi';
 import { useToast } from 'vue-toastification';
+import type { Question } from '@/types';
 
-interface Question extends Omit<QuestionViewModel, 'questionCategory' | 'questionType' | 'score' | 'questionAnswers' | 'options' | 'questionAudios'> {
-  type: string;
-  category: string;
-  points: number;
-  content: string;
-  duration?: number;
-  options?: Array<{
-    id: string;
-    text: string;
-    correct: boolean;
-  }>;
-  questionAnswers?: string[];
-  questionAudios?: any[];
-}
+// Question type constants
+const QUESTION_TYPES = {
+  MULTIPLE_CHOICE: 'multiple_choice',
+  FILL_IN_BLANK: 'fill_in_blank',
+  ESSAY: 'essay'
+} as const;
 
-interface Category extends QuestionCategory { }
+type Category = QuestionCategory;
 
 interface QuestionTypeOption {
   value: string;
@@ -324,6 +303,14 @@ const props = withDefaults(defineProps<QuestionBankModalProps>(), {
 });
 
 const emit = defineEmits<QuestionBankModalEmits>();
+
+// State
+const isFiltersExpanded = ref(true);
+
+// Toggle filters section
+const toggleFilters = () => {
+  isFiltersExpanded.value = !isFiltersExpanded.value;
+};
 
 // State
 const searchQuery = ref<string>('');
@@ -370,15 +357,41 @@ const fetchQuestions = async () => {
 
     // Transform API response to match our component's expected format
     questions.value = response.data.content.map(q => {
-      const question = {
+      // Map the question type to match the expected type
+      const mapQuestionType = (type: string): Question['type'] => {
+        const typeMap: Record<string, Question['type']> = {
+          'multiple choice': 'multiple_choice',
+          'true false': 'true_false',
+          'short answer': 'short_answer',
+          'essay': 'essay',
+          'fill in blank': 'fill_in_blank',
+          'matching': 'matching',
+          'ordering': 'ordering',
+          'drag drop': 'drag_drop',
+          'hotspot': 'hotspot'
+        };
+        return typeMap[type.toLowerCase()] || 'other';
+      };
+
+      const question: Question = {
         ...q, // Include all original properties
         id: q.id,
-        prompt: q.prompt,
-        content: q.prompt, // Using prompt as content for display
-        type: q.questionType?.name || 'Unknown',
+        prompt: q.prompt || '',
+        content: q.prompt || '',
+        type: mapQuestionType(q.questionType?.name || 'other'),
         category: q.questionCategory?.name || 'Uncategorized',
-        points: q.score || 0
+        points: q.score || 0,
+        // Add required fields with default values
+        difficulty: 'medium', // Default to medium difficulty
+        duration: 60, // Default 60 seconds
+        explanation: '', // Empty explanation by default
+        tags: [], // Empty tags by default
+        // Ensure questionAnswers is properly typed
+        questionAnswers: Array.isArray(q.questionAnswers) ? q.questionAnswers : [],
+        // Ensure options is properly typed
+        options: Array.isArray(q.options) ? q.options : []
       };
+      
       console.log('Processed question:', question);
       return question;
     });
