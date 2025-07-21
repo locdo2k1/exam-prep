@@ -7,13 +7,28 @@
       </div>
       
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left Panel - Test Parts & Questions -->
-        <div class="lg:col-span-2">
-          <TestPartList 
-            v-model="test.listPart"
-            @select-question="handleSelectQuestion"
-            @active-part-change="handleActivePartChange"
-          />
+        <!-- Left Panel - Question Bank & Test Parts -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Question Bank Section -->
+          <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Question Bank</h2>
+            <TestQuestionList 
+              :list-question="test.listQuestion"
+              :list-question-set="test.listQuestionSet"
+              @select-question="handleSelectQuestionFromBank"
+              @select-question-set="handleSelectQuestionSet"
+            />
+          </div>
+          
+          <!-- Test Parts Section -->
+          <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Test Parts</h2>
+            <TestPartList 
+              v-model="test.listPart"
+              @select-question="handleSelectQuestion"
+              @active-part-change="handleActivePartChange"
+            />
+          </div>
         </div>
         
         <!-- Right Panel - Test Information -->
@@ -48,44 +63,17 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, Ref, watch } from 'vue';
-
-interface Question {
-  id: string;
-  type: string;
-  question: string;
-  category: string;
-  content: string;
-  prompt: string;
-  points: number;
-  duration?: number;
-  options?: Array<{
-    id: string;
-    text: string;
-    correct: boolean;
-  }>;
-  correctAnswer?: number;
-  questionAnswers?: string[];
-  questionAudios?: any[];
-  [key: string]: any; // For any additional properties
-}
-
-interface TestPartVM {
-  id?: string;
-  title: string;
-  description: string;
-  instruction?: string;
-  order: number;
-  duration: number;
-  questionSets: any[]; // Replace with proper type when available
-  questions: Question[];
-}
-
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
+import type { Question, QuestionSet, TestPart, TestInfo, TestVM } from '@/types';
+
+// Component imports
+import TestQuestionList from '@/components/admin/test/TestQuestionList.vue';
 import TestPartList from '@/components/admin/test/TestPartList.vue';
 import TestInfoForm from '@/components/admin/test/TestInfoForm.vue';
 import QuestionBankModal from '@/components/admin/test/QuestionBankModal.vue';
 
+// Router and toast setup
 const router = useRouter();
 const toast = useToast();
 
@@ -93,7 +81,7 @@ const toast = useToast();
 const selectedQuestionsForBank = ref<Question[]>([]);
 
 // Handle questions selected from the question bank
-const handleQuestionsSelected = (questions: any[]) => {
+const handleQuestionsSelected = (questions: Question[]) => {
   const partIndex = activePartIndex.value;
   
   // Ensure the part exists
@@ -110,17 +98,22 @@ const handleQuestionsSelected = (questions: any[]) => {
   
   // Add the selected questions to the current part with proper defaults
   questions.forEach(question => {
-    test.value.listPart[partIndex].questions.push({
-      ...question,
-      // Ensure required fields have default values if not provided
+    const newQuestion: Question = {
+      id: question.id || Date.now().toString(),
       type: question.type || 'multiple_choice',
-      category: question.category || '',
-      content: question.content || '',
-      prompt: question.prompt || '',
-      points: question.points ?? 1,
+      content: question.content || 'New Question',
+      prompt: question.prompt || 'New Question',
+      points: question.points || 1,
       options: question.options || [],
-      correctAnswer: question.correctAnswer ?? []
-    });
+      correctAnswer: question.correctAnswer || '',
+      category: question.category || 'General',
+      difficulty: question.difficulty || 'medium',
+      duration: question.duration || 60,
+      explanation: question.explanation || '',
+      tags: question.tags || []
+    };
+    
+    test.value.listPart[partIndex].questions.push(newQuestion);
   });
   
   // Close the question bank modal
@@ -135,23 +128,32 @@ const { isDarkMode } = inject('theme', {
 // Test data structure
 const showQuestionBank = ref(false);
 
-const test = ref<{
-  title: string;
-  listPart: TestPartVM[];
-  listQuestionSet: any[]; // Replace any with proper type when available
-  listQuestion: any[];    // Replace any with proper type when available
-  skillIds: string[];
-  testCategoryId: string | null;
-  files: File[];
-}>({
-  title: '',
+const test = ref<TestVM>({
+  info: {
+    id: '',
+    name: 'New Test',
+    description: '',
+    duration: 60, // Default duration in minutes
+    passingScore: 0,
+    maxAttempts: 1,
+    isPublished: false,
+    startTime: undefined,
+    endTime: undefined,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    testCategoryId: '',
+    skillIds: []
+  },
   listPart: [],
-  listQuestionSet: [],
   listQuestion: [],
-  skillIds: [],
-  testCategoryId: null,
+  listQuestionSet: [],
   files: []
 });
+
+// Computed properties for template
+const title = computed(() => test.value.info.name);
+const testCategoryId = computed(() => test.value.info.testCategoryId || '');
+const skillIds = computed(() => test.value.info.skillIds || []);
 
 // Watch for changes to the test object
 watch(
@@ -168,18 +170,21 @@ const currentQuestionIndex = ref<{ partIndex: number; questionIndex: number | nu
 const activePartIndex = ref<number>(0); // Track the currently active part index
 
 // Handlers
-const handleAddPart = (partData?: TestPartVM) => {
+const handleAddPart = (partData?: TestPart) => {
   if (partData) {
     test.value.listPart.push(partData);
   } else {
-    test.value.listPart.push({
+    const newPart: TestPart = {
+      id: `part-${Date.now()}`,
+      name: `Part ${test.value.listPart.length + 1}`,
       title: `Part ${test.value.listPart.length + 1}`,
       description: '',
       order: test.value.listPart.length + 1,
       duration: 0,
-      questionSets: [],
-      questions: []
-    });
+      questions: [],
+      questionSets: []
+    };
+    test.value.listPart.push(newPart);
   }
   // Update current question index to the new part
   currentQuestionIndex.value = {
@@ -215,7 +220,64 @@ const handleAddQuestion = (partIndex: number | null = null) => {
 
 const handleAddQuestionSet = () => {
   // Implementation for adding a set of questions
-  toast.info('Adding question set functionality will be implemented here');
+  showQuestionBank.value = true;
+};
+
+const handleSelectQuestionFromBank = (question: Question) => {
+  if (!test.value.listPart[activePartIndex.value]) {
+    toast.error('Please select a part to add the question to');
+    return;
+  }
+  
+  const currentPart = test.value.listPart[activePartIndex.value];
+  
+  // Ensure the part has a questions array
+  if (!currentPart.questions) {
+    currentPart.questions = [];
+  }
+  
+  // Create a new question with all required fields and proper defaults
+  const newQuestion: Question = {
+    id: Date.now().toString(),
+    type: question.type || 'multiple_choice',
+    content: question.content || 'New Question',
+    prompt: question.prompt || 'New Question',
+    points: question.points || 1,
+    options: question.options || [],
+    correctAnswer: question.correctAnswer || '',
+    category: question.category || 'General',
+    difficulty: question.difficulty || 'medium',
+    duration: question.duration || 60, // Default duration in seconds
+    explanation: question.explanation || '',
+    tags: question.tags || []
+  };
+  
+  currentPart.questions.push(newQuestion);
+  toast.success('Question added to the test');
+};
+
+const handleSelectQuestionSet = (questionSet: QuestionSet) => {
+  if (!test.value.listPart[activePartIndex.value]) {
+    toast.error('Please select a part to add the questions to');
+    return;
+  }
+  
+  const currentPart = test.value.listPart[activePartIndex.value];
+  
+  // Ensure the part has a questions array
+  if (!currentPart.questions) {
+    currentPart.questions = [];
+  }
+  
+  // Add all questions from the set to the current part
+  const questionsToAdd = questionSet.questions?.map((q: Question) => ({
+    ...q,
+    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    points: q.points || 1
+  })) || [];
+  
+  currentPart.questions.push(...questionsToAdd);
+  toast.success(`Added ${questionsToAdd.length} questions from "${questionSet.name}"`);
 };
 
 // Handle when the active part changes in the TestPartList
