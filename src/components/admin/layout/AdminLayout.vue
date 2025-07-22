@@ -2,7 +2,7 @@
   <div class="min-h-screen flex">
     <app-sidebar />
     <Backdrop />
-    <div class="min-h-screen relative flex-1 transition-all duration-300 ease-in-out" :class="[
+    <div class="min-h-screen relative flex-1" :class="[
       { 'h-screen overflow-hidden': isPopupVisible },
       isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]'
     ]">

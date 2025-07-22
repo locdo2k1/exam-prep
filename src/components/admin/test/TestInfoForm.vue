@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 h-full flex flex-col border border-gray-100 dark:border-gray-700/50 transition-all duration-200 hover:shadow-md dark:hover:border-gray-600">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 h-full flex flex-col border border-gray-100 dark:border-gray-700/50 hover:shadow-md dark:hover:border-gray-600">
     <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
       <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
         <DocumentTextIcon class="h-5 w-5 mr-2.5 text-blue-500" />
@@ -10,7 +10,7 @@
     <div class="space-y-6 flex-1">
       <!-- Title Input -->
       <div class="group relative">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 group-focus-within:text-blue-500">
           Test Title
           <span class="text-red-500 ml-0.5">*</span>
         </label>
@@ -24,7 +24,7 @@
             v-model="testData.title"
             type="text"
             required
-            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
+            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             placeholder="e.g., IELTS Practice Test 2023"
           />
         </div>
@@ -33,7 +33,7 @@
       
       <!-- Duration Input -->
       <div class="group relative w-full">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 group-focus-within:text-blue-500">
           Duration (minutes)
           <span class="text-red-500 ml-0.5">*</span>
         </label>
@@ -48,7 +48,7 @@
             type="number"
             min="1"
             required
-            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
+            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             placeholder="e.g., 60"
           />
         </div>
@@ -56,7 +56,7 @@
       
       <!-- Audio File Input -->
       <div class="group relative mt-6">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
           Audio File
           <span class="text-gray-400 text-xs ml-1">(Optional)</span>
         </label>
@@ -72,7 +72,7 @@
             <button
               type="button"
               @click="$refs.audioFileInput.click()"
-              class="inline-flex items-center px-4 py-2.5 rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              class="inline-flex items-center px-4 py-2.5 rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
@@ -101,7 +101,7 @@
       
       <!-- Description Textarea -->
       <div class="group relative">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 group-focus-within:text-blue-500">
           Description
           <span class="text-gray-400 text-xs ml-1">(Optional)</span>
         </label>
@@ -109,7 +109,7 @@
           <textarea
             v-model="testData.description"
             rows="6"
-            class="w-full px-4 py-3 pr-10 text-base rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200 resize-none min-h-[150px] leading-relaxed"
+            class="w-full px-4 py-3 pr-10 text-base rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none min-h-[150px] leading-relaxed"
             placeholder="Enter a detailed description of the test..."
             maxlength="500"
           ></textarea>
@@ -136,7 +136,7 @@
           <button
             type="button"
             @click="openAddPartModal"
-            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
           >
             <div class="w-10 h-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-lg mb-2 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,7 +150,7 @@
           <button
             type="button"
             @click="$emit('add-question', 0)"  
-            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10"
           >
             <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-lg mb-2 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -164,7 +164,7 @@
           <button
             type="button"
             @click="openQuestionSetModal"
-            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10"
           >
             <div class="w-10 h-10 flex items-center justify-center bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-lg mb-2 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,7 +193,7 @@
             type="button"
             @click="$emit('save')"
             :disabled="!isFormValid"
-            class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg v-if="isSaving" class="animate-spin mr-1.5 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

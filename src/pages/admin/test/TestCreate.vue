@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Create New Test</h1>
@@ -9,19 +9,20 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Panel - Question Bank & Test Parts -->
         <div class="lg:col-span-2 space-y-6">
-          <!-- Question Bank Section -->
-          <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+          <!-- Question Bank Section - Only show when there are parts -->
+          <div v-if="!test.listPart || test.listPart.length === 0" class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
             <h2 class="text-xl font-semibold mb-4 dark:text-white">Question Bank</h2>
             <TestQuestionList 
               :list-question="test.listQuestion"
               :list-question-set="test.listQuestionSet"
               @select-question="handleSelectQuestionFromBank"
               @select-question-set="handleSelectQuestionSet"
+              @remove-question="handleRemoveQuestion"
             />
           </div>
           
           <!-- Test Parts Section -->
-          <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+          <div v-if="test.listPart && test.listPart.length > 0" class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
             <h2 class="text-xl font-semibold mb-4 dark:text-white">Test Parts</h2>
             <TestPartList 
               v-model="test.listPart"
@@ -82,39 +83,61 @@ const selectedQuestionsForBank = ref<Question[]>([]);
 
 // Handle questions selected from the question bank
 const handleQuestionsSelected = (questions: Question[]) => {
-  const partIndex = activePartIndex.value;
-  
-  // Ensure the part exists
-  if (!test.value.listPart[partIndex]) {
-    console.error('Invalid part index:', partIndex);
-    showQuestionBank.value = false;
-    return;
-  }
-  
-  // Ensure the part has a questions array
-  if (!test.value.listPart[partIndex].questions) {
-    test.value.listPart[partIndex].questions = [];
-  }
-  
-  // Add the selected questions to the current part with proper defaults
-  questions.forEach(question => {
-    const newQuestion: Question = {
-      id: question.id || Date.now().toString(),
-      type: question.type || 'multiple_choice',
-      content: question.content || 'New Question',
-      prompt: question.prompt || 'New Question',
-      points: question.points || 1,
-      options: question.options || [],
-      correctAnswer: question.correctAnswer || '',
-      category: question.category || 'General',
-      difficulty: question.difficulty || 'medium',
-      duration: question.duration || 60,
-      explanation: question.explanation || '',
-      tags: question.tags || []
-    };
+  // If there are no parts, add questions directly to test.listQuestion
+  if (!test.value.listPart || test.value.listPart.length === 0) {
+    questions.forEach(question => {
+      const newQuestion: Question = {
+        id: question.id || Date.now().toString(),
+        type: question.type || 'multiple_choice',
+        content: question.content || 'New Question',
+        prompt: question.prompt || 'New Question',
+        points: question.points || 1,
+        options: question.options || [],
+        correctAnswer: question.correctAnswer || '',
+        category: question.category || 'General',
+        difficulty: question.difficulty || 'medium',
+        duration: question.duration || 60,
+        explanation: question.explanation || '',
+        tags: question.tags || []
+      };
+      
+      test.value.listQuestion.push(newQuestion);
+    });
+  } else {
+    const partIndex = activePartIndex.value;
     
-    test.value.listPart[partIndex].questions.push(newQuestion);
-  });
+    // Ensure the part exists
+    if (!test.value.listPart[partIndex]) {
+      console.error('Invalid part index:', partIndex);
+      showQuestionBank.value = false;
+      return;
+    }
+    
+    // Ensure the part has a questions array
+    if (!test.value.listPart[partIndex].questions) {
+      test.value.listPart[partIndex].questions = [];
+    }
+    
+    // Add the selected questions to the current part with proper defaults
+    questions.forEach(question => {
+      const newQuestion: Question = {
+        id: question.id || Date.now().toString(),
+        type: question.type || 'multiple_choice',
+        content: question.content || 'New Question',
+        prompt: question.prompt || 'New Question',
+        points: question.points || 1,
+        options: question.options || [],
+        correctAnswer: question.correctAnswer || '',
+        category: question.category || 'General',
+        difficulty: question.difficulty || 'medium',
+        duration: question.duration || 60,
+        explanation: question.explanation || '',
+        tags: question.tags || []
+      };
+      
+      test.value.listPart[partIndex].questions.push(newQuestion);
+    });
+  }
   
   // Close the question bank modal
   showQuestionBank.value = false;
@@ -323,6 +346,40 @@ const handleSaveQuestion = (updatedQuestion: Question) => {
   };
   
   showQuestionEditor.value = false;
+};
+
+const handleRemoveQuestion = (questionId: string | number) => {
+  // Check if we're in a part or in the main question bank
+  if (test.value.listPart && test.value.listPart.length > 0) {
+    // Find which part contains the question
+    const partIndex = test.value.listPart.findIndex(part => {
+      if (!part.questions) return false;
+      return part.questions.some((q, idx) => {
+        // Check both by ID and by index
+        return (q.id && q.id === questionId) || idx === questionId;
+      });
+    });
+    
+    if (partIndex !== -1 && test.value.listPart[partIndex].questions) {
+      // Remove from the part's questions
+      test.value.listPart[partIndex].questions = test.value.listPart[partIndex].questions!.filter(
+        (q, idx) => {
+          // Keep if ID doesn't match AND index doesn't match (if questionId is a number)
+          return (q.id ? q.id !== questionId : true) && 
+                 (typeof questionId === 'number' ? idx !== questionId : true);
+        }
+      );
+    }
+  } else {
+    // Remove from the main question list
+    if (typeof questionId === 'number') {
+      test.value.listQuestion.splice(questionId, 1);
+    } else {
+      test.value.listQuestion = test.value.listQuestion.filter(
+        q => q.id ? q.id !== questionId : false
+      );
+    }
+  }
 };
 
 const handleSave = async () => {

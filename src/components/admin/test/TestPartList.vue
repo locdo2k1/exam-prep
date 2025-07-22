@@ -59,7 +59,7 @@
       </fwb-tabs>
     </template>
     
-    <div class="flex-1 overflow-y-auto pr-1">
+    <div class="flex-1 pr-1">
       <div v-if="parts.length === 0" class="text-center py-12">
         <p class="text-gray-500 dark:text-gray-400 mb-4">No parts added yet.</p>
         <p class="text-sm text-gray-400 dark:text-gray-500">Add a part using the "Add Part" button in the test information panel.</p>
@@ -69,7 +69,7 @@
       <div v-else class="flex flex-col sm:flex-row gap-3 mb-4">
         <button
           @click="addNewQuestion"
-          class="group flex-1 flex items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+          class="group flex-1 flex items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10"
         >
           <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-lg mr-3 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,7 +84,7 @@
         
         <button
           @click="openQuestionBank"
-          class="group flex-1 flex items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+          class="group flex-1 flex items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10"
         >
           <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-lg mr-3 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
