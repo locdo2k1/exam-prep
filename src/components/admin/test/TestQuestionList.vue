@@ -52,9 +52,10 @@
           
           <!-- Question Content -->
           <div class="mb-3">
-            <p class="text-sm text-gray-700 dark:text-gray-200 line-clamp-2">
-              {{ question.content || question.prompt || 'No question text provided' }}
-            </p>
+            <div 
+              class="text-sm text-gray-700 dark:text-gray-200 line-clamp-2 prose dark:prose-invert prose-sm max-w-none"
+              v-html="question.content || question.prompt || 'No question text provided'"
+            ></div>
           </div>
           
           <!-- Options (if any) -->
@@ -62,18 +63,18 @@
             <div 
               v-for="(option, i) in question.options" 
               :key="i" 
-              class="flex items-start text-xs text-gray-600 dark:text-gray-300"
+              class="flex items-center text-xs text-gray-600 dark:text-gray-300"
             >
-              <span class="font-medium w-4 mr-1.5 mt-0.5">{{ String.fromCharCode(65 + i) }}.</span>
-              <span class="flex-1 break-words">
-                {{ option.text || `Option ${i + 1}` }}
+              <span class="font-medium w-4 mr-1.5">{{ String.fromCharCode(65 + i) }}.</span>
+              <div class="flex items-center flex-1">
+                <div class="break-words prose dark:prose-invert prose-sm max-w-none" v-html="option.text || `Option ${i + 1}`"></div>
                 <span 
                   v-if="isCorrectAnswer(question, i)" 
-                  class="ml-1.5 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[11px]"
+                  class="ml-2 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[11px] whitespace-nowrap"
                 >
                   Correct
                 </span>
-              </span>
+              </div>
             </div>
           </div>
           </div>

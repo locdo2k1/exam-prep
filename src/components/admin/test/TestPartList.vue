@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 h-full flex flex-col">
+  <div class="bg-white dark:bg-gray-800 p-4 h-full flex flex-col">
     <!-- Question Bank Modal -->
     <QuestionBankModal
       :isOpen="showQuestionBankModal"
@@ -8,56 +8,49 @@
       @select="handleAddQuestionsFromBank"
     />
     <!-- Only show tabs if there are parts -->
-    <template v-if="parts.length > 0">
-      <fwb-tabs 
-        v-model="activePart" 
-        variant="underline"
-        class="mb-4"
-        :class="{ 'dark:text-white': isDarkMode }"
-      >
-        <fwb-tab 
+    <div class="mb-4">
+      <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700">
+        <div 
           v-for="(part, index) in parts" 
           :key="part.id"
-          :name="`part-${index}`"
-          :title="part.title || part.name || `Part ${index + 1}`"
+          class="relative mr-2"
         >
-          <template #title>
-            <div class="flex items-center min-w-[80px]" @dblclick.stop="startEditing(index)">
-              <div 
-                v-if="!editingPartIndexes.has(index)" 
-                class="px-2 py-1 text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
-                :class="{
-                  'text-blue-600 dark:text-blue-500': activePart === `part-${index}`,
-                  'text-gray-700 dark:text-gray-300': activePart !== `part-${index}`
-                }"
-              >
-                {{ part.title || part.name || `Part ${index + 1}` }}
-              </div>
-              <input
-                v-else
-                v-model="editingPartNames[index]"
-                type="text"
-                class="w-32 px-1 py-0.5 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                @blur="savePartName(index)"
-                @keyup.enter="savePartName(index)"
-                @keyup.escape="cancelEditing(index)"
-                @click.stop
-                v-focus
-              />
-              <button 
-                @click.stop="removePart(index)"
-                class="ml-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
-                v-if="parts.length > 1"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </template>
-        </fwb-tab>
-      </fwb-tabs>
-    </template>
+          <button
+            @click="activePart = `part-${index}`"
+            class="inline-flex items-center py-2 px-4 text-sm font-medium text-center rounded-t-lg"
+            :class="{
+              'text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500': activePart === `part-${index}`,
+              'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300': activePart !== `part-${index}`
+            }"
+          >
+            <span class="whitespace-nowrap">
+              {{ part.title || part.name || `Part ${index + 1}` }}
+            </span>
+            
+            <!-- Delete Button -->
+            <button 
+              @click.stop="removePart(index)"
+              class="ml-2 p-0.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full transition-colors"
+              :title="'Delete ' + (part.title || part.name || 'Part ' + (index + 1))"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content">
+      <div 
+        v-for="(part, index) in parts" 
+        :key="part.id"
+        v-show="activePart === `part-${index}`"
+        class="pt-2"
+      >
+      </div>
+    </div>
     
     <div class="flex-1 pr-1">
       <div v-if="parts.length === 0" class="text-center py-12">
@@ -338,7 +331,7 @@ const handleAddQuestionsFromBank = (questions) => {
 };
 
 const removePart = (index) => {
-  if (parts.value.length > 1) {
+  if (parts.value.length > 0) {
     const newParts = [...parts.value];
     newParts.splice(index, 1);
     emit('update:modelValue', newParts);

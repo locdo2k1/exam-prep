@@ -21,21 +21,24 @@
             {{ formatQuestionType(question.type) }}
           </span>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          {{ question.question || question.content || question.prompt || 'Click to edit question' }}
-        </p>
+        <div 
+          class="text-sm text-gray-600 dark:text-gray-300 mt-1 prose dark:prose-invert prose-sm max-w-none"
+          v-html="question.question || question.content || question.prompt || 'Click to edit question'"
+        ></div>
 
         <!-- Show options for multiple choice questions -->
         <div v-if="shouldShowOptions" class="mt-2 space-y-1">
           <template v-if="hasOptions">
             <div v-for="(option, index) in question.options" :key="index"
-              class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+              class="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-1">
               <span class="font-medium w-4 mr-1">{{ String.fromCharCode(65 + index) }}.</span>
-              <span class="truncate">{{ option.text || 'Empty option' }}</span>
-              <span v-if="option.correct"
-                class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                Correct
-              </span>
+              <div class="prose dark:prose-invert prose-sm max-w-none flex items-center">
+                <span v-html="option.text || `Option ${index + 1}`"></span>
+                <span v-if="option.correct" 
+                  class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 whitespace-nowrap">
+                  Correct
+                </span>
+              </div>
             </div>
           </template>
           <div v-else class="text-xs text-gray-500 dark:text-gray-400 italic">
