@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 h-full flex flex-col border border-gray-100 dark:border-gray-700/50 transition-all duration-200 hover:shadow-md dark:hover:border-gray-600">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 h-full flex flex-col border border-gray-100 dark:border-gray-700/50 hover:shadow-md dark:hover:border-gray-600">
     <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
       <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center">
         <DocumentTextIcon class="h-5 w-5 mr-2.5 text-blue-500" />
@@ -10,21 +10,21 @@
     <div class="space-y-6 flex-1">
       <!-- Title Input -->
       <div class="group relative">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 group-focus-within:text-blue-500">
           Test Title
           <span class="text-red-500 ml-0.5">*</span>
         </label>
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <input
             v-model="testData.title"
             type="text"
             required
-            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
+            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             placeholder="e.g., IELTS Practice Test 2023"
           />
         </div>
@@ -33,13 +33,13 @@
       
       <!-- Duration Input -->
       <div class="group relative w-full">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 group-focus-within:text-blue-500">
           Duration (minutes)
           <span class="text-red-500 ml-0.5">*</span>
         </label>
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -48,7 +48,7 @@
             type="number"
             min="1"
             required
-            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200"
+            class="pl-10 pr-4 py-3 w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             placeholder="e.g., 60"
           />
         </div>
@@ -56,7 +56,7 @@
       
       <!-- Audio File Input -->
       <div class="group relative mt-6">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
           Audio File
           <span class="text-gray-400 text-xs ml-1">(Optional)</span>
         </label>
@@ -72,7 +72,7 @@
             <button
               type="button"
               @click="$refs.audioFileInput.click()"
-              class="inline-flex items-center px-4 py-2.5 rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              class="inline-flex items-center px-4 py-2.5 rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
@@ -86,7 +86,7 @@
               <button 
                 v-if="testData.audioFile"
                 @click.stop="testData.audioFile = null"
-                class="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+                class="ml-2 text-gray-400 hover:text-red-500"
                 aria-label="Remove file"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,7 +101,7 @@
       
       <!-- Description Textarea -->
       <div class="group relative">
-        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 transition-colors duration-200 group-focus-within:text-blue-500">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5 group-focus-within:text-blue-500">
           Description
           <span class="text-gray-400 text-xs ml-1">(Optional)</span>
         </label>
@@ -109,7 +109,7 @@
           <textarea
             v-model="testData.description"
             rows="6"
-            class="w-full px-4 py-3 pr-10 text-base rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all duration-200 resize-none min-h-[150px] leading-relaxed"
+            class="w-full px-4 py-3 pr-10 text-base rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none min-h-[150px] leading-relaxed"
             placeholder="Enter a detailed description of the test..."
             maxlength="500"
           ></textarea>
@@ -136,9 +136,9 @@
           <button
             type="button"
             @click="openAddPartModal"
-            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all duration-200"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
           >
-            <div class="w-10 h-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-lg mb-2 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+            <div class="w-10 h-10 flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-lg mb-2 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
@@ -150,11 +150,11 @@
           <button
             type="button"
             @click="$emit('add-question', 0)"  
-            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10"
           >
-            <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-lg mb-2 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors">
+            <div class="w-10 h-10 flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-lg mb-2 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Add Question</span>
@@ -164,9 +164,9 @@
           <button
             type="button"
             @click="openQuestionSetModal"
-            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all duration-200"
+            class="group flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10"
           >
-            <div class="w-10 h-10 flex items-center justify-center bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-lg mb-2 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
+            <div class="w-10 h-10 flex items-center justify-center bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-lg mb-2 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
@@ -183,17 +183,17 @@
           <div class="text-sm text-gray-500 dark:text-gray-400">
             <p>Make sure all required fields are filled</p>
             <p v-if="!isFormValid" class="text-amber-500 text-xs mt-1 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 100 2v3a1 1 0 102 0v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
               </svg>
-              Please complete all required fields
+              <span>Please complete all required fields</span>
             </p>
           </div>
           <button
             type="button"
             @click="$emit('save')"
             :disabled="!isFormValid"
-            class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg v-if="isSaving" class="animate-spin mr-1.5 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -213,7 +213,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 relative">
         <button 
           @click="showPartModal = false" 
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           aria-label="Close modal"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -473,7 +473,6 @@ textarea::-webkit-scrollbar-track {
 textarea::-webkit-scrollbar-thumb {
   background: #cbd5e1; /* gray-300 */
   border-radius: 4px;
-  transition: background-color 0.2s ease-in-out;
 }
 
 textarea::-webkit-scrollbar-thumb:hover {
