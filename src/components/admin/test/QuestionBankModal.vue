@@ -17,10 +17,12 @@
           <button @click.stop="toggleFilters"
             class="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             :aria-expanded="isFiltersExpanded" type="button">
-            <span class="relative inline-flex items-center h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-200"
+            <span
+              class="relative inline-flex items-center h-5 w-9 flex-shrink-0 rounded-full transition-colors duration-200"
               :class="isFiltersExpanded ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'">
               <span class="sr-only">Toggle filters</span>
-              <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200"
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200"
                 :class="{ 'translate-x-4': isFiltersExpanded, 'translate-x-0.5': !isFiltersExpanded }">
               </span>
             </span>
@@ -92,16 +94,14 @@
                   <!-- Score Range -->
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <label for="minScore"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min
+                      <label for="minScore" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min
                         Score</label>
                       <input id="minScore" v-model.number="minScore" type="number" min="0"
                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="Min score">
                     </div>
                     <div>
-                      <label for="maxScore"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max
+                      <label for="maxScore" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max
                         Score</label>
                       <input id="maxScore" v-model.number="maxScore" type="number" min="0"
                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -141,8 +141,7 @@
                 :class="{
                   'ring-2 ring-blue-500 bg-blue-50/80 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800': isQuestionSelected(question.id),
                   'hover:bg-gray-50 dark:hover:bg-gray-700/70': !isQuestionSelected(question.id)
-                }"
-                @click="toggleQuestion(question)">
+                }" @click="toggleQuestion(question)">
                 <div class="flex items-start">
                   <div class="flex-1 min-w-0">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full">
@@ -233,30 +232,63 @@
     </template>
 
     <template #footer>
-      <div class="flex justify-between w-full">
-        <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-          {{ selectedCount }} questions selected
+      <div class="flex flex-col space-y-4 w-full">
+        <!-- Pagination -->
+        <div class="flex justify-between items-center">
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            Showing {{ Math.min((currentPage - 1) * pageSize + 1, totalQuestions) }} to
+            {{ Math.min(currentPage * pageSize, totalQuestions) }} of {{ totalQuestions }} questions
+          </div>
+          <div class="flex items-center space-x-1">
+            <fwb-button @click="currentPage > 1 ? currentPage-- : null"
+              :disabled="currentPage === 1 || loadingStates.questions" color="alternative" size="sm"
+              class="px-3 py-1.5">
+              Previous
+            </fwb-button>
+            <div class="flex items-center space-x-1">
+              <template v-for="page in totalPages" :key="page">
+                <fwb-button 
+                  @click="currentPage = page" 
+                  :color="currentPage === page ? 'blue' : 'alternative'"
+                  size="sm"
+                  class="w-8 h-8 p-0 flex items-center justify-center">
+                  {{ page }}
+                </fwb-button>
+              </template>
+            </div>
+            <fwb-button @click="currentPage < totalPages ? currentPage++ : null"
+              :disabled="currentPage >= totalPages || loadingStates.questions"
+              color="alternative" size="sm" class="px-3 py-1.5">
+              Next
+            </fwb-button>
+          </div>
         </div>
-        <div>
-          <fwb-button @click="closeModal" color="alternative" class="mr-2" :disabled="loadingStates.saving">
-            Cancel
-          </fwb-button>
-          <fwb-button @click="saveSelected" color="blue" :disabled="loadingStates.saving || selectedCount === 0"
-            :class="{ 'opacity-50 cursor-not-allowed': loadingStates.saving || selectedCount === 0 }">
-            <span v-if="loadingStates.saving" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-              </svg>
-              Adding...
-            </span>
-            <span v-else>
-              Add Selected ({{ selectedCount }})
-            </span>
-          </fwb-button>
+
+        <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+            {{ selectedCount }} questions selected
+          </div>
+          <div>
+            <fwb-button @click="closeModal" color="alternative" class="mr-2" :disabled="loadingStates.saving">
+              Cancel
+            </fwb-button>
+            <fwb-button @click="saveSelected" color="blue" :disabled="loadingStates.saving || selectedCount === 0"
+              :class="{ 'opacity-50 cursor-not-allowed': loadingStates.saving || selectedCount === 0 }">
+              <span v-if="loadingStates.saving" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                  viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                Adding...
+              </span>
+              <span v-else>
+                Add Selected ({{ selectedCount }})
+              </span>
+            </fwb-button>
+          </div>
         </div>
       </div>
     </template>
@@ -316,9 +348,11 @@ const toggleFilters = () => {
 const searchQuery = ref<string>('');
 const selectedCategory = ref<string>('');
 const selectedQuestionType = ref<string>('');
+const currentPage = ref<number>(1);
 const minScore = ref<number>(0);
 const maxScore = ref<number>(10);
 const totalQuestions = ref<number>(0);
+const totalPages = ref<number>(1);
 
 const toast = useToast();
 // Separate loading states for better user feedback
@@ -336,15 +370,17 @@ const questionTypeOptions = ref<QuestionTypeOption[]>([]);
 const fetchCount = ref(0);
 
 // Fetch questions from API
+const pageSize = 10; // Number of items per page
+
 const fetchQuestions = async () => {
   const callId = ++fetchCount.value;
-  console.log(`[${callId}] fetchQuestions called`);
+  console.log(`[${callId}] fetchQuestions called`, { currentPage: currentPage.value });
 
   try {
     loadingStates.value.questions = true;
     const response = await questionApi.getAll({
-      page: 0,
-      size: 50, // Adjust page size as needed
+      page: currentPage.value - 1, // Convert to 0-based index for API
+      size: pageSize,
       direction: 'desc',
       questionTypeId: selectedQuestionType.value || undefined,
       categoryId: selectedCategory.value || undefined,
@@ -391,12 +427,13 @@ const fetchQuestions = async () => {
         // Ensure options is properly typed
         options: Array.isArray(q.options) ? q.options : []
       };
-      
+
       console.log('Processed question:', question);
       return question;
     });
 
     totalQuestions.value = response.data.totalElements;
+    totalPages.value = response.data.totalPages;
   } catch (error) {
     console.error('Error fetching questions:', error);
     toast.error('Failed to load questions');
@@ -479,7 +516,11 @@ const initializeData = async () => {
 // Initialize when the modal opens
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
+    console.log('Modal opened, initializing data...');
     await initializeData();
+    // Reset pagination and fetch questions
+    currentPage.value = 1;
+    await fetchQuestions();
   }
 }, { immediate: true });
 
@@ -492,6 +533,14 @@ watch(searchQuery, () => {
 
 // Watch for filter changes
 watch([selectedCategory, selectedQuestionType, minScore, maxScore], () => {
+  if (initialLoadDone.value) {
+    currentPage.value = 1; // Reset to first page when filters change
+    fetchQuestions();
+  }
+}, { immediate: false });
+
+// Watch for page changes
+watch(currentPage, () => {
   if (initialLoadDone.value) {
     fetchQuestions();
   }
@@ -511,21 +560,21 @@ const typeSelect = ref<SearchableSelectMethods | null>(null);
 // Reset all filters and clear selections
 const resetAllFilters = () => {
   console.log('Resetting all filters');
-  
+
   // Reset all filter values
   searchQuery.value = '';
   selectedCategory.value = '';
   selectedQuestionType.value = '';
   minScore.value = 0;
   maxScore.value = 10;
-  
+
   // Clear selected questions
   selectedQuestions.value.clear();
-  
+
   // Reset SearchableSelect components if they exist
   if (categorySelect.value) categorySelect.value.reset();
   if (typeSelect.value) typeSelect.value.reset();
-  
+
   // Refetch questions with reset filters
 };
 
@@ -549,6 +598,26 @@ const getSelectedQuestions = (): Question[] => {
 
 // Methods
 const closeModal = () => {
+  // Reset search and filters
+  searchQuery.value = '';
+  selectedCategory.value = '';
+  selectedQuestionType.value = '';
+
+  // Reset pagination
+  currentPage.value = 1;
+
+  // Clear selected questions
+  selectedQuestions.value.clear();
+
+  // Reset any select components if they exist
+  if (categorySelect.value) {
+    categorySelect.value.reset();
+  }
+  if (typeSelect.value) {
+    typeSelect.value.reset();
+  }
+
+  // Close the modal
   emit('close');
 };
 
