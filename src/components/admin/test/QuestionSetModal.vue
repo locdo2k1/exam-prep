@@ -202,7 +202,7 @@
       </div>
       
       <!-- Preview Modal -->
-      <fwb-modal v-if="showPreviewModal" @close="showPreviewModal = false" size="5xl" class="dark:bg-gray-800">
+      <fwb-modal v-if="showPreviewModal" @close="showPreviewModal = false" size="5xl" class="dark:bg-gray-800 [&>div]:overflow-hidden">
         <template #header>
           <div class="flex items-center justify-between w-full px-1">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -229,7 +229,7 @@
             <p class="text-gray-600 dark:text-gray-400">Loading question set details...</p>
           </div>
           
-          <div v-else-if="previewQuestionSetData" class="space-y-6">
+          <div v-else-if="previewQuestionSetData" class="space-y-6 max-h-[70vh] overflow-y-auto pr-2 -mr-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full">
             <!-- Header Section -->
             <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
               <!-- Header with gradient background -->
@@ -250,11 +250,11 @@
               <!-- Content -->
               <div class="p-6 space-y-4">
                 <!-- Description -->
-                <div v-if="previewQuestionSetData.description" class="prose prose-sm max-w-none text-gray-600 dark:text-gray-300" v-html="previewQuestionSetData.description">
+                <div v-if="previewQuestionSetData.description" class="prose prose-sm max-w-none text-gray-600 dark:text-gray-300 bg-white p-4 rounded-lg shadow-sm" v-html="previewQuestionSetData.description">
                 </div>
                 
                 <!-- Stats -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100 dark:border-gray-700/50">
                   <div class="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                     <div class="flex items-center text-indigo-600 dark:text-indigo-400 mb-1">
                       <i class="fas fa-question-circle text-lg mr-2"></i>
@@ -322,10 +322,7 @@
                         </span>
                       </div>
                     </div>
-                    <div v-if="question.questionAudios?.length" class="flex items-center text-xs text-blue-600 dark:text-blue-400">
-                      <i class="fas fa-headphones mr-1"></i>
-                      Audio Included
-                    </div>
+
                   </div>
                   
                   <!-- Question Content -->
@@ -337,18 +334,18 @@
                     <!-- Multiple Choice Options -->
                     <div v-if="question.questionType?.name === 'Multiple Choice' && question.options?.length" class="space-y-2 mt-3">
                       <div v-for="(option, oIndex) in question.options" :key="option.id" 
-                           class="flex items-start p-2 rounded-md transition-colors duration-150"
-                           :class="{ 'bg-green-50 dark:bg-green-900/30': option.isCorrect }">
+                           class="flex items-start p-3 rounded-lg transition-colors duration-200 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                           :class="{ 'bg-green-50 dark:bg-green-900/30': option.correct }">
                         <div class="flex items-center h-5 mt-0.5">
-                          <span class="flex items-center justify-center h-5 w-5 rounded mr-2.5 text-sm font-medium"
-                                :class="{ 'bg-indigo-100 border-indigo-500 text-indigo-800 dark:bg-indigo-900/50 dark:border-indigo-600 dark:text-indigo-200': option.isCorrect }">
+                          <span class="flex items-center justify-center h-5 w-5 rounded mr-2.5 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700"
+                                :class="{ 'bg-indigo-100 border-indigo-500 text-indigo-800 dark:bg-indigo-900/50 dark:border-indigo-600 dark:text-indigo-200': option.correct }">
                             {{ String.fromCharCode(65 + oIndex) }}
                           </span>
                         </div>
-                        <div class="text-sm" :class="{ 'text-green-700 dark:text-green-300 font-medium': option.isCorrect }">
-                          {{ option.content }}
+                        <div class="text-sm text-gray-800 dark:text-gray-200" :class="{ 'text-green-700 dark:text-green-300 font-medium': option.correct }">
+                          {{ option.text }}
                         </div>
-                        <div v-if="option.isCorrect" class="ml-2 text-green-500">
+                        <div v-if="option.correct" class="ml-2 text-green-500">
                           <i class="fas fa-check-circle"></i>
                         </div>
                       </div>
@@ -420,7 +417,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import { useToast } from 'vue-toast-notification';
 import { FwbModal, FwbButton } from 'flowbite-vue';
 import { questionSetApi } from '@/api/admin/question-set/questionSet';
 import type { QuestionSetSimpleVM, QuestionSetViewModel } from '@/api/admin/question-set/questionSet';
