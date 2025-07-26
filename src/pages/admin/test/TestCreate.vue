@@ -5,58 +5,47 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Create New Test</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Set up your test by adding parts and questions</p>
       </div>
-      
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Panel - Question Bank & Test Parts -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Question Bank Section - Only show when there are parts -->
-          <div v-if="!test.listPart || test.listPart.length === 0" class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+          <div v-if="!test.listPart || test.listPart.length === 0"
+            class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
             <h2 class="text-xl font-semibold mb-4 dark:text-white">Question Bank</h2>
-            <TestQuestionList 
-              :list-question="test.listQuestion"
-              :list-question-set="test.listQuestionSet"
-              @select-question="handleSelectQuestionFromBank"
-              @select-question-set="handleSelectQuestionSet"
-              @remove-question="handleRemoveQuestion"
-            />
+            <TestQuestionList :list-question-and-question-set="test.listQuestionAndQuestionSet"
+              @select-question="handleSelectQuestionFromBank" @select-question-set="handleSelectQuestionSet"
+              @remove-question="handleRemoveQuestion" @remove-question-set="handleRemoveQuestionSet" />
           </div>
-          
+
           <!-- Test Parts Section -->
           <div v-if="test.listPart && test.listPart.length > 0" class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
             <h2 class="text-xl font-semibold mb-4 dark:text-white">Test Parts</h2>
-            <TestPartList 
-              v-model="test.listPart"
-              @select-question="handleSelectQuestion"
-              @active-part-change="handleActivePartChange"
-            />
+            <TestPartList v-model="test.listPart" @select-question="handleSelectQuestion"
+              @active-part-change="handleActivePartChange" />
           </div>
         </div>
-        
+
         <!-- Right Panel - Test Information -->
         <div class="lg:col-span-1">
-          <TestInfoForm 
-            :test-title="test.title"
-            :test-category-id="test.testCategoryId"
-            :skill-ids="test.skillIds"
-            @update:test-title="test.title = $event"
-            @update:test-category-id="test.testCategoryId = $event"
-            @update:skill-ids="test.skillIds = $event"
-            @add-part="handleAddPart"
-            @add-question="handleAddQuestion"
-            @add-question-set="handleAddQuestionSet"
-            @save="handleSave"
-          />
+          <TestInfoForm :test-title="test.title" :test-category-id="test.testCategoryId" :skill-ids="test.skillIds"
+            @update:test-title="test.title = $event" @update:test-category-id="test.testCategoryId = $event"
+            @update:skill-ids="test.skillIds = $event" @add-part="handleAddPart" @add-question="handleAddQuestion"
+            @add-question-set="handleAddQuestionSet" @select-question-set="handleSelectQuestionSet"
+            @save="handleSave" />
         </div>
       </div>
-      
+
       <!-- Question Bank Modal -->
       <div class="question-bank-modal">
-        <QuestionBankModal 
-          :isOpen="showQuestionBank"
-          :selected-questions="selectedQuestionsForBank"
-          @close="showQuestionBank = false"
-          @select="handleQuestionsSelected"
-        />
+        <QuestionBankModal :isOpen="showQuestionBank" :selected-questions="selectedQuestionsForBank"
+          @close="showQuestionBank = false" @select="handleQuestionsSelected" />
+      </div>
+
+      <!-- Question Set Modal -->
+      <div class="question-set-modal">
+        <QuestionSetModal :is-open="showQuestionSetModal" @close="showQuestionSetModal = false"
+          @select="handleQuestionSetsSelected" />
       </div>
     </div>
   </div>
@@ -73,6 +62,7 @@ import TestQuestionList from '@/components/admin/test/TestQuestionList.vue';
 import TestPartList from '@/components/admin/test/TestPartList.vue';
 import TestInfoForm from '@/components/admin/test/TestInfoForm.vue';
 import QuestionBankModal from '@/components/admin/test/QuestionBankModal.vue';
+import QuestionSetModal from '@/components/admin/test/QuestionSetModal.vue';
 
 // Router and toast setup
 const router = useRouter();
@@ -81,71 +71,79 @@ const toast = useToast();
 // Track selected questions for the question bank
 const selectedQuestionsForBank = ref<Question[]>([]);
 
+// Track question set modal visibility
+const showQuestionSetModal = ref(false);
+
 // Handle questions selected from the question bank
 const handleQuestionsSelected = (questions: Question[]) => {
-  // If there are no parts, add questions directly to test.listQuestion
+  // Get the base order value for this batch of questions
+  const baseOrder = getNextOrder();
+
+  // Create new question objects with proper defaults and sequential order
+  const newQuestions = questions.map((question, index) => {
+    const newQuestion: Question = {
+      id: question.id || `temp-${Date.now()}-${index}`,
+      type: question.type || 'multiple_choice',
+      content: question.content || 'New Question',
+      prompt: question.prompt || 'New Question',
+      questionText: question.questionText || question.content || question.prompt || 'New Question',
+      points: question.points || 1,
+      options: question.options || [],
+      correctAnswer: question.correctAnswer || '',
+      category: question.category || 'General',
+      difficulty: question.difficulty || 'medium',
+      duration: question.duration || 60,
+      explanation: question.explanation || '',
+      tags: question.tags || [],
+      // Assign sequential order values starting from the base order
+      order: baseOrder + index
+    };
+    return newQuestion;
+  });
+
+  // If there are no parts, add questions directly to test.listQuestionAndQuestionSet
   if (!test.value.listPart || test.value.listPart.length === 0) {
-    questions.forEach(question => {
-      const newQuestion: Question = {
-        id: question.id || Date.now().toString(),
-        type: question.type || 'multiple_choice',
-        content: question.content || 'New Question',
-        prompt: question.prompt || 'New Question',
-        points: question.points || 1,
-        options: question.options || [],
-        correctAnswer: question.correctAnswer || '',
-        category: question.category || 'General',
-        difficulty: question.difficulty || 'medium',
-        duration: question.duration || 60,
-        explanation: question.explanation || '',
-        tags: question.tags || []
-      };
-      
-      test.value.listQuestion.push(newQuestion);
-    });
+    // Initialize listQuestionAndQuestionSet if it doesn't exist
+    if (!test.value.listQuestionAndQuestionSet) {
+      test.value.listQuestionAndQuestionSet = [];
+    }
+    test.value.listQuestionAndQuestionSet.push(...newQuestions);
   } else {
-    const partIndex = activePartIndex.value;
-    
+    // If there are parts, add questions to the currently active part
+    const currentPartIndex = activePartIndex.value;
+
     // Ensure the part exists
-    if (!test.value.listPart[partIndex]) {
-      console.error('Invalid part index:', partIndex);
+    if (!test.value.listPart[currentPartIndex]) {
+      console.error('Invalid part index:', currentPartIndex);
       showQuestionBank.value = false;
       return;
     }
-    
+
     // Ensure the part has a questions array
-    if (!test.value.listPart[partIndex].questions) {
-      test.value.listPart[partIndex].questions = [];
+    if (!test.value.listPart[currentPartIndex].questions) {
+      test.value.listPart[currentPartIndex].questions = [];
     }
-    
-    // Add the selected questions to the current part with proper defaults
-    questions.forEach(question => {
-      const newQuestion: Question = {
-        id: question.id || Date.now().toString(),
-        type: question.type || 'multiple_choice',
-        content: question.content || 'New Question',
-        prompt: question.prompt || 'New Question',
-        points: question.points || 1,
-        options: question.options || [],
-        correctAnswer: question.correctAnswer || '',
-        category: question.category || 'General',
-        difficulty: question.difficulty || 'medium',
-        duration: question.duration || 60,
-        explanation: question.explanation || '',
-        tags: question.tags || []
-      };
-      
-      test.value.listPart[partIndex].questions.push(newQuestion);
-    });
+
+    // Add the selected questions to the current part
+    test.value.listPart[currentPartIndex].questions.push(...newQuestions);
+
+    // Also add to listQuestionAndQuestionSet for the question bank view
+    if (!test.value.listQuestionAndQuestionSet) {
+      test.value.listQuestionAndQuestionSet = [];
+    }
+    test.value.listQuestionAndQuestionSet.push(...newQuestions);
+
+    // Sort questions by order to ensure consistent display
+    test.value.listPart[currentPartIndex].questions.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
-  
+
   // Close the question bank modal
   showQuestionBank.value = false;
 };
 
 // Get dark mode state from ThemeProvider
-const { isDarkMode } = inject('theme', { 
-  isDarkMode: ref(false) 
+const { isDarkMode } = inject('theme', {
+  isDarkMode: ref(false)
 });
 
 // Test data structure
@@ -168,14 +166,32 @@ const test = ref<TestVM>({
     skillIds: []
   },
   listPart: [],
-  listQuestion: [],
-  listQuestionSet: [],
+  listQuestionAndQuestionSet: [],
   files: []
 });
 
 // Computed properties for template
 const title = computed(() => test.value.info.name);
 const testCategoryId = computed(() => test.value.info.testCategoryId || '');
+
+// Get the next available order for questions and question sets
+// Uses a unified order for both questions and question sets
+const getNextOrder = () => {
+  const allItems = [
+    ...(test.value.listQuestionAndQuestionSet || []),
+    ...test.value.listPart.flatMap(p => [
+      ...(p.questions || []),
+      ...(p.questionSets || [])
+    ])
+  ];
+
+  const maxOrder = Math.max(
+    ...allItems.map(item => item.order || 0),
+    0
+  );
+
+  return maxOrder + 1;
+};
 const skillIds = computed(() => test.value.info.skillIds || []);
 
 // Watch for changes to the test object
@@ -217,90 +233,275 @@ const handleAddPart = (partData?: TestPart) => {
 };
 
 const handleAddQuestion = (partIndex: number | null = null) => {
-  // If no part index is provided, add to the first part or create a new part
-  let targetPartIndex = partIndex;
-  
-  if (targetPartIndex === null) {
-    if (test.value.listPart.length === 0) {
-      // If no parts exist, create one first
-      handleAddPart();
-      targetPartIndex = 0;
-    } else {
-      // Default to the first part
-      targetPartIndex = 0;
-    }
+  // If partIndex is null or there are no parts, add directly to listQuestionAndQuestionSet
+  if (partIndex === null || test.value.listPart.length === 0) {
+    // Set current part index to -1 to indicate we're not in a specific part
+    currentQuestionIndex.value = {
+      partIndex: -1,
+      questionIndex: null
+    };
+  } else {
+    // If part index is provided and parts exist, use the specified part
+    currentQuestionIndex.value = {
+      partIndex: partIndex,
+      questionIndex: null
+    };
   }
-  
-  // Set the current part index for question selection
-  currentQuestionIndex.value = {
-    partIndex: targetPartIndex,
-    questionIndex: null
-  };
-  
+
   // Show the question bank modal
   showQuestionBank.value = true;
 };
 
-const handleAddQuestionSet = () => {
-  // Implementation for adding a set of questions
-  showQuestionBank.value = true;
+const handleAddQuestionSet = (partIndex: number | null = null) => {
+  // If partIndex is null or there are no parts, add directly to listQuestionAndQuestionSet
+  if (partIndex === null || test.value.listPart.length === 0) {
+    // Set current part index to -1 to indicate we're not in a specific part
+    currentQuestionIndex.value = {
+      partIndex: -1,
+      questionIndex: null
+    };
+  } else {
+    // If part index is provided and parts exist, use the specified part
+    currentQuestionIndex.value = {
+      partIndex: partIndex,
+      questionIndex: null
+    };
+  }
+
+  // Show the question set modal
+  showQuestionSetModal.value = true;
 };
 
 const handleSelectQuestionFromBank = (question: Question) => {
+  // If there are no parts, add directly to listQuestionAndQuestionSet
+  if (!test.value.listPart || test.value.listPart.length === 0) {
+    // Check if question already exists to avoid duplicates
+    const isDuplicate = test.value.listQuestionAndQuestionSet.some(
+      (item: Question | QuestionSet) => 'questionText' in item && item.id === question.id
+    );
+
+    if (isDuplicate) {
+      toast.info('This question is already added');
+      return;
+    }
+
+    // Add the question to listQuestionAndQuestionSet with proper order
+    const newQuestion = {
+      ...question,
+      id: `temp-${Date.now()}`,
+      order: question.order !== undefined ? question.order : getNextOrder()
+    };
+
+    test.value.listQuestionAndQuestionSet.push(newQuestion);
+    toast.success('Question added to the test');
+    return;
+  }
+
+  // If there are parts, add to the current part
   if (!test.value.listPart[activePartIndex.value]) {
     toast.error('Please select a part to add the question to');
     return;
   }
-  
+
   const currentPart = test.value.listPart[activePartIndex.value];
-  
+
   // Ensure the part has a questions array
   if (!currentPart.questions) {
     currentPart.questions = [];
   }
-  
+
   // Create a new question with all required fields and proper defaults
   const newQuestion: Question = {
-    id: Date.now().toString(),
+    ...question,
+    id: `temp-${Date.now()}`,
     type: question.type || 'multiple_choice',
     content: question.content || 'New Question',
     prompt: question.prompt || 'New Question',
     points: question.points || 1,
-    options: question.options || [],
+    options: [...(question.options || [])],
     correctAnswer: question.correctAnswer || '',
     category: question.category || 'General',
     difficulty: question.difficulty || 'medium',
     duration: question.duration || 60, // Default duration in seconds
     explanation: question.explanation || '',
-    tags: question.tags || []
+    tags: [...(question.tags || [])],
+    // Preserve the original order or set to the next available position
+    order: question.order !== undefined ? question.order : getNextOrder()
   };
-  
+
+  // Add the new question while maintaining order
   currentPart.questions.push(newQuestion);
+
+  // Sort questions by order to ensure consistent display
+  currentPart.questions.sort((a, b) => (a.order || 0) - (b.order || 0));
   toast.success('Question added to the test');
 };
 
-const handleSelectQuestionSet = (questionSet: QuestionSet) => {
-  if (!test.value.listPart[activePartIndex.value]) {
-    toast.error('Please select a part to add the questions to');
+const handleQuestionSetsSelected = async (questionSets: any) => {
+  if (!questionSets || questionSets.length === 0) {
+    toast.info('No question sets selected');
     return;
   }
-  
-  const currentPart = test.value.listPart[activePartIndex.value];
-  
-  // Ensure the part has a questions array
-  if (!currentPart.questions) {
-    currentPart.questions = [];
+
+  try {
+    // If there are no parts, add directly to listQuestionAndQuestionSet
+    if (test.value.listPart.length === 0) {
+      // Filter out any duplicate question sets
+      const newQuestionSets = questionSets.filter(qs => {
+        // Check if a question set with this ID already exists in listQuestionAndQuestionSet
+        const exists = test.value.listQuestionAndQuestionSet.some(
+          (item: Question | QuestionSet) => 'questions' in item && item.id === qs.id
+        );
+        return !exists;
+      });
+
+      if (newQuestionSets.length === 0) {
+        toast.info('All selected question sets are already added');
+        return;
+      }
+
+      // Process each question set
+      for (const questionSet of newQuestionSets) {
+        try {
+          const questionSetOrder = getNextOrder();
+          const timestamp = Date.now();
+
+          // Create a new question set with properly mapped questions
+          const newQuestionSet: QuestionSet = {
+            id: questionSet.id,
+            name: questionSet.name || `Question Set ${questionSet.id.substring(0, 8)}`,
+            description: questionSet.description || '',
+            order: questionSetOrder,
+            questionCount: questionSet.questions?.length || 0,
+            questions: questionSet.questions?.map((q, index) => ({
+              ...q,
+              id: `temp-${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
+              points: q.points || 1,
+              order: index,
+              questionSetId: questionSet.id,
+              // Set default values for required fields
+              category: q.category || 'general',
+              difficulty: q.difficulty || 'medium',
+              duration: q.duration || 60,
+              explanation: q.explanation || '',
+              tags: q.tags || [],
+              // Map options to the correct format
+              options: q.options?.map(opt => ({
+                id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
+                text: opt.text || '',
+                correct: opt.correct || false
+              })) || []
+            })) || [],
+            tags: questionSet.tags || []
+          };
+
+          // Add to the main list
+          test.value.listQuestionAndQuestionSet.push(newQuestionSet);
+
+          // Sort to maintain order
+          test.value.listQuestionAndQuestionSet.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        } catch (error) {
+          console.error(`Error processing question set ${questionSet.id}:`, error);
+          toast.error(`Failed to add question set: ${questionSet.name || questionSet.id}`);
+        }
+      }
+
+      const totalQuestions = newQuestionSets.reduce((total, qs) => total + (qs.questions?.length || 0), 0);
+      toast.success(`Added ${newQuestionSets.length} question set(s) with ${totalQuestions} total questions`);
+      return;
+    }
+
+    // If there are parts, add to the current part
+    const currentPart = test.value.listPart[activePartIndex.value];
+    if (!currentPart) {
+      toast.error('Please select a part to add the questions to');
+      return;
+    }
+
+    // Initialize arrays if they don't exist
+    if (!currentPart.questions) {
+      currentPart.questions = [];
+    }
+
+    if (!currentPart.questionSets) {
+      currentPart.questionSets = [];
+    }
+
+    // Filter out any duplicate question sets
+    const newQuestionSets = questionSets.filter(qs =>
+      !currentPart.questionSets?.some(existingQs => existingQs.id === qs.id)
+    );
+
+    if (newQuestionSets.length === 0) {
+      toast.info('All selected question sets are already added to this part');
+      return;
+    }
+
+    // Process each new question set
+    let totalQuestionsAdded = 0;
+    for (const questionSet of newQuestionSets) {
+      try {
+        // Add the question set reference with shared order
+        const questionSetOrder = getNextOrder();
+        const newQuestionSet: QuestionSet = {
+          id: questionSet.id,
+          name: questionSet.name,
+          description: questionSet.description,
+          questions: questionSet.questions?.map((q, index) => ({
+            ...q,
+            id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            points: q.points || 1,
+            order: q.order !== undefined ? q.order : (getNextOrder() + index),
+            questionSetId: questionSet.id,
+            // Ensure all required Question fields have defaults
+            category: q.category || 'general',
+            difficulty: q.difficulty || 'medium',
+            duration: q.duration || 60,
+            explanation: q.explanation || '',
+            tags: q.tags || []
+          })) || [],
+          order: questionSetOrder,
+          questionCount: questionSet.questions?.length || 0,
+          tags: questionSet.tags
+        };
+        currentPart.questionSets?.push(newQuestionSet);
+
+        // Add all questions from the set to the current part with consistent ordering
+        const baseOrder = getNextOrder();
+        const questionsToAdd = questionSet.questions?.map((q: Question, index) => ({
+          ...q,
+          id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          points: q.points || 1,
+          order: q.order !== undefined ? q.order : (baseOrder + index),
+          questionSetId: questionSet.id
+        })) || [];
+
+        currentPart.questions.push(...questionsToAdd);
+        totalQuestionsAdded += questionsToAdd.length;
+      } catch (error) {
+        console.error(`Error processing question set ${questionSet.id}:`, error);
+        toast.error(`Failed to add question set: ${questionSet.name}`);
+      }
+    }
+
+    // Sort questions by order to ensure consistent display
+    currentPart.questions.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    if (totalQuestionsAdded > 0) {
+      toast.success(`Added ${newQuestionSets.length} question set(s) with ${totalQuestionsAdded} total questions to "${currentPart.name || 'the part'}"`);
+    }
+  } catch (error) {
+    console.error('Error adding question sets:', error);
+    toast.error('Failed to add question sets. Please try again.');
+  } finally {
+    showQuestionSetModal.value = false;
   }
-  
-  // Add all questions from the set to the current part
-  const questionsToAdd = questionSet.questions?.map((q: Question) => ({
-    ...q,
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    points: q.points || 1
-  })) || [];
-  
-  currentPart.questions.push(...questionsToAdd);
-  toast.success(`Added ${questionsToAdd.length} questions from "${questionSet.name}"`);
+};
+
+// For backward compatibility
+const handleSelectQuestionSet = (questionSet: QuestionSet) => {
+  handleQuestionSetsSelected(questionSet);
 };
 
 // Handle when the active part changes in the TestPartList
@@ -313,9 +514,9 @@ const handleActivePartChange = (partIndex: number) => {
 const handleSelectQuestion = ({ partIndex, questionIndex }: { partIndex: number; questionIndex: number }) => {
   // Ensure the part and question exist before setting the current question index
   if (test.value.listPart[partIndex]?.questions?.[questionIndex] !== undefined) {
-    currentQuestionIndex.value = { 
-      partIndex, 
-      questionIndex 
+    currentQuestionIndex.value = {
+      partIndex,
+      questionIndex
     };
     showQuestionEditor.value = true;
   } else {
@@ -324,28 +525,46 @@ const handleSelectQuestion = ({ partIndex, questionIndex }: { partIndex: number;
 };
 
 const handleSaveQuestion = (updatedQuestion: Question) => {
-  if (!currentQuestionIndex.value || 
-      currentQuestionIndex.value.partIndex === null || 
-      currentQuestionIndex.value.questionIndex === null) {
+  if (!currentQuestionIndex.value ||
+    currentQuestionIndex.value.partIndex === null ||
+    currentQuestionIndex.value.questionIndex === null) {
     showQuestionEditor.value = false;
     return;
   }
-  
+
   const { partIndex, questionIndex } = currentQuestionIndex.value;
-  
+
   // Ensure the part and question exist
   if (!test.value.listPart[partIndex] || !test.value.listPart[partIndex].questions) {
     showQuestionEditor.value = false;
     return;
   }
-  
+
   // Update the question
   test.value.listPart[partIndex].questions[questionIndex] = {
     ...test.value.listPart[partIndex].questions[questionIndex],
     ...updatedQuestion
   };
-  
+
   showQuestionEditor.value = false;
+};
+
+const handleRemoveQuestionSet = (questionSetId: string) => {
+  // Remove from the main question and question set list
+  const initialLength = test.value.listQuestionAndQuestionSet.length;
+  test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
+    (item: Question | QuestionSet) => {
+      if ('questions' in item) { // This is a question set
+        return item.id !== questionSetId;
+      }
+      return true; // Keep all questions
+    }
+  );
+
+  // If we removed a question set, show a success message
+  if (test.value.listQuestionAndQuestionSet.length < initialLength) {
+    toast.success('Question set removed');
+  }
 };
 
 const handleRemoveQuestion = (questionId: string | number) => {
@@ -359,24 +578,29 @@ const handleRemoveQuestion = (questionId: string | number) => {
         return (q.id && q.id === questionId) || idx === questionId;
       });
     });
-    
+
     if (partIndex !== -1 && test.value.listPart[partIndex].questions) {
       // Remove from the part's questions
       test.value.listPart[partIndex].questions = test.value.listPart[partIndex].questions!.filter(
         (q, idx) => {
           // Keep if ID doesn't match AND index doesn't match (if questionId is a number)
-          return (q.id ? q.id !== questionId : true) && 
-                 (typeof questionId === 'number' ? idx !== questionId : true);
+          return (q.id ? q.id !== questionId : true) &&
+            (typeof questionId === 'number' ? idx !== questionId : true);
         }
       );
     }
   } else {
-    // Remove from the main question list
+    // Remove from the main question and question set list
     if (typeof questionId === 'number') {
-      test.value.listQuestion.splice(questionId, 1);
+      test.value.listQuestionAndQuestionSet.splice(questionId, 1);
     } else {
-      test.value.listQuestion = test.value.listQuestion.filter(
-        q => q.id ? q.id !== questionId : false
+      test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
+        (item: Question | QuestionSet) => {
+          if ('id' in item) {
+            return item.id !== questionId;
+          }
+          return false;
+        }
       );
     }
   }
@@ -389,17 +613,17 @@ const handleSave = async () => {
       toast.error('Test title is required');
       return;
     }
-    
+
     if (!test.value.testCategoryId) {
       toast.error('Please select a test category');
       return;
     }
-    
+
     if (test.value.listPart.length === 0) {
       toast.error('Please add at least one part to the test');
       return;
     }
-    
+
     // Prepare the payload
     const payload = {
       title: test.value.title,
@@ -413,13 +637,13 @@ const handleSave = async () => {
       })),
       files: test.value.files || []
     };
-    
+
     // Here you would typically make an API call to save the test
     console.log('Saving test:', payload);
-    
+
     // Show success message
     toast.success('Test saved successfully!');
-    
+
     // Redirect to tests list or edit page
     router.push({ name: 'admin-tests' });
   } catch (error) {

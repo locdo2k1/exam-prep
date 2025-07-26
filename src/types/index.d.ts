@@ -32,6 +32,8 @@ export interface QuestionSet {
   name: string;
   description?: string;
   questions: Question[];
+  order?: number;
+  questionCount?: number;
   tags?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -74,8 +76,7 @@ export interface TestVM {
     skillIds?: string[];
   };
   listPart: TestPart[];
-  listQuestion: Question[];
-  listQuestionSet: QuestionSet[];
+  listQuestionAndQuestionSet: Array<Question | QuestionSet>;
   files?: File[];
   title?: string; // For backward compatibility
   testCategoryId?: string; // For backward compatibility

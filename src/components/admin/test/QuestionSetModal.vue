@@ -3,7 +3,12 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl flex flex-col h-[80vh]">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Select Question Sets</h3>
+        <div class="flex items-center space-x-3">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Select Question Sets</h3>
+          <span v-if="selectedCount > 0" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+            {{ selectedCount }} selected
+          </span>
+        </div>
         <button 
           @click="closeModal" 
           class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
@@ -44,12 +49,30 @@
         </div>
         
         <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-          <li v-for="questionSet in questionSets" :key="questionSet.id" class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" @click="selectQuestionSet(questionSet)">
+          <li 
+            v-for="questionSet in questionSets" 
+            :key="questionSet.id" 
+            class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+            :class="{ 'bg-indigo-50 dark:bg-indigo-900/30': isQuestionSetSelected(questionSet.id) }"
+            @click="toggleQuestionSet(questionSet)"
+          >
             <div class="flex items-center justify-between">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {{ questionSet.title }}
-                </p>
+              <div class="flex items-center min-w-0">
+                <div class="flex items-center h-5 mr-3">
+                  <input 
+                    :id="`question-set-${questionSet.id}`" 
+                    type="checkbox" 
+                    :checked="isQuestionSetSelected(questionSet.id)"
+                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                    @click.stop
+                    @change="toggleQuestionSet(questionSet)"
+                  >
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {{ questionSet.title }}
+                  </p>
+                </div>
               </div>
               <div class="ml-4 flex-shrink-0 flex items-center space-x-2">
                 <button
@@ -63,13 +86,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                   <span class="sr-only">Preview</span>
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  @click.stop="selectQuestionSet(questionSet)"
-                >
-                  Select
                 </button>
               </div>
             </div>
@@ -181,22 +197,28 @@
       <div class="bg-gray-50 dark:bg-gray-800 px-6 py-4 flex justify-between items-center rounded-b-lg border-t border-gray-200 dark:border-gray-700/50">
         <div class="text-sm text-gray-500 dark:text-gray-400">
           <i class="fas fa-info-circle mr-1.5 text-indigo-500"></i>
-          Review all questions before saving
+          <span v-if="selectedCount > 0">{{ selectedCount }} question set{{ selectedCount !== 1 ? 's' : '' }} selected</span>
+          <span v-else>Select question sets to add</span>
         </div>
         <div class="flex space-x-3">
           <button
             type="button"
-            @click="$emit('close')"
+            @click="closeModal"
             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600/70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors duration-150"
           >
             Cancel
           </button>
           <button
             type="button"
-            @click="handleSave"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:focus:ring-indigo-600 transition-colors duration-150"
+            @click="saveSelected"
+            :disabled="selectedCount === 0"
+            :class="{
+              'opacity-50 cursor-not-allowed': selectedCount === 0,
+              'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500': selectedCount > 0
+            }"
+            class="px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 transition-colors duration-150"
           >
-            Save Changes
+            Add Selected ({{ selectedCount }})
           </button>
         </div>
       </div>
@@ -271,12 +293,12 @@
                     <span class="text-lg font-bold text-gray-800 dark:text-white">{{ previewQuestionSetData.totalScore || 0 }}</span>
                   </div>
                   
-                  <div v-if="previewQuestionSetData.questionAudios?.length" class="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                  <div v-if="previewQuestionSetData.files?.length" class="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                     <div class="flex items-center text-purple-500 dark:text-purple-400 mb-1">
                       <i class="fas fa-music text-lg mr-2"></i>
                       <span class="text-sm font-medium">Audio Files</span>
                     </div>
-                    <span class="text-lg font-bold text-gray-800 dark:text-white">{{ previewQuestionSetData.questionAudios.length }}</span>
+                    <span class="text-lg font-bold text-gray-800 dark:text-white">{{ previewQuestionSetData.files.length }}</span>
                   </div>
                 </div>
               </div>
@@ -333,21 +355,26 @@
                     
                     <!-- Multiple Choice Options -->
                     <div v-if="question.questionType?.name === 'Multiple Choice' && question.options?.length" class="space-y-2 mt-3">
-                      <div v-for="(option, oIndex) in question.options" :key="option.id" 
-                           class="flex items-start p-3 rounded-lg transition-colors duration-200 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                           :class="{ 'bg-green-50 dark:bg-green-900/30': option.correct }">
-                        <div class="flex items-center h-5 mt-0.5">
-                          <span class="flex items-center justify-center h-5 w-5 rounded mr-2.5 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700"
-                                :class="{ 'bg-indigo-100 border-indigo-500 text-indigo-800 dark:bg-indigo-900/50 dark:border-indigo-600 dark:text-indigo-200': option.correct }">
-                            {{ String.fromCharCode(65 + oIndex) }}
-                          </span>
+                      <div v-for="(option, optionIndex) in question.options" :key="option.id" class="flex items-start">
+                        <div class="flex items-center h-5">
+                          <input 
+                            :id="`option-${option.id}`" 
+                            :name="`question-${question.id}`" 
+                            :value="option.id" 
+                            type="radio" 
+                            :checked="option.isCorrect || option.correct"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:bg-gray-700 dark:border-gray-600"
+                            disabled
+                          >
                         </div>
-                        <div class="text-sm text-gray-800 dark:text-gray-200" :class="{ 'text-green-700 dark:text-green-300 font-medium': option.correct }">
-                          {{ option.text }}
+                        <div class="ml-3 text-sm">
+                          <label :for="`option-${option.id}`" class="font-medium text-gray-700 dark:text-gray-300">
+                            {{ option.content || option.text || `Option ${optionIndex + 1}` }}
+                          </label>
                         </div>
-                        <div v-if="option.correct" class="ml-2 text-green-500">
+                        <span v-if="option.isCorrect || option.correct" class="ml-2 text-green-600 dark:text-green-400">
                           <i class="fas fa-check-circle"></i>
-                        </div>
+                        </span>
                       </div>
                     </div>
                     
@@ -357,7 +384,7 @@
                         Acceptable Answers:
                       </div>
                       <div class="flex flex-wrap gap-2">
-                        <span v-for="(answer, aIndex) in question.questionAnswers" :key="aIndex"
+                        <span v-for="(answer, answerIndex) in question.questionAnswers" :key="answerIndex"
                               class="px-2.5 py-1 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md border border-blue-100 dark:border-blue-800">
                           "{{ answer }}"
                         </span>
@@ -400,16 +427,6 @@
             </div>
           </div>
         </template>
-        <template #footer>
-          <div class="flex justify-end">
-            <FwbButton @click="showPreviewModal = false" color="alternative" class="mr-2">
-              Close
-            </FwbButton>
-            <FwbButton v-if="previewQuestionSetData" @click="selectQuestionSet(previewQuestionSetData)" color="blue">
-              Select This Set
-            </FwbButton>
-          </div>
-        </template>
       </fwb-modal>
     </div>
   </div>
@@ -419,8 +436,54 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { FwbModal, FwbButton } from 'flowbite-vue';
 import { questionSetApi } from '@/api/admin/question-set/questionSet';
-import type { QuestionSetSimpleVM, QuestionSetViewModel } from '@/api/admin/question-set/questionSet';
+import type { QuestionSetSimpleVM, QuestionSetViewModel, QuestionViewModel } from '@/api/admin/question-set/questionSet';
 import { debounce } from 'lodash';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
+
+// Extend the QuestionViewModel to include audio files and required properties
+interface QuestionWithAudio extends Omit<QuestionViewModel, 'questionAudios' | 'options' | 'id' | 'createdAt' | 'updatedAt'> {
+  id: string;
+  questionAudios?: Array<{ 
+    id: string; 
+    url: string; 
+    fileName?: string;
+    fileUrl?: string;
+    fileType?: string;
+    fileSize?: number;
+  }>;
+  options?: Array<{
+    id: string;
+    content: string;
+    isCorrect: boolean;
+    text?: string; // For backward compatibility
+    correct?: boolean; // For backward compatibility
+  }>;
+  // Required properties from Question interface
+  points: number;
+  order?: number;
+  questionSetId?: string;
+  category: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  duration: number;
+  explanation: string;
+  tags: string[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+interface QuestionSetWithAudio extends Omit<QuestionSetViewModel, 'questions'> {
+  questions: QuestionWithAudio[];
+  questionAudios?: Array<{
+    id: string;
+    url: string;
+    fileName?: string;
+    fileUrl?: string;
+    fileType?: string;
+    fileSize?: number;
+  }>;
+}
 
 const props = defineProps({
   isOpen: {
@@ -439,7 +502,8 @@ const isLoading = ref(false);
 const isPreviewLoading = ref(false);
 const searchQuery = ref('');
 const questionSets = ref<QuestionSetSimpleVM[]>([]);
-const previewQuestionSetData = ref<QuestionSetViewModel | null>(null);
+const selectedQuestionSets = ref<Set<string>>(new Set());
+const previewQuestionSetData = ref<QuestionSetWithAudio | null>(null);
 const showPreviewModal = ref(false);
 const pagination = ref({
   page: 0,
@@ -447,6 +511,24 @@ const pagination = ref({
   totalPages: 0,
   totalElements: 0
 });
+
+// Computed property to get the count of selected question sets
+const selectedCount = computed(() => selectedQuestionSets.value.size);
+
+// Check if a question set is selected
+const isQuestionSetSelected = (questionSetId: string) => {
+  return selectedQuestionSets.value.has(questionSetId);
+};
+
+// Toggle selection of a question set
+const toggleQuestionSet = (questionSet: QuestionSetSimpleVM) => {
+  const questionSetId = questionSet.id;
+  if (selectedQuestionSets.value.has(questionSetId)) {
+    selectedQuestionSets.value.delete(questionSetId);
+  } else {
+    selectedQuestionSets.value.add(questionSetId);
+  }
+};
 
 // Fetch question sets
 const fetchQuestionSets = async () => {
@@ -535,8 +617,8 @@ const previewQuestionSet = async (questionSet: QuestionSetSimpleVM) => {
     isPreviewLoading.value = true;
     const response = await questionSetApi.getById(questionSet.id);
     
-    // Ensure we're using the data from the response
-    const data = response.data || response;
+    // Cast the response to our extended type
+    const data = response as unknown as QuestionSetWithAudio;
     
     // Ensure questions array exists and is properly initialized
     if (!data.questions) {
@@ -544,13 +626,8 @@ const previewQuestionSet = async (questionSet: QuestionSetSimpleVM) => {
     }
     
     // Calculate total questions and score if not provided
-    if (data.questions) {
-      data.totalQuestions = data.questions.length;
-      data.totalScore = calculateTotalScore(data.questions);
-    } else {
-      data.totalQuestions = 0;
-      data.totalScore = 0;
-    }
+    data.totalQuestions = data.questions.length;
+    data.totalScore = calculateTotalScore(data.questions);
     
     previewQuestionSetData.value = data;
     showPreviewModal.value = true;
@@ -566,23 +643,116 @@ const previewQuestionSet = async (questionSet: QuestionSetSimpleVM) => {
       totalQuestions: 0,
       totalScore: 0,
       questionAudios: []
-    } as QuestionSetViewModel;
+    } as unknown as QuestionSetWithAudio;
     showPreviewModal.value = true;
   } finally {
     isPreviewLoading.value = false;
   }
 };
 
-// Handle question set selection
-const selectQuestionSet = (questionSet: QuestionSetSimpleVM | QuestionSetViewModel) => {
-  emit('select', questionSet);
-  emit('close');
+// Save selected question sets
+const saveSelected = async () => {
+  if (selectedQuestionSets.value.size === 0) {
+    toast.warning('Please select at least one question set');
+    return;
+  }
+
+  try {
+    // Get all selected question set IDs before clearing
+    const selectedSetIds = Array.from(selectedQuestionSets.value);
+    const selectedSets: QuestionSetWithAudio[] = [];
+    
+    // Process each selected question set
+    for (const id of selectedSetIds) {
+      try {
+        // Find the question set in the current list
+        const questionSet = questionSets.value.find(qs => qs.id === id);
+        console.log(questionSet);
+        if (!questionSet) continue;
+        
+        // Get full details for the question set
+        isPreviewLoading.value = true;
+        const response = await questionSetApi.getById(id);
+        const responseData = response.data;
+        
+        // Map the API response to our QuestionSetWithAudio type
+        const fullSet: QuestionSetWithAudio = {
+          id: responseData.id,
+          name: responseData.title || `Question Set ${responseData.id.substring(0, 8)}`,
+          description: responseData.description || '',
+          questions: responseData.questions?.map((q: any) => ({
+            id: q.id,
+            prompt: q.prompt,
+            category: q.questionCategory?.name || 'general',
+            difficulty: 'medium', // Default value since not in response
+            duration: 60, // Default value
+            explanation: '', // Default value
+            tags: [], // Default value
+            points: q.score || 1,
+            options: q.options?.map((opt: any) => ({
+              id: opt.id,
+              content: opt.text,
+              isCorrect: opt.correct,
+              text: opt.text, // For backward compatibility
+              correct: opt.correct // For backward compatibility
+            })) || [],
+            questionAudios: q.questionAudios || [],
+            questionAnswers: q.questionAnswers || []
+          })) || [],
+          totalQuestions: responseData.totalQuestions || 0,
+          totalScore: responseData.totalScore || 0,
+          order: responseData.order || 0
+        };
+        
+        // Format the question set to match the expected structure in TestCreate.vue
+        const timestamp = Date.now();
+        const formattedSet: QuestionSetWithAudio = {
+          ...fullSet,
+          questions: fullSet.questions.map((q, index) => ({
+            ...q,
+            id: `temp-${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
+            points: q.points || 1,
+            order: q.order !== undefined ? q.order : index,
+            questionSetId: fullSet.id,
+            // Ensure all required properties have values
+            category: q.category || 'general',
+            difficulty: q.difficulty || 'medium',
+            duration: q.duration || 60,
+            explanation: q.explanation || '',
+            tags: q.tags || []
+          }))
+        };
+        
+        selectedSets.push(formattedSet);
+      } catch (error) {
+        console.error(`Error loading question set ${id}:`, error);
+        toast.error(`Failed to load question set. Some items may be missing.`);
+      } finally {
+        isPreviewLoading.value = false;
+      }
+    }
+    
+    // Emit all selected question sets at once
+    if (selectedSets.length > 0) {
+      emit('select', selectedSets);
+      toast.success(`Successfully added ${selectedSets.length} question set(s)`);
+      
+      // Close the modal after successful selection
+      emit('close');
+    } else {
+      toast.warning('No valid question sets were selected');
+    }
+  } catch (error) {
+    console.error('Error saving selected question sets:', error);
+    toast.error('Failed to add selected question sets');
+  }
 };
 
 // Reset all input and filter states when modal is closed
 const closeModal = () => {
-  // Reset search query
+  // Reset search query and selections
   searchQuery.value = '';
+  selectedQuestionSets.value.clear();
   
   // Reset pagination to first page
   pagination.value = {
@@ -600,6 +770,8 @@ const closeModal = () => {
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen) {
     fetchQuestionSets();
+    // Clear previous selections when opening the modal
+    selectedQuestionSets.value.clear();
   } else {
     searchQuery.value = ''; // Clear search when closing
   }

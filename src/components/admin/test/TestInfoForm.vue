@@ -276,9 +276,10 @@
 
     <!-- Question Set Modal -->
     <QuestionSetModal 
-      :isOpen="showQuestionSetModal"
+      v-if="showQuestionSetModal"
+      :is-open="showQuestionSetModal"
       @close="showQuestionSetModal = false"
-      @save="handleQuestionSetSave"
+      @select="$emit('select-question-set', $event)"
     />
   </div>
 </template>
