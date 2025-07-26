@@ -150,7 +150,7 @@
                       </h4>
                       <span
                         class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 whitespace-nowrap">
-                        {{ question.type || QUESTION_TYPES.MULTIPLE_CHOICE }}
+                        {{ question.questionType.name || QUESTION_TYPES.MULTIPLE_CHOICE }}
                       </span>
                     </div>
 
