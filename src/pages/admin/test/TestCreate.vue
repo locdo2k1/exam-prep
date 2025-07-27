@@ -374,6 +374,7 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
               points: q.points || 1,
               order: index + questionSetOrder,
               questionSetId: questionSet.id,
+              type: q.type,
               // Set default values for required fields
               category: q.category || 'general',
               difficulty: q.difficulty || 'medium',
