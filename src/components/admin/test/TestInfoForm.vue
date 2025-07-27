@@ -276,9 +276,10 @@
 
     <!-- Question Set Modal -->
     <QuestionSetModal 
-      :isOpen="showQuestionSetModal"
+      v-if="showQuestionSetModal"
+      :is-open="showQuestionSetModal"
       @close="showQuestionSetModal = false"
-      @save="handleQuestionSetSave"
+      @select="$emit('select-question-set', $event)"
     />
   </div>
 </template>
@@ -354,7 +355,6 @@ const fetchParts = async (page = 0, search = '') => {
     totalPages.value = response.totalPages;
     currentPage.value = page;
   } catch (err) {
-    console.error('Failed to fetch parts:', err);
     error.value = 'Failed to load parts. Please try again later.';
   } finally {
     isLoading.value = false;
@@ -391,7 +391,7 @@ const addSelectedPart = () => {
   
   emit('add-part', {
     ...selectedPart.value,
-    questions: []
+    listQuestionAndQuestionSet: []
   });
   showPartModal.value = false;
 };
@@ -415,14 +415,12 @@ const handleFileUpload = (event) => {
     const validTypes = ['audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mpeg'];
     if (!validTypes.includes(file.type)) {
       // Show error or handle invalid file type
-      console.error('Invalid file type. Please upload an audio file (MP3, WAV, or OGG)');
       return;
     }
     
     // Check file size (e.g., 10MB limit)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      console.error('File is too large. Maximum size is 10MB');
       return;
     }
     

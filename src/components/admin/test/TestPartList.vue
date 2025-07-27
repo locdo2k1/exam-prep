@@ -1,12 +1,5 @@
 <template>
   <div class="bg-white dark:bg-gray-800 p-4 h-full flex flex-col">
-    <!-- Question Bank Modal -->
-    <QuestionBankModal
-      :isOpen="showQuestionBankModal"
-      :selected-questions="currentQuestions"
-      @close="showQuestionBankModal = false"
-      @select="handleAddQuestionsFromBank"
-    />
     <!-- Only show tabs if there are parts -->
     <div class="mb-4">
       <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700">
@@ -90,24 +83,62 @@
           </div>
         </button>
       </div>
-      <template v-else>
-        <QuestionListItem
-          v-for="(question, qIndex) in currentQuestions"
-          :key="qIndex"
-          :question="question"
-          :question-number="qIndex + 1"
-          :is-selected="selectedQuestion === qIndex"
-          @select="selectQuestion(qIndex)"
-          @remove="removeQuestion(qIndex)"
-        />
+      <div v-else class="space-y-4">
+        <template v-for="(item, index) in currentItems" :key="index">
+          <!-- Question Set -->
+          <div v-if="item._type === 'questionSet'" class="border-2 border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div class="bg-gray-50 dark:bg-gray-700/80 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+              <div class="font-medium text-gray-900 dark:text-white">
+                {{ item.name || `Question Set ${index + 1}` }}
+                <span class="text-sm text-gray-500 ml-2">
+                  ({{ item.questions?.length || 0 }} questions)
+                </span>
+              </div>
+              <button 
+                @click.stop="removeQuestion(index, true)"
+                class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 p-1"
+                title="Remove question set"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-4 bg-white dark:bg-gray-800">
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-3" v-html="item.description || 'No description provided.'"></p>
+              <div class="space-y-3">
+                <QuestionListItem
+                  v-for="(question, qIndex) in item.questions || []"
+                  :key="qIndex"
+                  :question="question"
+                  :question-number="question.order"
+                  :is-selected="false"
+                  :show-remove="false"
+                  class="border-l-2 border-blue-100 dark:border-blue-900/50 hover:border-blue-200 dark:hover:border-blue-800/70"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Single Question -->
+          <QuestionListItem
+            v-else
+            :question="item"
+            :question-number="item.order"
+            :is-selected="selectedQuestion === index"
+            :show-remove="true"
+            @select="selectQuestion(index)"
+            @remove="removeQuestion(index)"
+          />
+        </template>
         
         <div 
-          v-if="currentQuestions.length === 0"
+          v-if="currentItems.length === 0"
           class="text-center py-8 text-gray-500 dark:text-gray-400 text-sm"
         >
-          No questions added yet. Click the "Add Question" button to get started.
+          No items added yet. Click the "Add Question" or "Add from Bank" button to get started.
         </div>
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -184,7 +215,6 @@ const cancelEditing = (index) => {
 };
 
 const parts = computed(() => {
-  console.log('modelValue:', props.modelValue);
   // Ensure each part has the correct structure
   const normalizedParts = props.modelValue.map((part, index) => {
     if (Array.isArray(part)) {
@@ -192,7 +222,8 @@ const parts = computed(() => {
         id: `part-${index + 1}`,
         name: `Part ${index + 1}`,
         title: `Part ${index + 1}`,
-        questions: part 
+        questions: part,
+        listQuestionAndQuestionSet: []
       };
     }
     return {
@@ -200,22 +231,19 @@ const parts = computed(() => {
       id: part.id || `part-${index + 1}`,
       title: part.title || part.name || `Part ${index + 1}`,
       name: part.name || `Part ${index + 1}`,
-      questions: part.questions || []
+      questions: part.questions || [],
+      listQuestionAndQuestionSet: part.listQuestionAndQuestionSet || []
     };
   });
-  console.log('Normalized parts:', normalizedParts);
   return normalizedParts;
 });
 
 // Watch for changes to parts and initialize activePart if needed
 watch(parts, (newParts) => {
-  console.log('Parts updated:', newParts);
-  console.log('Current activePart:', activePart.value);
   
   // If no active part is set but we have parts, set the first one as active
   if (newParts.length > 0 && !activePart.value) {
     activePart.value = 'part-0';
-    console.log('Set initial active part:', activePart.value);
   }
   
   // If the active part no longer exists (e.g., part was deleted)
@@ -224,7 +252,6 @@ watch(parts, (newParts) => {
     if (activeIndex >= newParts.length) {
       // If the active part was removed, set the last part as active
       activePart.value = `part-${newParts.length - 1}`;
-      console.log('Adjusted active part to:', activePart.value);
     }
   }
   
@@ -232,16 +259,23 @@ watch(parts, (newParts) => {
   if (newParts.length > 0) {
     const currentIndex = activePart.value ? parseInt(activePart.value.replace('part-', '')) : 0;
     if (newParts[currentIndex]) {
-      console.log('Current part data:', newParts[currentIndex]);
     }
   }
 }, { immediate: true, deep: true });
 
-const currentQuestions = computed(() => {
+const currentItems = computed(() => {
   const partIndex = getCurrentPartIndex();
+  if (partIndex < 0) return [];
+  
   const part = parts.value[partIndex];
-  console.log(part);
-  return (part && part.questions) || [];
+  // Use listQuestionAndQuestionSet if available, otherwise fall back to questions
+  const items = part.listQuestionAndQuestionSet || part.questions || [];
+  
+  // Add a type property to each item for easier template rendering
+  return items.map(item => ({
+    ...item,
+    _type: item.questions ? 'questionSet' : 'question'
+  }));
 });
 
 const getCurrentPartIndex = () => {
@@ -249,7 +283,6 @@ const getCurrentPartIndex = () => {
 };
 
 watch(activePart, (newVal, oldVal) => {
-  console.log('Tab changed to:', newVal);
   selectedQuestion.value = null;
   
   // Emit the active part index to parent
@@ -259,7 +292,6 @@ watch(activePart, (newVal, oldVal) => {
   // If you need to access the part data, you can do it like this:
   const partIndex = parseInt(newVal.replace('part-', ''));
   if (!isNaN(partIndex) && parts.value[partIndex]) {
-    console.log('Selected part:', parts.value[partIndex]);
   }
 });
 
@@ -292,16 +324,29 @@ const selectQuestion = (index) => {
 
 const removeQuestion = (index) => {
   const partIndex = getCurrentPartIndex();
+  if (partIndex === -1) return;
+  
   const newParts = [...parts.value];
-  if (newParts[partIndex]?.questions) {
-    newParts[partIndex].questions.splice(index, 1);
-    emit('update:modelValue', newParts);
-    
-    // Reset selected question if it was the one removed
-    if (selectedQuestion.value === index) {
-      selectedQuestion.value = null;
-    }
+  const currentPart = newParts[partIndex];
+  
+  if (!currentPart?.listQuestionAndQuestionSet) return;
+  
+  // Remove the item from listQuestionAndQuestionSet
+  currentPart.listQuestionAndQuestionSet.splice(index, 1);
+  
+  // Update the model value
+  emit('update:modelValue', newParts);
+  
+  // Reset selected question if it was the one removed
+  if (selectedQuestion.value === index) {
+    selectedQuestion.value = null;
   }
+  
+  // Show success message
+  emit('show-toast', {
+    message: 'Item removed successfully',
+    type: 'success'
+  });
 };
 
 // Initialize part names when parts change
