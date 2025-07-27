@@ -550,7 +550,6 @@ const fetchQuestionSets = async () => {
       page: number
     };
   } catch (error) {
-    console.error('Failed to fetch question sets:', error);
   } finally {
     isLoading.value = false;
   }
@@ -632,7 +631,6 @@ const previewQuestionSet = async (questionSet: QuestionSetSimpleVM) => {
     previewQuestionSetData.value = data;
     showPreviewModal.value = true;
   } catch (error) {
-    console.error('Failed to fetch question set details:', error);
     // Initialize with minimal required properties if there's an error
     previewQuestionSetData.value = {
       id: questionSet.id,
@@ -667,7 +665,6 @@ const saveSelected = async () => {
       try {
         // Find the question set in the current list
         const questionSet = questionSets.value.find(qs => qs.id === id);
-        console.log(questionSet);
         if (!questionSet) continue;
         
         // Get full details for the question set
@@ -725,7 +722,6 @@ const saveSelected = async () => {
         
         selectedSets.push(formattedSet);
       } catch (error) {
-        console.error(`Error loading question set ${id}:`, error);
         toast.error(`Failed to load question set. Some items may be missing.`);
       } finally {
         isPreviewLoading.value = false;
@@ -743,7 +739,6 @@ const saveSelected = async () => {
       toast.warning('No valid question sets were selected');
     }
   } catch (error) {
-    console.error('Error saving selected question sets:', error);
     toast.error('Failed to add selected question sets');
   }
 };

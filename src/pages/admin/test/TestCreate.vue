@@ -41,12 +41,6 @@
         <QuestionBankModal :isOpen="showQuestionBank" :selected-questions="selectedQuestionsForBank"
           @close="showQuestionBank = false" @select="handleQuestionsSelected" />
       </div>
-
-      <!-- Question Set Modal -->
-      <div class="question-set-modal">
-        <QuestionSetModal :is-open="showQuestionSetModal" @close="showQuestionSetModal = false"
-          @select="handleQuestionSetsSelected" />
-      </div>
     </div>
   </div>
 </template>
@@ -62,7 +56,6 @@ import TestQuestionList from '@/components/admin/test/TestQuestionList.vue';
 import TestPartList from '@/components/admin/test/TestPartList.vue';
 import TestInfoForm from '@/components/admin/test/TestInfoForm.vue';
 import QuestionBankModal from '@/components/admin/test/QuestionBankModal.vue';
-import QuestionSetModal from '@/components/admin/test/QuestionSetModal.vue';
 
 // Router and toast setup
 const router = useRouter();
@@ -114,7 +107,6 @@ const handleQuestionsSelected = (questions: Question[]) => {
 
     // Ensure the part exists
     if (!test.value.listPart[currentPartIndex]) {
-      console.error('Invalid part index:', currentPartIndex);
       showQuestionBank.value = false;
       return;
     }
@@ -123,15 +115,11 @@ const handleQuestionsSelected = (questions: Question[]) => {
     if (!test.value.listPart[currentPartIndex].questions) {
       test.value.listPart[currentPartIndex].questions = [];
     }
-
-    // Add the selected questions to the current part
-    test.value.listPart[currentPartIndex].questions.push(...newQuestions);
-
     // Also add to listQuestionAndQuestionSet for the question bank view
     if (!test.value.listQuestionAndQuestionSet) {
       test.value.listQuestionAndQuestionSet = [];
     }
-    test.value.listQuestionAndQuestionSet.push(...newQuestions);
+    test.value.listPart[currentPartIndex].listQuestionAndQuestionSet.push(...newQuestions);
 
     // Sort questions by order to ensure consistent display
     test.value.listPart[currentPartIndex].questions.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -177,11 +165,27 @@ const testCategoryId = computed(() => test.value.info.testCategoryId || '');
 // Get the next available order for questions and question sets
 // Uses a unified order for both questions and question sets
 const getNextOrder = () => {
+  // Get the current part using activePartIndex
+  const currentPart = test.value.listPart[activePartIndex.value];
+
+  // Get the relevant list (from current part or test)
+  const list = currentPart?.listQuestionAndQuestionSet || test.value.listQuestionAndQuestionSet || [];
+
+  // Extract all items, including questions from within question sets
+  const items = [
+    ...list,  // Include all items (questions and question sets)
+    ...list
+      .filter(item => item.questions) // Find question sets
+      .flatMap(qs => qs.questions || []) // Extract all questions from sets
+  ];
+
+  // Also include all questions and question sets from all parts
   const allItems = [
-    ...(test.value.listQuestionAndQuestionSet || []),
+    ...items,
     ...test.value.listPart.flatMap(p => [
-      ...(p.questions || []),
-      ...(p.questionSets || [])
+      ...(p.listQuestionAndQuestionSet || []).flatMap(qs => 
+        qs.questions ? qs.questions : [qs] // Include questions from question sets or the question set itself
+      )
     ])
   ];
 
@@ -194,14 +198,6 @@ const getNextOrder = () => {
 };
 const skillIds = computed(() => test.value.info.skillIds || []);
 
-// Watch for changes to the test object
-watch(
-  () => test.value,
-  (newValue) => {
-    console.log('Test data:', newValue);
-  },
-  { deep: true, immediate: true }
-);
 
 // Question editor state
 const showQuestionEditor = ref(false);
@@ -220,8 +216,7 @@ const handleAddPart = (partData?: TestPart) => {
       description: '',
       order: test.value.listPart.length + 1,
       duration: 0,
-      questions: [],
-      questionSets: []
+      listQuestionAndQuestionSet: []
     };
     test.value.listPart.push(newPart);
   }
@@ -330,7 +325,7 @@ const handleSelectQuestionFromBank = (question: Question) => {
   };
 
   // Add the new question while maintaining order
-  currentPart.questions.push(newQuestion);
+  currentPart.listQuestionAndQuestionSet.push(newQuestion);
 
   // Sort questions by order to ensure consistent display
   currentPart.questions.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -377,7 +372,7 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
               ...q,
               id: `temp-${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
               points: q.points || 1,
-              order: index,
+              order: index + questionSetOrder,
               questionSetId: questionSet.id,
               // Set default values for required fields
               category: q.category || 'general',
@@ -402,7 +397,6 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
           test.value.listQuestionAndQuestionSet.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         } catch (error) {
-          console.error(`Error processing question set ${questionSet.id}:`, error);
           toast.error(`Failed to add question set: ${questionSet.name || questionSet.id}`);
         }
       }
@@ -452,7 +446,7 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
             ...q,
             id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             points: q.points || 1,
-            order: q.order !== undefined ? q.order : (getNextOrder() + index),
+            order: questionSetOrder + index,
             questionSetId: questionSet.id,
             // Ensure all required Question fields have defaults
             category: q.category || 'general',
@@ -465,22 +459,9 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
           questionCount: questionSet.questions?.length || 0,
           tags: questionSet.tags
         };
-        currentPart.questionSets?.push(newQuestionSet);
+        currentPart.listQuestionAndQuestionSet?.push(newQuestionSet);
 
-        // Add all questions from the set to the current part with consistent ordering
-        const baseOrder = getNextOrder();
-        const questionsToAdd = questionSet.questions?.map((q: Question, index) => ({
-          ...q,
-          id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          points: q.points || 1,
-          order: q.order !== undefined ? q.order : (baseOrder + index),
-          questionSetId: questionSet.id
-        })) || [];
-
-        currentPart.questions.push(...questionsToAdd);
-        totalQuestionsAdded += questionsToAdd.length;
       } catch (error) {
-        console.error(`Error processing question set ${questionSet.id}:`, error);
         toast.error(`Failed to add question set: ${questionSet.name}`);
       }
     }
@@ -492,7 +473,6 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
       toast.success(`Added ${newQuestionSets.length} question set(s) with ${totalQuestionsAdded} total questions to "${currentPart.name || 'the part'}"`);
     }
   } catch (error) {
-    console.error('Error adding question sets:', error);
     toast.error('Failed to add question sets. Please try again.');
   } finally {
     showQuestionSetModal.value = false;
@@ -506,7 +486,6 @@ const handleSelectQuestionSet = (questionSet: QuestionSet) => {
 
 // Handle when the active part changes in the TestPartList
 const handleActivePartChange = (partIndex: number) => {
-  console.log('Active part changed to index:', partIndex);
   activePartIndex.value = partIndex;
   // You can add any additional logic here when the active part changes
 };
@@ -520,7 +499,6 @@ const handleSelectQuestion = ({ partIndex, questionIndex }: { partIndex: number;
     };
     showQuestionEditor.value = true;
   } else {
-    console.error('Invalid part or question index selected');
   }
 };
 
@@ -639,7 +617,6 @@ const handleSave = async () => {
     };
 
     // Here you would typically make an API call to save the test
-    console.log('Saving test:', payload);
 
     // Show success message
     toast.success('Test saved successfully!');
@@ -647,7 +624,6 @@ const handleSave = async () => {
     // Redirect to tests list or edit page
     router.push({ name: 'admin-tests' });
   } catch (error) {
-    console.error('Error saving test:', error);
     toast.error('Failed to save test. Please try again.');
   }
 };

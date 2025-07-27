@@ -6,7 +6,7 @@
         <div 
           v-for="(item, index) in combinedItems" 
           :key="`item-${item.id || index}`"
-          class="group relative p-4 border rounded-lg cursor-pointer border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+          class="group relative p-4 border rounded-lg cursor-pointer border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700" 
           @click="handleItemClick(item)"
           :class="{ 'border-blue-200 dark:border-blue-800': isQuestionSet(item) }"
         >

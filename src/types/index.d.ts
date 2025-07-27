@@ -50,6 +50,7 @@ export interface TestPart {
   duration: number;
   questions: Question[];
   questionSets?: QuestionSet[];
+  listQuestionAndQuestionSet: Array<Question | QuestionSet>,
   createdAt?: string;
   updatedAt?: string;
 }

@@ -374,7 +374,6 @@ const pageSize = 10; // Number of items per page
 
 const fetchQuestions = async () => {
   const callId = ++fetchCount.value;
-  console.log(`[${callId}] fetchQuestions called`, { currentPage: currentPage.value });
 
   try {
     loadingStates.value.questions = true;
@@ -389,7 +388,6 @@ const fetchQuestions = async () => {
     });
 
     // Log raw question data for inspection
-    console.log('Raw question data from API:', response.data.content);
 
     // Transform API response to match our component's expected format
     questions.value = response.data.content.map(q => {
@@ -428,17 +426,14 @@ const fetchQuestions = async () => {
         options: Array.isArray(q.options) ? q.options : []
       };
 
-      console.log('Processed question:', question);
       return question;
     });
 
     totalQuestions.value = response.data.totalElements;
     totalPages.value = response.data.totalPages;
   } catch (error) {
-    console.error('Error fetching questions:', error);
     toast.error('Failed to load questions');
   } finally {
-    console.log(`[${callId}] fetchQuestions completed`);
     loadingStates.value.questions = false;
   }
 };
@@ -455,7 +450,6 @@ const fetchCategories = async () => {
     });
     categories.value = response.data.content;
   } catch (error) {
-    console.error('Error fetching categories:', error);
     toast.error('Failed to load categories');
   } finally {
     loadingStates.value.categories = false;
@@ -478,7 +472,6 @@ const fetchQuestionTypes = async () => {
       label: type.name
     }));
   } catch (error) {
-    console.error('Error fetching question types:', error);
     toast.error('Failed to load question types');
   } finally {
     loadingStates.value.questionTypes = false;
@@ -494,7 +487,6 @@ const initializeData = async () => {
   if (initialLoadDone.value || isInitializing.value) return;
 
   isInitializing.value = true;
-  console.log('Initial data loading started');
 
   try {
     // First load categories and question types
@@ -504,10 +496,8 @@ const initializeData = async () => {
     ]);
 
     // Then fetch questions after initial data is loaded
-    console.log('Initial data loaded, fetching questions');
     await fetchQuestions();
     initialLoadDone.value = true;
-    console.log('Initial load completed');
   } finally {
     isInitializing.value = false;
   }
@@ -516,7 +506,6 @@ const initializeData = async () => {
 // Initialize when the modal opens
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
-    console.log('Modal opened, initializing data...');
     await initializeData();
     // Reset pagination and fetch questions
     currentPage.value = 1;
@@ -559,7 +548,6 @@ const typeSelect = ref<SearchableSelectMethods | null>(null);
 
 // Reset all filters and clear selections
 const resetAllFilters = () => {
-  console.log('Resetting all filters');
 
   // Reset all filter values
   searchQuery.value = '';
@@ -628,7 +616,6 @@ const saveSelected = async () => {
     emit('select', selected);
     closeModal();
   } catch (error) {
-    console.error('Error saving selected questions:', error);
     toast.error('Failed to save selected questions');
   } finally {
     loadingStates.value.saving = false;
@@ -674,7 +661,6 @@ const handleTypeSearch = (query: string) => {
 
 // Handle modal open/close
 watch(() => props.isOpen, (newVal) => {
-  console.log(`Modal ${newVal ? 'opened' : 'closed'}`);
   if (!newVal) {
     // Clear selections when modal closes
     selectedQuestions.value.clear();
