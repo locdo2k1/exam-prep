@@ -155,72 +155,61 @@
                     </div>
 
                     <!-- Question Options / Answers -->
-                    <div
-                      v-if="question.type === QUESTION_TYPES.MULTIPLE_CHOICE && question.options && question.options.length > 0"
-                      class="mt-2 space-y-1.5">
-                      <!-- Multiple Choice Options -->
-                      <div v-for="(option, oIndex) in question.options" :key="option.id"
-                        class="flex items-start text-sm text-gray-700 dark:text-gray-300">
-                        <span class="font-medium mr-2 mt-0.5">{{ String.fromCharCode(65 + oIndex) }}.</span>
-                        <div class="flex-1 flex items-baseline flex-nowrap gap-2">
-                          <span v-html="option.text || 'No content'" class="whitespace-nowrap"></span>
-                          <span v-if="option.correct"
-                            class="inline-flex items-center text-xs text-green-600 dark:text-green-400 whitespace-nowrap">
-                            <svg class="h-3 w-3 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clip-rule="evenodd" />
-                            </svg>
-                            <span>Correct Answer</span>
+                    <div v-if="question.type === 'Multiple Choice' || question.questionType?.name === 'Multiple Choice'" class="mt-2 space-y-2">
+                      <div v-if="question.options?.length" class="space-y-1.5">
+                        <div v-for="(option, optIndex) in expandedQuestions.has(question.id) ? question.options : question.options.slice(0, 4)" :key="option.id" class="flex items-start">
+                          <span class="inline-flex items-center justify-center w-4 h-4 mt-1 mr-2 text-xs rounded flex-shrink-0"
+                            :class="{
+                              'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200': option.isCorrect || option.correct,
+                              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200': !(option.isCorrect || option.correct)
+                            }">
+                            {{ String.fromCharCode(65 + optIndex) }}
                           </span>
+                          <div class="flex-1 min-w-0">
+                            <span class="text-sm text-gray-700 dark:text-gray-300 break-words"
+                              :class="{ 'font-medium': option.isCorrect || option.correct }">
+                              {{ option.content || option.text || `Option ${optIndex + 1}` }}
+                            </span>
+                            <span v-if="option.isCorrect || option.correct" class="ml-1.5 text-green-500">
+                              <i class="fas fa-check text-xs"></i>
+                              <span class="sr-only">Correct Answer</span>
+                            </span>
+                          </div>
                         </div>
+                        <button 
+                          v-if="question.options.length > 4" 
+                          @click.stop="toggleQuestionOptions(question.id)"
+                          class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 ml-6 focus:outline-none"
+                        >
+                          {{ expandedQuestions.has(question.id) ? 'Show less' : `+${question.options.length - 4} more options` }}
+                        </button>
                       </div>
-                    </div>
-                    <div
-                      v-else-if="question.type === QUESTION_TYPES.FILL_IN_BLANK && question.questionAnswers && question.questionAnswers.length > 0"
-                      class="mt-2 space-y-1.5">
-                      <!-- Fill in the Blank Answers -->
-                      <div class="text-sm text-gray-700 dark:text-gray-300">
-                        <div class="font-medium mb-1 text-blue-600 dark:text-blue-400">Possible Answers:</div>
-                        <div class="flex flex-wrap gap-2">
-                          <span v-for="(answer, aIndex) in question.questionAnswers" :key="aIndex"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                            {{ answer }}
-                          </span>
-                        </div>
+                      <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                        No options provided
                       </div>
-                    </div>
-                    <div v-else-if="question.type === QUESTION_TYPES.ESSAY"
-                      class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
-                      Essay question - No specific answer options
                     </div>
 
-                    <div class="mt-2.5 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
-                      <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 p-1">
-                        <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ question.duration || 0
-                          }}s</span>
+                    <div v-else-if="question.type === 'Fill in the Blank' || question.questionType?.name === 'Fill in the Blank'" class="mt-2">
+                      <div v-if="question.questionAnswers?.length" class="space-y-1.5">
+                        <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Acceptable Answers:</div>
+                        <div class="flex flex-wrap gap-1.5">
+                          <span v-for="(answer, ansIndex) in question.questionAnswers.slice(0, 4)" :key="ansIndex"
+                            class="inline-flex items-center px-2 py-0.5 text-xs rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                            "{{ answer }}"
+                          </span>
+                          <span v-if="question.questionAnswers.length > 4" class="text-xs text-gray-500 dark:text-gray-400 self-center">
+                            +{{ question.questionAnswers.length - 4 }} more
+                          </span>
+                        </div>
                       </div>
-                      <div class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
-                        <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ question.points || 0 }} pts</span>
+                      <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                        No answers provided
                       </div>
-                      <div v-if="question.category"
-                        class="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-full px-2.5 py-1">
-                        <svg class="h-3.5 w-3.5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        <span class="truncate max-w-[120px]">{{ question.category }}</span>
-                      </div>
+                    </div>
+
+                    <div v-else-if="question.type === 'Essay' || question.questionType?.name === 'Essay'"
+                      class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
+                      Essay question - No specific answer options
                     </div>
                   </div>
                 </div>
@@ -365,6 +354,7 @@ const loadingStates = ref({
 const questions = ref<Question[]>([]);
 const categories = ref<Category[]>([]);
 const questionTypeOptions = ref<QuestionTypeOption[]>([]);
+const expandedQuestions = ref<Set<string>>(new Set());
 
 // Track fetch calls
 const fetchCount = ref(0);
@@ -391,28 +381,12 @@ const fetchQuestions = async () => {
 
     // Transform API response to match our component's expected format
     questions.value = response.data.content.map(q => {
-      // Map the question type to match the expected type
-      const mapQuestionType = (type: string): Question['type'] => {
-        const typeMap: Record<string, Question['type']> = {
-          'multiple choice': 'multiple_choice',
-          'true false': 'true_false',
-          'short answer': 'short_answer',
-          'essay': 'essay',
-          'fill in blank': 'fill_in_blank',
-          'matching': 'matching',
-          'ordering': 'ordering',
-          'drag drop': 'drag_drop',
-          'hotspot': 'hotspot'
-        };
-        return typeMap[type.toLowerCase()] || 'other';
-      };
-
       const question: Question = {
         ...q, // Include all original properties
         id: q.id,
         prompt: q.prompt || '',
         content: q.prompt || '',
-        type: mapQuestionType(q.questionType?.name || 'other'),
+        type: q.questionType?.name || '',
         category: q.questionCategory?.name || 'Uncategorized',
         points: q.score || 0,
         // Add required fields with default values
@@ -623,17 +597,21 @@ const saveSelected = async () => {
 };
 
 const toggleQuestion = (question: Question) => {
-  const newSelected = new Set<string>(selectedQuestions.value);
-  if (newSelected.has(question.id)) {
-    newSelected.delete(question.id);
+  emit('select', [question]);
+};
+
+const toggleQuestionOptions = (questionId: string) => {
+  const newExpanded = new Set(expandedQuestions.value);
+  if (newExpanded.has(questionId)) {
+    newExpanded.delete(questionId);
   } else {
-    newSelected.add(question.id);
+    newExpanded.add(questionId);
   }
-  selectedQuestions.value = newSelected;
+  expandedQuestions.value = newExpanded;
 };
 
 const isQuestionSelected = (questionId: string) => {
-  return selectedQuestions.value.has(questionId);
+  return props.selectedQuestions.some(q => q.id === questionId);
 };
 
 const applyFilters = () => {
