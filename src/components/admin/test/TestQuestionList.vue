@@ -2,13 +2,16 @@
   <div class="space-y-3">
     <!-- Combined List of Questions and Question Sets -->
     <div v-if="combinedItems.length">
-      <div class="space-y-3">
+      <div class="space-y-4">
         <div 
           v-for="(item, index) in combinedItems" 
           :key="`item-${item.id || index}`"
-          class="group relative p-4 border rounded-lg cursor-pointer border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700" 
+          class="group relative p-5 border rounded-lg cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md border-gray-200 hover:border-blue-100 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-800/90" 
           @click="handleItemClick(item)"
-          :class="{ 'border-blue-200 dark:border-blue-800': isQuestionSet(item) }"
+          :class="{ 
+            'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10': isQuestionSet(item),
+            'hover:border-blue-200': !isQuestionSet(item)
+          }"
         >
           <!-- Item Header -->
           <div class="flex items-start justify-between mb-2">
@@ -22,7 +25,7 @@
                 </span>
               </template>
               <template v-else>
-                Question {{ index + 1 }}
+                Question {{ item.order }}
               </template>
             </h4>
             <div class="flex items-center space-x-2">
@@ -46,30 +49,98 @@
           </div>
           
           <!-- Item Content -->
-          <div v-if="!isQuestionSet(item)">
-            <div class="mb-3">
-              <div 
-                class="text-sm text-gray-700 dark:text-gray-200 line-clamp-2 prose dark:prose-invert prose-sm max-w-none"
-                v-html="item.content || item.prompt || item.questionText || 'No question text provided'"
-              ></div>
+          <div>
+            <!-- Question Set Content -->
+            <div v-if="isQuestionSet(item)" class="mt-3">
+              <div v-if="item.questions?.length" class="space-y-3 mt-3">
+                <div 
+                  v-for="(question, qIndex) in item.questions" 
+                  :key="`q-${question.id || qIndex}`"
+                  class="p-4 bg-white dark:bg-gray-800/70 rounded-lg border border-gray-100 dark:border-gray-700/80 hover:border-blue-100 dark:hover:border-blue-900/50 transition-colors duration-150"
+                >
+                  <div class="flex items-start justify-between mb-3">
+                    <h5 class="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center">
+                      <span class="inline-flex items-center justify-center w-5 h-5 mr-2 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full dark:bg-blue-900/50 dark:text-blue-300">
+                        {{ question.order }}
+                      </span>
+                      {{ getQuestionType(question) }}
+                    </h5>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">
+                      {{ question.points || 1 }} pt{{ question.points !== 1 ? 's' : '' }}
+                    </span>
+                  </div>
+                  
+                  <div class="text-sm text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">
+                    <div class="prose prose-sm dark:prose-invert max-w-none" v-html="question.content || question.prompt || question.questionText || 'No question text provided'"></div>
+                  </div>
+                  
+                  <!-- Question Options -->
+                  <div v-if="question.options?.length" class="space-y-2 mt-3">
+                    <div 
+                      v-for="(option, oIndex) in question.options" 
+                      :key="oIndex" 
+                      class="flex items-start text-sm"
+                      :class="{
+                        'text-green-700 dark:text-green-300 font-medium': isCorrectAnswer(question, oIndex),
+                        'text-gray-700 dark:text-gray-300': !isCorrectAnswer(question, oIndex)
+                      }"
+                    >
+                      <span 
+                        class="inline-flex items-center justify-center w-5 h-5 mt-0.5 mr-2 text-xs font-medium rounded-full flex-shrink-0"
+                        :class="{
+                          'bg-green-100 text-green-700 dark:bg-green-900/50': isCorrectAnswer(question, oIndex),
+                          'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300': !isCorrectAnswer(question, oIndex)
+                        }"
+                      >
+                        {{ String.fromCharCode(65 + oIndex) }}
+                      </span>
+                      <div class="flex-1">
+                        <div class="break-words leading-normal" v-html="option.text || `Option ${oIndex + 1}`"></div>
+                      </div>
+                      <span 
+                        v-if="isCorrectAnswer(question, oIndex)" 
+                        class="ml-2 px-2 py-0.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 text-xs whitespace-nowrap flex-shrink-0 flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Correct
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                No questions in this set
+              </div>
             </div>
             
-            <!-- Options (for questions only) -->
-            <div v-if="item.options?.length" class="space-y-1.5 mt-2">
-              <div 
-                v-for="(option, i) in item.options" 
-                :key="i" 
-                class="flex items-center text-xs text-gray-600 dark:text-gray-300"
-              >
-                <span class="font-medium w-4 mr-1.5">{{ String.fromCharCode(65 + i) }}.</span>
-                <div class="flex items-center flex-1">
-                  <div class="break-words prose dark:prose-invert prose-sm max-w-none" v-html="option.text || `Option ${i + 1}`"></div>
-                  <span 
-                    v-if="isCorrectAnswer(item, i)" 
-                    class="ml-2 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[11px] whitespace-nowrap"
-                  >
-                    Correct
-                  </span>
+            <!-- Regular Question Content -->
+            <div v-else>
+              <div class="mb-3">
+                <div 
+                  class="text-sm text-gray-700 dark:text-gray-200 line-clamp-2 prose dark:prose-invert prose-sm max-w-none"
+                  v-html="item.content || item.prompt || item.questionText || 'No question text provided'"
+                ></div>
+              </div>
+              
+              <!-- Options (for questions only) -->
+              <div v-if="item.options?.length" class="space-y-1.5 mt-2">
+                <div 
+                  v-for="(option, i) in item.options" 
+                  :key="i" 
+                  class="flex items-center text-xs text-gray-600 dark:text-gray-300"
+                >
+                  <span class="font-medium w-4 mr-1.5">{{ String.fromCharCode(65 + i) }}.</span>
+                  <div class="flex items-center flex-1">
+                    <div class="break-words prose dark:prose-invert prose-sm max-w-none" v-html="option.text || `Option ${i + 1}`"></div>
+                    <span 
+                      v-if="isCorrectAnswer(item, i)" 
+                      class="ml-2 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[11px] whitespace-nowrap"
+                    >
+                      Correct
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

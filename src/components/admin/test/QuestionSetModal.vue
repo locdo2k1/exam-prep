@@ -681,6 +681,7 @@ const saveSelected = async () => {
             id: q.id,
             prompt: q.prompt,
             category: q.questionCategory?.name || 'general',
+            type: q.questionType.name,
             difficulty: 'medium', // Default value since not in response
             duration: 60, // Default value
             explanation: '', // Default value
@@ -716,6 +717,7 @@ const saveSelected = async () => {
             difficulty: q.difficulty || 'medium',
             duration: q.duration || 60,
             explanation: q.explanation || '',
+            type: q.type,
             tags: q.tags || []
           }))
         };

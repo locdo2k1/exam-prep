@@ -126,7 +126,7 @@ export const questionSetApi = {
   /**
    * Get a question set by ID
    */
-  getById: async (id: string): Promise<QuestionSetViewModel> => {
+  getById: async (id: string): Promise<ApiResponse<QuestionSetViewModel>> => {
     return await apiClient.get(`${BASE_URL}/${id}`);
   },
 
