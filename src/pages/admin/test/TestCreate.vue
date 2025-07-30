@@ -6,9 +6,9 @@
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Set up your test by adding parts and questions</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-1">
         <!-- Left Panel - Question Bank & Test Parts -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-6 mb-6">
           <!-- Question Bank Section - Only show when there are parts -->
           <div v-if="!test.listPart || test.listPart.length === 0"
             class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
@@ -28,11 +28,14 @@
 
         <!-- Right Panel - Test Information -->
         <div class="lg:col-span-1">
-          <TestInfoForm :test-title="test.title" :test-category-id="test.testCategoryId" :skill-ids="test.skillIds"
-            @update:test-title="test.title = $event" @update:test-category-id="test.testCategoryId = $event"
-            @update:skill-ids="test.skillIds = $event" @add-part="handleAddPart" @add-question="handleAddQuestion"
-            @add-question-set="handleAddQuestionSet" @select-question-set="handleSelectQuestionSet"
-            @save="handleSave" />
+          <TestInfoForm 
+            v-model="test"
+            @add-part="handleAddPart" 
+            @add-question="handleAddQuestion"
+            @add-question-set="handleAddQuestionSet"
+            @select-question-set="handleSelectQuestionSet"
+            @save="handleSave" 
+          />
         </div>
       </div>
 
@@ -50,6 +53,7 @@ import { ref, computed, inject, Ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import type { Question, QuestionSet, TestPart, TestInfo, TestVM } from '@/types';
+import testApi from '@/api/admin/test/testApi';
 
 // Component imports
 import TestQuestionList from '@/components/admin/test/TestQuestionList.vue';
@@ -82,7 +86,7 @@ const handleQuestionsSelected = (questions: Question[]) => {
       questionText: question.questionText || question.content || question.prompt || 'New Question',
       points: question.points || 1,
       options: question.options || [],
-      correctAnswer: question.correctAnswer || '',
+      correctAnswer: question.questionAnswers || '',
       category: question.category || 'General',
       difficulty: question.difficulty || 'medium',
       duration: question.duration || 60,
@@ -206,15 +210,24 @@ const activePartIndex = ref<number>(0); // Track the currently active part index
 
 // Handlers
 const handleAddPart = (partData?: TestPart) => {
+  const newOrder = test.value.listPart.length > 0 
+    ? Math.max(...test.value.listPart.map(p => p.order || 0)) + 1 
+    : 1;
+    
   if (partData) {
-    test.value.listPart.push(partData);
+    // Ensure the part has a proper order when added
+    const partToAdd = {
+      ...partData,
+      order: partData.order !== undefined ? partData.order : newOrder
+    };
+    test.value.listPart.push(partToAdd);
   } else {
     const newPart: TestPart = {
       id: `part-${Date.now()}`,
-      name: `Part ${test.value.listPart.length + 1}`,
-      title: `Part ${test.value.listPart.length + 1}`,
+      name: `Part ${newOrder}`,
+      title: `Part ${newOrder}`,
       description: '',
-      order: test.value.listPart.length + 1,
+      order: newOrder,
       duration: 0,
       listQuestionAndQuestionSet: []
     };
@@ -314,7 +327,7 @@ const handleSelectQuestionFromBank = (question: Question) => {
     prompt: question.prompt || 'New Question',
     points: question.points || 1,
     options: [...(question.options || [])],
-    correctAnswer: question.correctAnswer || '',
+    correctAnswer: question.questionAnswers || '',
     category: question.category || 'General',
     difficulty: question.difficulty || 'medium',
     duration: question.duration || 60, // Default duration in seconds
@@ -386,7 +399,8 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
                 id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
                 text: opt.text || '',
                 correct: opt.correct || false
-              })) || []
+              })) || [],
+              correctAnswer: q.questionAnswers || '',
             })) || [],
             tags: questionSet.tags || []
           };
@@ -588,44 +602,71 @@ const handleRemoveQuestion = (questionId: string | number) => {
 const handleSave = async () => {
   try {
     // Validate required fields
-    if (!test.value.title) {
+    if (!test.value.title?.trim()) {
       toast.error('Test title is required');
       return;
     }
 
-    if (!test.value.testCategoryId) {
-      toast.error('Please select a test category');
-      return;
-    }
+    // if (!test.value.testCategoryId) {
+    //   toast.error('Please select a test category');
+    //   return;
+    // }
 
-    if (test.value.listPart.length === 0) {
-      toast.error('Please add at least one part to the test');
-      return;
-    }
-
-    // Prepare the payload
+    // Prepare the payload according to TestCreateVM interface
     const payload = {
-      title: test.value.title,
+      title: test.value.title || 'Untitled Test',
       testCategoryId: test.value.testCategoryId,
-      skillIds: test.value.skillIds,
+      skillIds: test.value.skillIds || [],
       listPart: test.value.listPart.map(part => ({
-        ...part,
-        // Ensure all required fields are included
-        questionSets: part.questionSets || [],
-        questions: part.questions || []
+        id: part.id || `part-${Date.now()}`,
+        title: part.title || `Part ${part.order}`,
+        description: part.description || '',
+        order: part.order,
+        questions: part.listQuestionAndQuestionSet
+          ?.filter(item => !('questions' in item))
+          .map((q, index) => ({
+            id: q.id,
+            order: index + 1
+          })) || [],
+        questionSets: part.listQuestionAndQuestionSet
+          ?.filter(item => 'questions' in item)
+          .map((qs, index) => ({
+            id: qs.id,
+            order: index + 1
+          })) || [],
       })),
+      listQuestion: test.value.listQuestionAndQuestionSet
+        ?.filter(item => !('questions' in item))
+        .map((q, index) => ({
+          questionId: q.id,
+          order: index + 1
+        })) || [],
+      listQuestionSet: test.value.listQuestionAndQuestionSet
+        ?.filter(item => 'questions' in item)
+        .map((qs, index) => ({
+          questionSetId: qs.id,
+          order: index + 1
+        })) || [],
       files: test.value.files || []
     };
 
-    // Here you would typically make an API call to save the test
-
-    // Show success message
-    toast.success('Test saved successfully!');
-
-    // Redirect to tests list or edit page
-    router.push({ name: 'admin-tests' });
-  } catch (error) {
-    toast.error('Failed to save test. Please try again.');
+    // Call the API to create the test
+    const response = await testApi.createTest(payload);
+    
+    if (response.success && response.data) {
+      toast.success('Test created successfully!');
+      // Redirect to edit page with the new test ID
+      router.push({ 
+        name: 'admin-test-edit',
+        params: { id: response.data.id }
+      });
+    } else {
+      throw new Error(response.message || 'Failed to save test');
+    }
+  } catch (error: any) {
+    console.error('Error saving test:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to save test. Please try again.';
+    toast.error(errorMessage);
   }
 };
 </script>

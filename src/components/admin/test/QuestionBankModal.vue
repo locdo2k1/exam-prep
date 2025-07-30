@@ -157,7 +157,7 @@
                     <!-- Question Options / Answers -->
                     <div v-if="question.type === 'Multiple Choice' || question.questionType?.name === 'Multiple Choice'" class="mt-2 space-y-2">
                       <div v-if="question.options?.length" class="space-y-1.5">
-                        <div v-for="(option, optIndex) in expandedQuestions.has(question.id) ? question.options : question.options.slice(0, 4)" :key="option.id" class="flex items-start">
+                        <div v-for="(option, optIndex) in expandedQuestions.has(question.id) ? question.options : question.options.slice(0, 3)" :key="option.id" class="flex items-start">
                           <span class="inline-flex items-center justify-center w-4 h-4 mt-1 mr-2 text-xs rounded flex-shrink-0"
                             :class="{
                               'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200': option.isCorrect || option.correct,
@@ -177,11 +177,18 @@
                           </div>
                         </div>
                         <button 
-                          v-if="question.options.length > 4" 
+                          v-if="question.options.length > 3" 
                           @click.stop="toggleQuestionOptions(question.id)"
-                          class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 ml-6 focus:outline-none"
+                          class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 ml-6 focus:outline-none flex items-center"
                         >
-                          {{ expandedQuestions.has(question.id) ? 'Show less' : `+${question.options.length - 4} more options` }}
+                          <span v-if="!expandedQuestions.has(question.id)">+{{ question.options.length - 3 }} more options</span>
+                          <span v-else>Show less</span>
+                          <svg v-if="!expandedQuestions.has(question.id)" class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                          <svg v-else class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                          </svg>
                         </button>
                       </div>
                       <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
@@ -596,10 +603,6 @@ const saveSelected = async () => {
   }
 };
 
-const toggleQuestion = (question: Question) => {
-  emit('select', [question]);
-};
-
 const toggleQuestionOptions = (questionId: string) => {
   const newExpanded = new Set(expandedQuestions.value);
   if (newExpanded.has(questionId)) {
@@ -610,8 +613,18 @@ const toggleQuestionOptions = (questionId: string) => {
   expandedQuestions.value = newExpanded;
 };
 
+const toggleQuestion = (question: Question) => {
+  const newSelected = new Set<string>(selectedQuestions.value);
+  if (newSelected.has(question.id)) {
+    newSelected.delete(question.id);
+  } else {
+    newSelected.add(question.id);
+  }
+  selectedQuestions.value = newSelected;
+};
+
 const isQuestionSelected = (questionId: string) => {
-  return props.selectedQuestions.some(q => q.id === questionId);
+  return selectedQuestions.value.has(questionId);
 };
 
 const applyFilters = () => {

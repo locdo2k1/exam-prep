@@ -54,6 +54,46 @@
         </div>
       </div>
       
+      <!-- Test Category Dropdown -->
+      <div class="group relative w-full">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
+          Test Category
+          <span class="text-red-500 ml-0.5">*</span>
+        </label>
+        <div class="relative">
+          <div 
+            @click="toggleCategoryDropdown"
+            class="w-full px-4 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer flex items-center justify-between"
+            :class="{ 'border-red-500': !testData.testCategoryId && isFormSubmitted }"
+          >
+            <span class="truncate">
+              {{ selectedCategoryName || 'Select a category' }}
+            </span>
+            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          
+          <div 
+            v-if="isCategoryDropdownOpen" 
+            class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden"
+          >
+            <div 
+              v-for="category in testCategories" 
+              :key="category.id"
+              @click="selectCategory(category)"
+              class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+            >
+              {{ category.name }} ({{ category.code }})
+            </div>
+          </div>
+          
+          <div v-if="!testData.testCategoryId && isFormSubmitted" class="mt-1 text-sm text-red-500">
+            Please select a test category
+          </div>
+        </div>
+      </div>
+      
       <!-- Audio File Input -->
       <div class="group relative mt-6">
         <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
@@ -287,6 +327,8 @@
 <script setup>
 import { ref, watch, computed, onMounted } from 'vue';
 import { DocumentTextIcon } from '@heroicons/vue/24/outline';
+import { getAllTestCategories } from '@/api/admin/test-category/testCategoryApi';
+import DropdownMenu from '@/components/admin/common/DropdownMenu.vue';
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
 import { partApi } from '@/api/admin/part/partApi';
 import QuestionSetModal from './QuestionSetModal.vue';
@@ -294,11 +336,17 @@ import QuestionSetModal from './QuestionSetModal.vue';
 const props = defineProps({
   modelValue: {
     type: Object,
+    required: true,
     default: () => ({
       title: '',
       duration: 60,
+      testCategoryId: null,
+      skillIds: [],
+      description: '',
       audioFile: null,
-      description: ''
+      files: [],
+      listPart: [],
+      listQuestionAndQuestionSet: []
     })
   },
   isSaving: {
@@ -309,13 +357,56 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:modelValue', 
-  'add-part', 
-  'add-question', 
-  'add-question-set', 
   'save'
 ]);
 
-const testData = ref({...props.modelValue});
+// Create a local copy of the test data for two-way binding
+const testData = ref(JSON.parse(JSON.stringify(props.modelValue)));
+const testCategories = ref([]);
+const isFormSubmitted = ref(false);
+const isCategoryDropdownOpen = ref(false);
+
+const selectedCategoryName = computed(() => {
+  if (!testData.value.testCategoryId) return '';
+  const category = testCategories.value.find(cat => cat.id === testData.value.testCategoryId);
+  return category ? `${category.name} (${category.code})` : '';
+});
+
+const toggleCategoryDropdown = () => {
+  isCategoryDropdownOpen.value = !isCategoryDropdownOpen.value;
+};
+
+const selectCategory = (category) => {
+  testData.value.testCategoryId = category.id;
+  isCategoryDropdownOpen.value = false;
+};
+
+// Watch for changes in the modelValue prop and update the local copy
+watch(() => props.modelValue, (newValue) => {
+  // Only update if the values are actually different to prevent infinite loop
+  if (JSON.stringify(newValue) !== JSON.stringify(testData.value)) {
+    testData.value = JSON.parse(JSON.stringify(newValue));
+  }
+}, { deep: true });
+
+// Emit update when local data changes
+watch(() => ({
+  title: testData.value.title,
+  duration: testData.value.duration,
+  testCategoryId: testData.value.testCategoryId,
+  skillIds: [...(testData.value.skillIds || [])],
+  description: testData.value.description,
+  audioFile: testData.value.audioFile,
+  files: [...(testData.value.files || [])],
+  listPart: [...(testData.value.listPart || [])],
+  listQuestionAndQuestionSet: [...(testData.value.listQuestionAndQuestionSet || [])]
+}), (newValue) => {
+  // Only emit if the values are different
+  if (JSON.stringify(newValue) !== JSON.stringify(props.modelValue)) {
+    emit('update:modelValue', { ...newValue });
+  }
+}, { deep: true });
+
 const showPartModal = ref(false);
 const showQuestionSetModal = ref(false);
 const selectedPart = ref(null);
@@ -361,8 +452,27 @@ const fetchParts = async (page = 0, search = '') => {
   }
 };
 
+// Fetch test categories
+const fetchTestCategories = async () => {
+  try {
+    const response = await getAllTestCategories();
+    testCategories.value = response.data || [];
+  } catch (error) {
+    console.error('Error fetching test categories:', error);
+    // Show error to user
+    error.value = 'Failed to load test categories. Please try again later.';
+  }
+};
+
+// Get category name by ID
+const getCategoryName = (categoryId) => {
+  const category = testCategories.value.find(cat => cat.id === categoryId);
+  return category ? `${category.name} (${category.code})` : 'Unknown Category';
+};
+
 // Initial load
-onMounted(() => {
+onMounted(async () => {
+  await fetchTestCategories();
   fetchParts();
 });
 
@@ -398,8 +508,9 @@ const addSelectedPart = () => {
 
 // Form validation
 const isFormValid = computed(() => {
-  return testData.value.title.trim() !== '' && 
-         testData.value.duration > 0;
+  return testData.value?.title?.trim() !== '' && 
+         testData.value?.duration > 0 &&
+         testData.value?.testCategoryId;
 });
 
 // Watch for changes in the form data
