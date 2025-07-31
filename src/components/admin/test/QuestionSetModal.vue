@@ -617,7 +617,7 @@ const previewQuestionSet = async (questionSet: QuestionSetSimpleVM) => {
     const response = await questionSetApi.getById(questionSet.id);
     
     // Cast the response to our extended type
-    const data = response as unknown as QuestionSetWithAudio;
+    const data = response.data as unknown as QuestionSetWithAudio;
     
     // Ensure questions array exists and is properly initialized
     if (!data.questions) {

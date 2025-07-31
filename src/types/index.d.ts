@@ -10,7 +10,7 @@ export interface QuestionOption {
 // Question
 export interface Question {
   id: string;
-  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'fill_in_blank' | 'matching' | 'ordering' | 'drag_drop' | 'hotspot' | 'other';
+  type: string;
   content: string;
   prompt: string; // Made required with default value
   points: number;
