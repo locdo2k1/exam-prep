@@ -5,7 +5,7 @@
       <div class="space-y-4">
         <div v-for="(item, index) in combinedItems" :key="`item-${item.id || index}`"
           class="group relative p-5 border rounded-lg cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md border-gray-200 hover:border-blue-100 dark:border-gray-700 dark:bg-gray-800/80 dark:hover:bg-gray-800/90"
-          @click="handleItemClick(item)" :class="{
+          :class="{
             'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10': isQuestionSet(item),
             'hover:border-blue-200': !isQuestionSet(item)
           }">
@@ -57,17 +57,19 @@
                 <div v-for="(question, qIndex) in item.questions" :key="`q-${question.id || qIndex}`"
                   class="p-4 bg-white dark:bg-gray-800/70 rounded-lg border border-gray-100 dark:border-gray-700/80 hover:border-blue-100 dark:hover:border-blue-900/50 transition-colors duration-150">
                   <div class="flex items-start justify-between mb-3">
-                    <h5 class="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center">
-                      <span
-                        class="inline-flex items-center justify-center w-5 h-5 mr-2 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full dark:bg-blue-900/50 dark:text-blue-300">
-                        {{ question.order }}
-                      </span>
-                      {{ getQuestionType(question) }}
+                    <h5 class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Question {{ question.order }}
                     </h5>
-                    <span
-                      class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">
-                      {{ question.points || 1 }} pt{{ question.points !== 1 ? 's' : '' }}
-                    </span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        {{ getQuestionType(question) }}
+                      </span>
+                      <span
+                        class="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                        {{ question.points || 1 }} pt{{ question.points !== 1 ? 's' : '' }}
+                      </span>
+                    </div>
                   </div>
 
                   <div class="text-sm text-gray-800 dark:text-gray-200 mb-4 leading-relaxed">

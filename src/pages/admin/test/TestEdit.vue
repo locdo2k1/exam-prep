@@ -14,7 +14,6 @@
             class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
             <h2 class="text-xl font-semibold mb-4 dark:text-white">Question Bank</h2>
             <TestQuestionList :list-question-and-question-set="test.listQuestionAndQuestionSet"
-              @select-question="handleSelectQuestionFromBank" @select-question-set="handleSelectQuestionSet"
               @remove-question="handleRemoveQuestion" @remove-question-set="handleRemoveQuestionSet" />
           </div>
 
@@ -28,14 +27,9 @@
 
         <!-- Right Panel - Test Information -->
         <div class="lg:col-span-1">
-          <TestInfoForm 
-            v-model="test"
-            @add-part="handleAddPart" 
-            @add-question="handleAddQuestion"
-            @add-question-set="handleAddQuestionSet"
-            @select-question-set="handleSelectQuestionSet"
-            @save="handleSave" 
-          />
+          <TestInfoForm v-model="test" @add-part="handleAddPart" @add-question="handleAddQuestion"
+            @add-question-set="handleAddQuestionSet" @select-question-set="handleSelectQuestionSet"
+            @save="handleSave" />
         </div>
       </div>
 
@@ -49,8 +43,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, Ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, inject, Ref, watch, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import type { Question, QuestionSet, TestPart, TestInfo, TestVM } from '@/types';
 import testApi from '@/api/admin/test/testApi';
@@ -61,12 +55,17 @@ import TestPartList from '@/components/admin/test/TestPartList.vue';
 import TestInfoForm from '@/components/admin/test/TestInfoForm.vue';
 import QuestionBankModal from '@/components/admin/test/QuestionBankModal.vue';
 
-// Router and toast setup
+// Router, route, and toast setup
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 
 // Track selected questions for the question bank
 const selectedQuestionsForBank = ref<Question[]>([]);
+
+// Loading and error state
+const isLoading = ref(false);
+const loadError = ref<string | null>(null);
 
 // Track question set modal visibility
 const showQuestionSetModal = ref(false);
@@ -142,29 +141,164 @@ const { isDarkMode } = inject('theme', {
 const showQuestionBank = ref(false);
 
 const test = ref<TestVM>({
-  info: {
-    id: '',
-    name: 'New Test',
-    description: '',
-    duration: 60, // Default duration in minutes
-    passingScore: 0,
-    maxAttempts: 1,
-    isPublished: false,
-    startTime: undefined,
-    endTime: undefined,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    testCategoryId: '',
-    skillIds: []
-  },
+  id: '',
+  title: 'New Test',
+  duration: 60, // Default duration in minutes
+  testCategoryId: '',
+  skillIds: [],
   listPart: [],
   listQuestionAndQuestionSet: [],
   files: []
 });
 
-// Computed properties for template
-const title = computed(() => test.value.info.name);
-const testCategoryId = computed(() => test.value.info.testCategoryId || '');
+// Watch for changes in the test object
+watch(
+  test,
+  (newVal, oldVal) => {
+    // You can replace this with any side-effect needed
+    console.log('Test changed:', { newVal, oldVal });
+    // e.g., auto-save, validation, analytics, etc.
+  },
+  { deep: true }
+);
+
+
+// Utility to normalize loaded test data to local TestVM shape (types/index.d.ts)
+function normalizeTestVM(apiTest: any): TestVM {
+  // Extract info fields
+  const info: TestVM = {
+    ...(apiTest.info || {}),
+    testCategoryId: apiTest.testCategory?.id || apiTest.testCategoryId || '',
+    skillIds: Array.isArray(apiTest.listSkill)
+      ? apiTest.listSkill.map((s: any) => s.id)
+      : apiTest.skillIds || [],
+    // fallback to API fields if not present
+    id: apiTest.id || apiTest.info?.id || '',
+    title: apiTest.title || apiTest.info?.title || '',
+    duration: apiTest.duration || apiTest.info?.duration || 0,
+  };
+
+  // Normalize parts
+  const normalizedParts = (apiTest.listPart || []).map((part, idx) => {
+    const questionItems = Array.isArray(part.questionItems)
+      ? part.questionItems.sort((a, b) => a.order - b.order)
+      : [];
+
+    const questions = questionItems
+      .map(item => {
+        if (!item.question) return null;
+        return {
+          ...item.question,
+          type: item.question.type || item.question.questionType?.name || item.question.questionType?.code || 'Unknown',
+        };
+      })
+      .filter(q => !!q);
+    const questionSets = questionItems
+      .map(item => item.questionSet)
+      .filter(qs => !!qs);
+    const listQuestionAndQuestionSet = questionItems.map(item => {
+      if (item.question) {
+        return {
+          ...item.question,
+          type: item.question.type || item.question.questionType?.name || item.question.questionType?.code || 'Unknown',
+          correctAnswer: item.question.questionAnswers,
+        };
+      } else if (item.questionSet) {
+        // Map type for each question inside questionSet
+        return {
+          ...item.questionSet,
+          name: item.questionSet.name || item.questionSet.title,
+          questions: Array.isArray(item.questionSet.questions)
+            ? item.questionSet.questions.map(q => ({
+              ...q,
+              type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
+              correctAnswer: q.questionAnswers,
+            }))
+            : [],
+        };
+      }
+      return null;
+    }).filter(Boolean);
+    return {
+      id: part.id || `part-${idx}`,
+      title: part.title || '',
+      testCategoryId: apiTest.category.Id,
+      order: part.order,
+      duration: part.duration,
+      questions,
+      questionSets,
+      listQuestionAndQuestionSet,
+    };
+  });
+
+
+  // Compose listQuestionAndQuestionSet from listQuestionItem if present
+  let listQuestionAndQuestionSet: Array<any> = [];
+  if (!apiTest.listPart || apiTest.listPart.length === 0) {
+    if (Array.isArray(apiTest.listQuestionItem)) {
+      // Flatten: push question or questionSet directly
+      apiTest.listQuestionItem.forEach((item: any) => {
+        if (item.question) {
+          listQuestionAndQuestionSet.push({
+            ...item.question,
+            type: item.question.type || item.question.questionType?.name || item.question.questionType?.code || 'Unknown',
+            correctAnswer: item.question.questionAnswers,
+          });
+        } else if (item.questionSet) {
+          listQuestionAndQuestionSet.push({
+            ...item.questionSet,
+            name: item.questionSet.name || item.questionSet.title,
+            questions: Array.isArray(item.questionSet.questions)
+              ? item.questionSet.questions.map((q: any) => ({
+                ...q,
+                type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
+                correctAnswer: q.questionAnswers,
+              }))
+              : [],
+          });
+        }
+      });
+    }
+  }
+
+  return {
+    id: apiTest.id,
+    duration: apiTest.duration,
+    listPart: normalizedParts,
+    listQuestionAndQuestionSet,
+    files: apiTest.files || [],
+    title: apiTest.title,
+    testCategoryId: apiTest.testCategory?.id,
+    skillIds: apiTest.skillIds
+  };
+}
+
+// Load test data by ID
+const loadTestData = async (id: string) => {
+  isLoading.value = true;
+  loadError.value = null;
+  try {
+    const response = await testApi.getTestById(id);
+    if (response.success && response.data) {
+      test.value = normalizeTestVM(response.data);
+    } else {
+      throw new Error(response.message || 'Failed to load test data');
+    }
+  } catch (error: any) {
+    loadError.value = error.response?.data?.message || error.message || 'Failed to load test data.';
+    toast.error(loadError.value);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// On mount, load test if ID is present in route
+onMounted(() => {
+  const testId = route.params.id as string;
+  if (testId) {
+    loadTestData(testId);
+  }
+});
 
 // Get the next available order for questions and question sets
 // Uses a unified order for both questions and question sets
@@ -187,7 +321,7 @@ const getNextOrder = () => {
   const allItems = [
     ...items,
     ...test.value.listPart.flatMap(p => [
-      ...(p.listQuestionAndQuestionSet || []).flatMap(qs => 
+      ...(p.listQuestionAndQuestionSet || []).flatMap(qs =>
         qs.questions ? qs.questions : [qs] // Include questions from question sets or the question set itself
       )
     ])
@@ -200,8 +334,6 @@ const getNextOrder = () => {
 
   return maxOrder + 1;
 };
-const skillIds = computed(() => test.value.info.skillIds || []);
-
 
 // Question editor state
 const showQuestionEditor = ref(false);
@@ -210,10 +342,10 @@ const activePartIndex = ref<number>(0); // Track the currently active part index
 
 // Handlers
 const handleAddPart = (partData?: TestPart) => {
-  const newOrder = test.value.listPart.length > 0 
-    ? Math.max(...test.value.listPart.map(p => p.order || 0)) + 1 
+  const newOrder = test.value.listPart.length > 0
+    ? Math.max(...test.value.listPart.map(p => p.order || 0)) + 1
     : 1;
-    
+
   if (partData) {
     // Ensure the part has a proper order when added
     const partToAdd = {
@@ -345,6 +477,7 @@ const handleSelectQuestionFromBank = (question: Question) => {
   toast.success('Question added to the test');
 };
 
+// Handle question sets selected from the question bank
 const handleQuestionSetsSelected = async (questionSets: any) => {
   if (!questionSets || questionSets.length === 0) {
     toast.info('No question sets selected');
@@ -499,67 +632,7 @@ const handleSelectQuestionSet = (questionSet: QuestionSet) => {
   handleQuestionSetsSelected(questionSet);
 };
 
-// Handle when the active part changes in the TestPartList
-const handleActivePartChange = (partIndex: number) => {
-  activePartIndex.value = partIndex;
-  // You can add any additional logic here when the active part changes
-};
-
-const handleSelectQuestion = ({ partIndex, questionIndex }: { partIndex: number; questionIndex: number }) => {
-  // Ensure the part and question exist before setting the current question index
-  if (test.value.listPart[partIndex]?.questions?.[questionIndex] !== undefined) {
-    currentQuestionIndex.value = {
-      partIndex,
-      questionIndex
-    };
-    showQuestionEditor.value = true;
-  } else {
-  }
-};
-
-const handleSaveQuestion = (updatedQuestion: Question) => {
-  if (!currentQuestionIndex.value ||
-    currentQuestionIndex.value.partIndex === null ||
-    currentQuestionIndex.value.questionIndex === null) {
-    showQuestionEditor.value = false;
-    return;
-  }
-
-  const { partIndex, questionIndex } = currentQuestionIndex.value;
-
-  // Ensure the part and question exist
-  if (!test.value.listPart[partIndex] || !test.value.listPart[partIndex].questions) {
-    showQuestionEditor.value = false;
-    return;
-  }
-
-  // Update the question
-  test.value.listPart[partIndex].questions[questionIndex] = {
-    ...test.value.listPart[partIndex].questions[questionIndex],
-    ...updatedQuestion
-  };
-
-  showQuestionEditor.value = false;
-};
-
-const handleRemoveQuestionSet = (questionSetId: string) => {
-  // Remove from the main question and question set list
-  const initialLength = test.value.listQuestionAndQuestionSet.length;
-  test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
-    (item: Question | QuestionSet) => {
-      if ('questions' in item) { // This is a question set
-        return item.id !== questionSetId;
-      }
-      return true; // Keep all questions
-    }
-  );
-
-  // If we removed a question set, show a success message
-  if (test.value.listQuestionAndQuestionSet.length < initialLength) {
-    toast.success('Question set removed');
-  }
-};
-
+// Remove a question by ID or index from either the current part's questions or the main question bank list
 const handleRemoveQuestion = (questionId: string | number) => {
   // Check if we're in a part or in the main question bank
   if (test.value.listPart && test.value.listPart.length > 0) {
@@ -571,14 +644,11 @@ const handleRemoveQuestion = (questionId: string | number) => {
         return (q.id && q.id === questionId) || idx === questionId;
       });
     });
-
     if (partIndex !== -1 && test.value.listPart[partIndex].questions) {
       // Remove from the part's questions
-      test.value.listPart[partIndex].questions = test.value.listPart[partIndex].questions!.filter(
+      test.value.listPart[partIndex].questions = test.value.listPart[partIndex].questions.filter(
         (q, idx) => {
-          // Keep if ID doesn't match AND index doesn't match (if questionId is a number)
-          return (q.id ? q.id !== questionId : true) &&
-            (typeof questionId === 'number' ? idx !== questionId : true);
+          return (q.id ? q.id !== questionId : true) && (typeof questionId === 'number' ? idx !== questionId : true);
         }
       );
     }
@@ -599,6 +669,39 @@ const handleRemoveQuestion = (questionId: string | number) => {
   }
 };
 
+// Remove a question set by ID from the main question and question set list
+const handleRemoveQuestionSet = (questionSetId: string) => {
+  const initialLength = test.value.listQuestionAndQuestionSet.length;
+  test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
+    (item: Question | QuestionSet) => {
+      if ('questions' in item) { // This is a question set
+        return item.id !== questionSetId;
+      }
+      return true; // Keep all questions
+    }
+  );
+  if (test.value.listQuestionAndQuestionSet.length < initialLength) {
+    toast.success('Question set removed');
+  }
+};
+
+// Set the current question index when a question is selected from a part, and show the question editor UI
+const handleSelectQuestion = ({ partIndex, questionIndex }: { partIndex: number; questionIndex: number }) => {
+  if (test.value.listPart[partIndex]?.questions?.[questionIndex] !== undefined) {
+    currentQuestionIndex.value = {
+      partIndex,
+      questionIndex
+    };
+    showQuestionEditor.value = true;
+  }
+};
+
+// Update the active part index when the active part changes in the TestPartList component
+const handleActivePartChange = (partIndex: number) => {
+  activePartIndex.value = partIndex;
+};
+
+// Async method to validate and save the test data
 const handleSave = async () => {
   try {
     // Validate required fields
@@ -607,13 +710,9 @@ const handleSave = async () => {
       return;
     }
 
-    // if (!test.value.testCategoryId) {
-    //   toast.error('Please select a test category');
-    //   return;
-    // }
-
-    // Prepare the payload according to TestCreateVM interface
-    const payload = {
+    // Prepare the payload according to TestEditVM interface
+    const payload: import('@/api/admin/test/testApi').TestEditVM = {
+      id: test.value.id,
       title: test.value.title || 'Untitled Test',
       testCategoryId: test.value.testCategoryId,
       skillIds: test.value.skillIds || [],
@@ -624,42 +723,38 @@ const handleSave = async () => {
         order: part.order,
         questions: part.listQuestionAndQuestionSet
           ?.filter(item => !('questions' in item))
-          .map((q, index) => ({
+          .map(q => ({
             id: q.id,
             order: q.order
           })) || [],
         questionSets: part.listQuestionAndQuestionSet
           ?.filter(item => 'questions' in item)
-          .map((qs, index) => ({
+          .map(qs => ({
             id: qs.id,
             order: qs.order
           })) || [],
       })),
       listQuestion: test.value.listQuestionAndQuestionSet
         ?.filter(item => !('questions' in item))
-        .map((q, index) => ({
+        .map(q => ({
           questionId: q.id,
           order: q.order
         })) || [],
       listQuestionSet: test.value.listQuestionAndQuestionSet
         ?.filter(item => 'questions' in item)
-        .map((qs, index) => ({
+        .map(qs => ({
           questionSetId: qs.id,
           order: qs.order
         })) || [],
       files: test.value.files || []
     };
 
-    // Call the API to create the test
-    const response = await testApi.createTest(payload);
-    
+    // Call the API to update the test (edit mode)
+    const response = await testApi.updateTest(payload.id, payload);
     if (response.success && response.data) {
-      toast.success('Test created successfully!');
-      // Redirect to edit page with the new test ID
-      router.push({ 
-        name: 'admin-test-edit',
-        params: { id: response.data.id }
-      });
+      toast.success('Test saved successfully!');
+      // Optionally, redirect or update state after saving
+      // router.push({ name: 'admin-test-edit', params: { id: response.data.id } });
     } else {
       throw new Error(response.message || 'Failed to save test');
     }
@@ -669,12 +764,6 @@ const handleSave = async () => {
     toast.error(errorMessage);
   }
 };
-</script>
 
-<style scoped>
-/* Add any custom styles here */
-.question-bank-modal {
-  z-index: 5000000;
-  position: relative;
-}
-</style>
+// ... (rest of the file continues)
+</script>

@@ -44,7 +44,7 @@
             </svg>
           </div>
           <input
-            v-model.number="testData.duration"
+            v-model="testData.duration"
             type="number"
             min="1"
             required
@@ -338,6 +338,7 @@ const props = defineProps({
     type: Object,
     required: true,
     default: () => ({
+      id: '',
       title: '',
       duration: 60,
       testCategoryId: null,
@@ -391,6 +392,7 @@ watch(() => props.modelValue, (newValue) => {
 
 // Emit update when local data changes
 watch(() => ({
+  id: testData.value.id,
   title: testData.value.title,
   duration: testData.value.duration,
   testCategoryId: testData.value.testCategoryId,

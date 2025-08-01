@@ -72,14 +72,14 @@ export interface TestInfo {
 
 // Test View Model
 export interface TestVM {
-  info: TestInfo & {
-    testCategoryId?: string;
-    skillIds?: string[];
-  };
+  testCategoryId?: string;
+  skillIds?: string[];
+  id?: string;
   listPart: TestPart[];
   listQuestionAndQuestionSet: Array<Question | QuestionSet>;
   files?: File[];
   title?: string; // For backward compatibility
   testCategoryId?: string; // For backward compatibility
   skillIds?: string[]; // For backward compatibility
+  duration?: number; // For backward compatibility
 }
