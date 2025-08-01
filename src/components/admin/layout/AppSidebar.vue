@@ -204,6 +204,30 @@ const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 
 const menuGroups: MenuGroup[] = [
   {
+    title: "Examination",
+    items: [
+      {
+        icon: ListIcon,
+        name: "Test Exams",
+        subItems: [
+          {
+            name: "Test List",
+            path: "/admin/tests"
+          },
+          {
+            name: "Create Test",
+            path: "/admin/tests/create"
+          }
+        ]
+      },
+      {
+        icon: StaredIcon,
+        name: "Certificates",
+        path: "/certificate"
+      }
+    ]
+  },
+  {
     title: "Question Bank",
     items: [
       {
@@ -262,7 +286,17 @@ const menuGroups: MenuGroup[] = [
       {
         icon: ListIcon,
         name: "Test Exams",
-        path: "/test-exam"
+        subItems: [
+          {
+            name: "Test List",
+            path: "/admin/tests"
+          },
+          {
+            name: "Create Test",
+            path: "/admin/tests/create"
+          }
+          // Edit Test is not shown here, as it's a contextual route
+        ]
       },
       {
         icon: StaredIcon,
