@@ -1,4 +1,5 @@
 import apiClient from '@/api/axios';
+import { Page } from '@/types/common';
 import type { AxiosResponse, AxiosError } from 'axios';
 
 // Base interfaces
@@ -30,6 +31,11 @@ export interface OptionVM extends BaseEntityVM {
 }
 
 // Test related interfaces
+export interface TestVMSimple extends BaseEntityVM {
+  name: string;
+  category: string;
+  listSkill: TestSkillVM[];
+}
 export interface TestQuestionVM extends BaseEntityVM {
   partId: string;
   prompt: string;
@@ -186,9 +192,22 @@ export const deleteTest = async (id: string): Promise<ApiResponse<void>> => {
   }
 };
 
+// Get all tests (simple)
+export const getAllTestsSimple = async (
+  params?: { page?: number; size?: number; search?: string }
+): Promise<ApiResponse<Page<TestVMSimple>>> => {
+  try {
+    return await apiClient.get('/tests/simple', { params });
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse<null>>;
+    throw axiosError.response || { data: { success: false, message: 'An error occurred' } };
+  }
+};
+
 // Export all API functions as default
 export default {
   createTest,
   getTestById,
   deleteTest,
+  getAllTestsSimple,
 };

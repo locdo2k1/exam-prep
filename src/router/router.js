@@ -14,6 +14,7 @@ import QuestionSetList from '../pages/admin/question-set/QuestionSetList.vue'
 import QuestionSetCreate from '../pages/admin/question-set/QuestionSetCreate.vue'
 import QuestionSetEdit from '../pages/admin/question-set/QuestionSetEdit.vue'
 import TestCreate from '../pages/admin/test/TestCreate.vue'
+import TestList from '../pages/admin/test/TestList.vue'
 
 const routes = [
    {
@@ -85,6 +86,12 @@ const routes = [
             meta: { requiresAuth: true }
          },
          // Tests
+         {
+            path: 'tests',
+            name: 'admin-question-bank-tests-list',
+            component: TestList,
+            meta: { requiresAuth: true, title: 'Test List' },
+         },
          {
             path: 'tests/create',
             name: 'admin-question-bank-tests-create',

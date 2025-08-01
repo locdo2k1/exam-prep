@@ -24,8 +24,8 @@
           <div v-if="props.actions && props.actions.length > 0" class="ml-2 flex-shrink-0">
             <div class="flex flex-col space-y-1">
               <button v-for="(action, actionIndex) in props.actions" :key="actionIndex" @click="action.handler(item)"
-                class="p-1.5 rounded-full hover:bg-opacity-20 transition-colors flex items-center justify-center"
-                :class="action.class" :title="action.label">
+                class="p-1.5 rounded-full hover:bg-opacity-20 flex items-center justify-center" :class="action.class"
+                :title="action.label">
                 <span v-if="typeof action.icon === 'string'" v-html="action.icon"></span>
                 <span class="sr-only">{{ action.label }}</span>
               </button>
@@ -80,7 +80,7 @@
           </thead>
           <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-for="(item, rowIndex) in paginatedData" :key="rowIndex"
-              class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150">
+              class="hover:bg-gray-50 dark:hover:bg-gray-800">
               <td v-for="(column, colIndex) in props.columns" :key="colIndex" :class="[tdClass, {
                 'hidden md:table-cell': column.hideOnMobile,
                 'font-medium': column.key === primaryColumn
@@ -89,8 +89,7 @@
                   <span v-html="column.render ? column.render(item[column.key], item) : item[column.key]"></span>
                 </slot>
               </td>
-              <td v-if="props.actions && props.actions.length > 0"
-                class="px-4 py-3 text-sm font-medium text-right">
+              <td v-if="props.actions && props.actions.length > 0" class="px-4 py-3 text-sm font-medium text-right">
                 <div class="relative inline-block text-left actions-dropdown-container">
                   <div>
                     <button @click="toggleActionMenu(rowIndex)" type="button"
@@ -104,10 +103,7 @@
                       </svg>
                     </button>
                   </div>
-                  <transition enter-active-class="transition ease-out duration-100"
-                    enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
-                    leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
-                    leave-to-class="transform opacity-0 scale-95">
+                  <div>
                     <div v-if="openActionMenu === rowIndex"
                       class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 focus:outline-none z-10"
                       role="menu" aria-orientation="vertical" tabindex="-1">
@@ -121,7 +117,7 @@
                         </button>
                       </div>
                     </div>
-                  </transition>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -268,7 +264,7 @@ const props = defineProps({
   },
   trClass: {
     type: String,
-    default: 'hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150'
+    default: 'hover:bg-gray-50 dark:hover:bg-gray-800'
   },
   tdClass: {
     type: String,
