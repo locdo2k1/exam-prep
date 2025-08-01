@@ -222,7 +222,7 @@ function normalizeTestVM(apiTest: any): TestVM {
     return {
       id: part.id || `part-${idx}`,
       title: part.title || '',
-      testCategoryId: apiTest.category.Id,
+      testCategoryId: apiTest.testCategory?.Id,
       order: part.order,
       duration: part.duration,
       questions,
