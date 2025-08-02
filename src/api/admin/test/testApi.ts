@@ -1,5 +1,6 @@
-import apiClient from '@/api/axios';
-import type { AxiosResponse, AxiosError } from 'axios';
+import apiClient from "@/api/axios";
+import { Page } from "@/types/common";
+import type { AxiosResponse, AxiosError } from "axios";
 
 // Base interfaces
 interface BaseEntityVM {
@@ -30,6 +31,11 @@ export interface OptionVM extends BaseEntityVM {
 }
 
 // Test related interfaces
+export interface TestVMSimple extends BaseEntityVM {
+  name: string;
+  category: string;
+  listSkill: TestSkillVM[];
+}
 export interface TestQuestionVM extends BaseEntityVM {
   partId: string;
   prompt: string;
@@ -56,6 +62,7 @@ export interface TestQuestionSetVM extends BaseEntityVM {
 export interface TestQuestionItemVM {
   question?: TestQuestionVM;
   questionSet?: TestQuestionSetVM;
+  order: number;
 }
 
 export interface TestPartVM {
@@ -134,27 +141,24 @@ interface ApiResponse<T> {
  * @param files Optional array of files to upload
  * @returns Promise with the created test
  */
-export const createTest = async (
-  testData: TestCreateVM,
-  files?: File[]
-): Promise<ApiResponse<TestVM>> => {
+export const createTest = async (testData: TestCreateVM, files?: File[]): Promise<ApiResponse<TestVM>> => {
   const formData = new FormData();
-  
+
   // Add test data as JSON
-  formData.append('testData', JSON.stringify(testData));
-  
+  formData.append("testData", JSON.stringify(testData));
+
   // Add files if any
   if (files && files.length > 0) {
     files.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
   }
 
   try {
-    return await apiClient.post('/tests', formData);
+    return await apiClient.post("/tests", formData);
   } catch (error) {
     const axiosError = error as AxiosError<ApiResponse<null>>;
-    throw axiosError.response || { data: { success: false, message: 'An error occurred' } };
+    throw axiosError.response || { data: { success: false, message: "An error occurred" } };
   }
 };
 
@@ -168,7 +172,7 @@ export const getTestById = async (id: string): Promise<ApiResponse<TestVM>> => {
     return await apiClient.get(`/tests/${id}`);
   } catch (error) {
     const axiosError = error as AxiosError<ApiResponse<null>>;
-    throw axiosError.response || { data: { success: false, message: 'An error occurred' } };
+    throw axiosError.response || { data: { success: false, message: "An error occurred" } };
   }
 };
 
@@ -182,7 +186,48 @@ export const deleteTest = async (id: string): Promise<ApiResponse<void>> => {
     return await apiClient.delete(`/tests/${id}`);
   } catch (error) {
     const axiosError = error as AxiosError<ApiResponse<null>>;
-    throw axiosError.response || { data: { success: false, message: 'An error occurred' } };
+    throw axiosError.response || { data: { success: false, message: "An error occurred" } };
+  }
+};
+
+/**
+ * Update an existing test
+ * @param id The ID of the test to update
+ * @param testData The test data to update
+ * @param files Optional array of files to upload
+ * @returns Promise with the updated test
+ */
+export interface TestEditVM extends TestCreateVM {
+  id: string;
+}
+
+export const updateTest = async (id: string, testData: TestEditVM, files?: File[]): Promise<ApiResponse<TestVM>> => {
+  const formData = new FormData();
+  formData.append("testData", JSON.stringify(testData));
+  if (files && files.length > 0) {
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+  }
+  try {
+    return await apiClient.put(`/tests/${id}`, formData);
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse<null>>;
+    throw axiosError.response || { data: { success: false, message: "An error occurred" } };
+  }
+};
+
+// Get all tests (simple)
+export const getAllTestsSimple = async (params?: {
+  page?: number;
+  size?: number;
+  search?: string;
+}): Promise<ApiResponse<Page<TestVMSimple>>> => {
+  try {
+    return await apiClient.get("/tests/simple", { params });
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse<null>>;
+    throw axiosError.response || { data: { success: false, message: "An error occurred" } };
   }
 };
 
@@ -190,5 +235,7 @@ export const deleteTest = async (id: string): Promise<ApiResponse<void>> => {
 export default {
   createTest,
   getTestById,
+  updateTest,
   deleteTest,
+  getAllTestsSimple,
 };
