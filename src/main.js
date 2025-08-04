@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import './style.css'
 import App from './App.vue'
 import router from './router/index'
@@ -6,6 +7,7 @@ import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 // Toast configuration
 const toastOptions = {
@@ -24,5 +26,6 @@ const toastOptions = {
    zIndex: 9999  // Add this line to set z-index
 }
 app.use(router)
+app.use(pinia)
 app.use(Toast, toastOptions)
 app.mount('#app')

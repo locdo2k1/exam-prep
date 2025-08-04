@@ -16,12 +16,21 @@ import QuestionSetEdit from '../pages/admin/question-set/QuestionSetEdit.vue'
 import TestCreate from '../pages/admin/test/TestCreate.vue'
 import TestEdit from '../pages/admin/test/TestEdit.vue';
 import TestList from '../pages/admin/test/TestList.vue'
+import TestPage from '../pages/user/TestPage.vue'
+// import TakeTestPage from '../pages/TakeTestPage.vue'
 
 const routes = [
    {
       path: '/',
       component: WelcomePage,
    },
+
+   // {
+   //    path: '/test/:id/take',
+   //    name: 'take-test',
+   //    component: TakeTestPage,
+   //    meta: { requiresAuth: true }
+   // },
    {
       path: '/user',
       component: LayoutUser,
@@ -31,6 +40,12 @@ const routes = [
             name: 'home',
             component: Home,
             meta: { requiresAuth: true },
+         },
+         {
+            path: 'test/:id',
+            name: 'test-details',
+            component: TestPage,
+            meta: { requiresAuth: true }
          },
          {
             path: 'login',
