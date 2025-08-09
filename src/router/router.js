@@ -5,7 +5,7 @@ import Login from '../pages/user/Login.vue'
 import { isAuthenticated } from './guards'
 import Home from '../components/user/layout/UserHome.vue'
 import AdminLogin from '../pages/admin/auth/Login.vue'
-import AdminLayout from '../components/admin/layout/AdminLayout.vue'
+import AdminLayoutWrapper from '../components/admin/layout/AdminLayoutWrapper.vue' // Changed this line
 import QuestionAdminCreate from '../pages/admin/question/QuestionAdminCreate.vue'
 import QuestionAdminEdit from '../pages/admin/question/QuestionAdminEdit.vue'
 import QuestionAdminList from '../pages/admin/question/QuestionAdminList.vue'
@@ -83,7 +83,7 @@ const routes = [
    },
    {
       path: '/admin',
-      component: AdminLayout,
+      component: AdminLayoutWrapper,
       children: [
          // Legacy routes (keep for backward compatibility)
          {
