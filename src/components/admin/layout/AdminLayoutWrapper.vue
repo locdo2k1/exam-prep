@@ -11,3 +11,5 @@ import SidebarProvider from './SidebarProvider.vue';
       </SidebarProvider>
    </ThemeProvider>
 </template>
+
+<style src="../../../../src/admin.style.css"></style>

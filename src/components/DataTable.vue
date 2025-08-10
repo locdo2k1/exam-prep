@@ -480,11 +480,6 @@ watch(() => props.currentPage, (newPage) => {
 
 // Initialize on mount
 onMounted(() => {
-  console.log('DataTable mounted with props:', {
-    columns: props.columns,
-    actions: props.actions,
-    data: props.data
-  });
 
   // Set default sort if specified
   const defaultSort = props.columns.find(col => col.defaultSort);

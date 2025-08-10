@@ -16,3 +16,5 @@ const route = useRoute();
    display: none;
 }
 </style>
+
+<style src="@/style.css"></style>
