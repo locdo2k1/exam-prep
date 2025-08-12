@@ -13,8 +13,8 @@
             <!-- <AudioPlayer :recordings="testData.recordings" :current-recording="currentRecording"
               @recording-change="handleRecordingChange" /> -->
 
-            <PracticePartList/>
-            <PracticeQuestionList/>
+            <PracticePartList v-if="testData?.parts?.length > 0"/>
+            <PracticeQuestionList v-else/>
           </div>
 
           <!-- Right Column - Question Navigation -->
@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useExamTestStore } from '@/stores/examTestStore.ts';
 import TestHeader from '@/components/user/test/TestHeader.vue';
@@ -57,6 +57,9 @@ export default {
     const examStore = useExamTestStore();
     const route = useRoute();
 
+    // Create a computed property for reactive testData
+    const testData = computed(() => examStore.state.testData);
+
     // Load test details when component mounts
     onMounted(async () => {
       try {
@@ -65,8 +68,9 @@ export default {
           throw new Error('Test ID is missing from the route');
         }
         await examStore.fetchPracticeTestByParts(testId);
-
-        console.log(examStore.state.testData);
+        
+        // Now we can use testData.value to access the reactive data
+        console.log('Test data loaded:', testData.value);
         
       } catch (error) {
         console.error('Failed to load test details:', error);
@@ -124,14 +128,21 @@ export default {
     });
 
     return {
-      testData: examStore.state.testData,
+      // Reactive data
+      testData,
+      
+      // Store getters/state
       testParts: examStore.testParts,
       currentRecording: examStore.currentRecording,
       timeLeft: examStore.timeLeft,
       isTestActive: examStore.isTestActive,
       answers: examStore.answers,
-      totalQuestions: 4,
+      totalQuestions: computed(() => testData.value?.parts?.reduce((total, part) => 
+        total + (part.questionsAndQuestionSets?.length || 0), 0) || 0
+      ),
       allAnswers: examStore.allAnswers,
+      
+      // Methods
       handleRecordingChange: examStore.handleRecordingChange,
       handleMultipleChoiceAnswer,
       handleCompletionAnswer,
