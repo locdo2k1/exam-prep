@@ -3,8 +3,8 @@
     <!-- Multiple Choice Options -->
     <div v-if="questionType === QUESTION_TYPES.MULTIPLE_CHOICE">
       <label 
-        v-for="(option, optIndex) in options" 
-        :key="optIndex"
+        v-for="option in options" 
+        :key="option.id"
         class="flex items-center space-x-3 p-3 bg-white rounded-lg hover:bg-gray-50 cursor-pointer"
       >
         <input 
@@ -22,8 +22,8 @@
     <!-- Single Choice (Radio) Options -->
     <div v-else-if="questionType === QUESTION_TYPES.SINGLE_CHOICE">
       <label 
-        v-for="(option, optIndex) in options" 
-        :key="optIndex"
+        v-for="option in options" 
+        :key="option.id"
         class="flex items-center space-x-3 p-3 bg-white rounded-lg hover:bg-gray-50 cursor-pointer"
       >
         <input 
@@ -42,17 +42,18 @@
     <div v-else-if="questionType === QUESTION_TYPES.FILL_IN_THE_BLANK" class="mt-2">
       <input
         type="text"
-        :value="selectedOptionIds[0] || ''"
+        :value="answerText"
         @input="handleTextInput($event)"
+        @blur="handleAnswer"
         class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-        :placeholder="'Type your answer here...'"
-      >
+        :placeholder="'Press Enter to submit your answer...'"
+      />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, type PropType, ref, watch, onMounted } from 'vue';
 import type { PracticeOptionVM } from '@/api/practiceTestApi';
 import { QUESTION_TYPES } from '@/constants/question.constants';
 
@@ -72,14 +73,42 @@ export default defineComponent({
       type: String,
       required: true,
       validator: (value: string) => Object.values(QUESTION_TYPES).includes(value)
+    },
+    answerText: {
+      type: String,
+      default: ''
     }
   },
   
-  emits: ['update:selectedOptionIds'],
+  emits: ['update:selectedOptionIds', 'answer'],
   
   setup(props, { emit }) {
+    const selectedOptionIds = ref<string[]>(props.selectedOptionIds || []);
+    const answerText = ref(props.answerText || '');
+    
+    // Watch for changes in props.selectedOptionIds
+    watch(() => props.selectedOptionIds, (newIds) => {
+      selectedOptionIds.value = [...(newIds || [])];
+    });
+    
+    // Watch for changes in answerText prop
+    watch(() => props.answerText, (newValue) => {
+      if (newValue !== undefined) {
+        answerText.value = newValue;
+      }
+    });
+    
+    // Initialize answerText if there's a selected option (for edit mode)
+    onMounted(() => {
+      if (props.questionType === QUESTION_TYPES.FILL_IN_THE_BLANK && props.selectedOptionIds?.[0]) {
+        answerText.value = props.selectedOptionIds[0];
+      } else if (props.answerText) {
+        answerText.value = props.answerText;
+      }
+    });
+    
     const isSelected = (optionId: string) => {
-      return props.selectedOptionIds.includes(optionId);
+      return selectedOptionIds.value.includes(optionId);
     };
 
     const handleOptionChange = (optionId: string, event: Event) => {
@@ -103,13 +132,21 @@ export default defineComponent({
 
     const handleTextInput = (event: Event) => {
       const target = event.target as HTMLInputElement;
-      emit('update:selectedOptionIds', [target.value]);
+      answerText.value = target.value;
+    };
+
+    const handleAnswer = () => {
+      if (answerText.value?.trim() !== '') {
+        emit('answer', answerText.value.trim());
+      }
     };
 
     return {
       isSelected,
       handleOptionChange,
       handleTextInput,
+      handleAnswer,
+      answerText,
       QUESTION_TYPES
     };
   }

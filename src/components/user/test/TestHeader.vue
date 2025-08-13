@@ -14,7 +14,7 @@ export default defineComponent({
   setup() {
     const examStore = useExamTestStore();
 
-    const testTitle = computed(() => examStore.state.testData?.testName || 'Test');
+    const testTitle = computed(() => examStore.state.testData?.testName);
     const timeLeft = computed(() => {
       // You can implement your time calculation logic here
       return examStore.state.testData ? '01:30:00' : '';

@@ -112,6 +112,19 @@ export interface PracticeTestRequest {
   partIds?: string[];
 }
 
+export interface QuestionAnswerRequest {
+  questionId: string;
+  selectedOptionIds?: string[];
+  answerText?: string;
+}
+
+interface SubmitPracticeTestPartRequest {
+  testId: string;
+  userId: string;
+  questionAnswers: QuestionAnswerRequest[];
+  listPartId: string[];
+}
+
 /**
  * Start a new practice test
  * @param testId - The ID of the test to practice
@@ -124,24 +137,6 @@ export const startPracticeTest = async (
 ): Promise<ApiResponse<TestAttemptVM>> => {
   const response = await apiClient.post<ApiResponse<TestAttemptVM>>(
     `${API_PATH}/${testId}/start`,
-    null,
-    { params: { userId } }
-  );
-  return response.data;
-};
-
-/**
- * Submit a practice test part
- * @param attemptId - The ID of the test part attempt
- * @param userId - The ID of the user submitting the attempt
- * @returns The submitted test part attempt
- */
-export const submitPracticeTestPart = async (
-  attemptId: string,
-  userId: string
-): Promise<ApiResponse<TestPartAttemptVM>> => {
-  const response = await apiClient.post<ApiResponse<TestPartAttemptVM>>(
-    `${API_PATH}/attempts/${attemptId}/submit`,
     null,
     { params: { userId } }
   );
@@ -212,10 +207,35 @@ export const getPracticeTestByParts = async (
   partIds?: string[]
 ): Promise<ApiResponse<PracticeTestVM>> => {
   const requestBody: PracticeTestRequest = { testId, partIds };
-  const response = await apiClient.post<PracticeTestVM>(
+  return await apiClient.post(
     `${API_PATH}/tests/${testId}/practice`,
     requestBody
   );
+};
 
-  return response;
+/**
+ * Submit a practice test part
+ * @param testId - The ID of the test
+ * @param userId - The ID of the user submitting the attempt
+ * @param questionAnswers - Array of question answers
+ * @param partIds - Array of part IDs included in this submission
+ * @returns The submitted test attempt
+ */
+export const submitPracticeTestPart = async (
+  testId: string,
+  userId: string,
+  questionAnswers: QuestionAnswerRequest[],
+  partIds: string[]
+): Promise<ApiResponse<TestAttemptVM>> => {
+  const requestBody: SubmitPracticeTestPartRequest = {
+    testId,
+    userId,
+    questionAnswers,
+    listPartId: partIds
+  };
+
+  return await apiClient.post(
+    `${API_PATH}/attempts/submit`,
+    requestBody
+  );
 };

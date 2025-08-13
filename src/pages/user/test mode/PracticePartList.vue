@@ -35,22 +35,10 @@
               class="p-4">
 
               <!-- Question Set (if exists) -->
-              <div v-if="item.questionSet" class="question-set mb-6">
-                <h5 class="font-medium text-gray-800 text-lg mb-2">{{ item.questionSet.title }}</h5>
-                <div v-if="item.questionSet.description" class="question-content text-gray-700 mb-4">
-                  {{ item.questionSet.description }}
-                </div>
-                <div v-if="item.questionSet.imageUrl" class="mb-4">
-                  <img :src="item.questionSet.imageUrl" :alt="item.questionSet.title" class="max-w-full h-auto rounded-lg border border-gray-200">
-                </div>
-                <div v-if="item.questionSet.questions?.length" class="space-y-6">
-                  <QuestionDisplay 
-                    v-for="(question, qIndex) in item.questionSet.questions" 
-                    :key="qIndex" 
-                    :question="question"
-                  />
-                </div>
-              </div>
+              <QuestionSetDisplay 
+                v-if="item.questionSet" 
+                :question-set="item.questionSet" 
+              />
 
               <!-- Individual Question -->
               <QuestionDisplay 
@@ -74,14 +62,15 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { useExamTestStore } from '@/stores/examTestStore';
-import type { PracticeTestVM } from '@/api/practiceTestApi';
 import QuestionDisplay from './QuestionDisplay.vue';
+import QuestionSetDisplay from '@/components/question/QuestionSetDisplay.vue';
 
 export default defineComponent({
   name: 'PracticePartList',
   
   components: {
-    QuestionDisplay
+    QuestionDisplay,
+    QuestionSetDisplay
   },
 
   setup() {

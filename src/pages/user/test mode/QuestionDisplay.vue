@@ -1,58 +1,142 @@
 <template>
-  <div class="question border-b border-gray-200 dark:border-gray-700" :data-question-order="question.order">
-    <h5 class="font-medium text-gray-800 mb-2">Question {{ question.order }}</h5>
-    <div class="question-content text-gray-700 font-medium mb-4">
-      {{ question.text || question.prompt }}
+  <div class="question border-b border-gray-200 dark:border-gray-700 pb-5" :data-question-order="question.order">
+    <h5 class="mb-2 relative">
+      <span @click.stop="toggleReview(question.id)"
+        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium cursor-pointer transition-colors"
+        :class="isInReview(question.id)
+          ? 'bg-yellow-100 text-yellow-800'
+          : 'bg-blue-50 text-blue-800 hover:bg-blue-100'">
+        {{ question.order }}
+      </span>
+    </h5>
+    <div class="question-content text-gray-700 font-medium mb-4" v-html="question.text || question.prompt">
     </div>
 
     <!-- Question Options -->
-    <QuestionOptions 
-      v-if="question.options?.length"
-      :options="question.options"
-      :question-type="question.questionType"
-      v-model:selected-option-ids="selectedOptions"
-    />
+    <QuestionOptions v-if="question.options?.length || question.questionType === QUESTION_TYPES.FILL_IN_THE_BLANK"
+      :options="question.options || []" :question-type="question.questionType" :answer-text="answerText"
+      v-model:selected-option-ids="selectedOptions" @answer="handleAnswer" />
 
-    <!-- Fill in the Blank -->
-    <div v-else-if="question.questionType === QUESTION_TYPES.FILL_IN_THE_BLANK" class="mt-2">
-      <input
-        type="text"
-        v-model="answerText"
-        class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-        :placeholder="'Type your answer here...'"
-      >
-    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, ref } from 'vue';
+import { defineComponent, type PropType, ref, onMounted, watch, onUpdated } from 'vue';
 import type { PracticeQuestionVM } from '@/api/practiceTestApi';
 import { QUESTION_TYPES } from '@/constants/question.constants';
 import QuestionOptions from './QuestionOptions.vue';
+import { useExamTestStore } from '@/stores/examTestStore';
+import { storeToRefs } from 'pinia';
 
 export default defineComponent({
   name: 'QuestionDisplay',
-  
+
   components: {
     QuestionOptions
   },
-  
+
   props: {
     question: {
       type: Object as PropType<PracticeQuestionVM>,
       required: true
     }
   },
-  
+
   setup(props) {
+    const store = useExamTestStore();
+    const { isInReview, addToReview, removeFromReview } = store;
     const selectedOptions = ref<string[]>([]);
     const answerText = ref('');
+
+    const toggleReview = (questionId: string) => {
+      if (isInReview(questionId)) {
+        removeFromReview(questionId);
+      } else {
+        addToReview(questionId);
+      }
+    };
+
+    // Track renders
+    onUpdated(() => {
+      console.log('QuestionDisplay updated');
+    });
+
+    // Load saved response if exists
+    onMounted(() => {
+      const savedResponse = store.getResponse(props.question.id);
+      if (savedResponse) {
+        selectedOptions.value = savedResponse.selectedOptionIds || [];
+        answerText.value = savedResponse.answer || '';
+      }
+    });
+
+    // Watch for changes in selected options and save to store
+    watch(selectedOptions, (newValue) => {
+      if (!props.question?.id) return;
+
+      // For multiple choice questions, use the selected options
+      if (props.question.questionType === QUESTION_TYPES.MULTIPLE_CHOICE ||
+        props.question.questionType === QUESTION_TYPES.SINGLE_CHOICE) {
+
+        const responseData = {
+          selectedOptionIds: [...newValue],
+          answer: null
+        };
+
+        // Check if response exists before updating
+        const responseExists = store.getResponse(props.question.id);
+        if (responseExists) {
+          store.updateResponse(props.question.id, responseData);
+        } else {
+          store.addResponse({
+            questionId: props.question.id,
+            ...responseData
+          });
+        }
+      }
+    }, { deep: true });
+
+    // Watch for changes in the question prop to update answerText
+    watch(() => props.question, (newQuestion) => {
+      if (newQuestion?.id) {
+        const savedResponse = store.getResponse(newQuestion.id);
+        if (savedResponse) {
+          answerText.value = savedResponse.answer || '';
+        }
+      }
+    });
+
+    // Handle answer text changes for fill-in-the-blank questions
+    const handleAnswer = (answer: string) => {
+      if (!props.question?.id) return;
+
+      // Update the local answerText ref
+      answerText.value = answer;
+
+      const responseData = {
+        selectedOptionIds: [],
+        answer: answer || null
+      };
+
+      // Check if response exists before updating
+      const responseExists = store.getResponse(props.question.id);
+      if (responseExists) {
+        store.updateResponse(props.question.id, responseData);
+      } else {
+        store.addResponse({
+          questionId: props.question.id,
+          ...responseData
+        });
+      }
+    };
 
     return {
       QUESTION_TYPES,
       selectedOptions,
-      answerText
+      answerText,
+      handleAnswer,
+      isInReview,
+      toggleReview
     };
   }
 });
