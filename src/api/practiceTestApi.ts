@@ -123,6 +123,7 @@ interface SubmitPracticeTestPartRequest {
   userId: string;
   questionAnswers: QuestionAnswerRequest[];
   listPartId: string[];
+  duration: number;
 }
 
 /**
@@ -219,19 +220,22 @@ export const getPracticeTestByParts = async (
  * @param userId - The ID of the user submitting the attempt
  * @param questionAnswers - Array of question answers
  * @param partIds - Array of part IDs included in this submission
+ * @param duration - Duration of the test part in seconds
  * @returns The submitted test attempt
  */
 export const submitPracticeTestPart = async (
   testId: string,
   userId: string,
   questionAnswers: QuestionAnswerRequest[],
-  partIds: string[]
+  partIds: string[],
+  duration: number
 ): Promise<ApiResponse<TestAttemptVM>> => {
   const requestBody: SubmitPracticeTestPartRequest = {
     testId,
     userId,
     questionAnswers,
-    listPartId: partIds
+    listPartId: partIds,
+    duration
   };
 
   return await apiClient.post(
