@@ -28,7 +28,7 @@
                      <div class="flex items-center mb-3">
                         <span class="self-center text-2xl font-semibold whitespace-nowrap">Exam Prep</span>
                      </div>
-                     <ul class="social-icons flex">
+                     <ul class="social-icons flex" style="color: #71869d;">
                         <li class="w-6">
                            <a href="#" aria-label="Facebook">
                               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
