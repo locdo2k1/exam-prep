@@ -25,6 +25,7 @@ const ExamTest = () => import(/* webpackChunkName: "user-exam" */ '../pages/user
 const Login = () => import(/* webpackChunkName: "auth" */ '../pages/user/Login.vue')
 const Signup = () => import(/* webpackChunkName: "auth" */ '../pages/user/Signup.vue')
 const AdminLogin = () => import(/* webpackChunkName: "admin-auth" */ '../pages/admin/auth/Login.vue')
+const AttemptResult = () => import(/* webpackChunkName: "user-attempt-result" */ '../pages/user/test-attempt/AttemptResult.vue')
 
 const routes = [
    {
@@ -52,6 +53,13 @@ const routes = [
             name: 'take-test',
             component: ExamTest,
             meta: { requiresAuth: true }
+         },
+         {
+            path: 'test/attempt/:attemptId/result',
+            name: 'attempt-result',
+            component: AttemptResult,
+            meta: { requiresAuth: true },
+            props: true
          },
          {
             path: 'login',
