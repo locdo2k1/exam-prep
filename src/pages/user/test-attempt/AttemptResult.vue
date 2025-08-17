@@ -1,62 +1,61 @@
 <template>
   <div class="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen font-roboto mt-6">
     <!-- Info Banner -->
-    <InfoBanner 
-      :show-guide="showGuide" 
-      @toggle-guide="toggleGuide" 
-    />
-    
+    <InfoBanner :show-guide="showGuide" @toggle-guide="toggleGuide" />
+
     <!-- Results Header -->
-    <ResultsHeader 
-      title="Kết quả luyện tập: 2024 Practice Set TOEIC Test 9"
-      part-name="Part 4"
-    />
-    
+    <ResultsHeader :title="state.testInfo?.testName || 'Kết quả luyện tập'"
+      :part-names="state.testInfo?.partNames || []" />
+
     <!-- Action Buttons -->
-    <ActionButtons 
-      :primary-button="{
-        text: 'Xem đáp án',
-        href: '#result-answers'
-      }"
-      :secondary-button="{
-        text: 'Quay về trang đề thi'
-      }"
-      @secondary-click="handleBackToTest"
-    />
-    
+    <ActionButtons :primary-button="{
+      text: 'Xem đáp án',
+      href: '#result-answers'
+    }" :secondary-button="{
+      text: 'Quay về trang đề thi'
+    }" @secondary-click="handleBackToTest" />
+
     <!-- Results Overview -->
-    <StatsOverview :stats="stats" />
-  
+    <StatsOverview :stats="statsFromStore" />
+
     <!-- Detailed Analysis -->
-    <AnalysisTabs 
-      v-model:active-tab="activeTab"
-      :tabs="[
-        { id: 'part4', label: 'Part 4' },
-        { id: 'overview', label: 'Tổng quát' }
-      ]"
-      :part4-data="part4Data"
-      :overview-data="overviewData"
-      @open-question="openQuestionModal"
-    />
-  
+    <AnalysisTabs v-model:active-tab="activeTab" :tabs="analysisTabsConfig" :current-data="currentAnalysisData"
+      :loading="loading" :error="error" @open-question="openQuestionModal" />
+
     <!-- Answer Section -->
-    <AnswerSection 
-      part-title="Part 4"
-      :answers="answers"
-      :actions="[
-        { type: 'view-details', label: 'Xem chi tiết đáp án' },
-        { type: 'retry-wrong', label: 'Làm lại các câu sai' }
-      ]"
-      @action-click="handleActionClick"
-      @question-click="openQuestionModal"
-    />
-  
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="text-lg font-semibold text-gray-900">Đáp án</h4>
+      <div class="flex space-x-2">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          Xem chi tiết đáp án
+        </button>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          Làm lại các câu sai
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+      <span class="text-red-700 text-sm font-italic">
+        Chú ý: Khi làm lại các câu sai, điểm trung bình của bạn sẽ KHÔNG BỊ ẢNH HƯỞNG.
+      </span>
+    </div>
+
+    <div class="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-start space-x-3">
+      <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path
+          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+      </svg>
+      <div class="text-green-800 text-sm">
+        <strong>Tips:</strong> Khi xem chi tiết đáp án, bạn có thể tạo và lưu highlight từ vựng, keywords và tạo note đề
+        học và tra cứu khi có nhu cầu ôn lại đề thi này trong tương lai.
+      </div>
+    </div>
+    <AnswerSection part-title="Part 4" :answers="answers" @action-click="handleActionClick"
+      @question-click="openQuestionModal" />
+
     <!-- Question Modal -->
-    <QuestionModal 
-      :show="showModal" 
-      :question="selectedQuestion"
-      @close="closeModal"
-    >
+    <QuestionModal :show="showModal" :question="selectedQuestion" @close="closeModal">
       <div v-if="selectedQuestion">
         <p class="mb-4">Nội dung chi tiết câu hỏi sẽ được hiển thị tại đây...</p>
         <div class="space-y-2">
@@ -72,8 +71,10 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { useAttemptResultStore } from '@/stores/modules/attemptResult.store';
 import InfoBanner from '@/components/user/test/InfoBanner.vue';
 import ResultsHeader from '@/components/user/test/ResultsHeader.vue';
 import ActionButtons from '@/components/user/test/ActionButtons.vue';
@@ -85,7 +86,7 @@ import QuestionModal from '@/components/user/test/QuestionModal.vue';
 const showGuide = ref(false);
 const activeTab = ref('overview');
 const showModal = ref(false);
-const selectedQuestion = ref(null);
+const selectedQuestion = ref<Question | null>(null);
 
 const stats = ref({
   completed: { current: 1, total: 30 },
@@ -96,79 +97,40 @@ const stats = ref({
   timeSpent: "0:01:08"
 })
 
-const part4Data = ref([
-  {
-    name: "[Part 4] Câu hỏi về chi tiết",
-    correct: 1,
-    wrong: 0,
-    skipped: 15,
-    accuracy: 100.00,
-    questions: [
-      { number: 72, status: 'unanswered' },
-      { number: 77, status: 'unanswered' },
-      { number: 78, status: 'unanswered' },
-      { number: 79, status: 'unanswered' },
-      { number: 80, status: 'unanswered' },
-      { number: 81, status: 'unanswered' },
-      { number: 83, status: 'unanswered' },
-      { number: 85, status: 'unanswered' },
-      { number: 87, status: 'unanswered' },
-      { number: 88, status: 'unanswered' },
-      { number: 90, status: 'unanswered' },
-      { number: 94, status: 'unanswered' },
-      { number: 95, status: 'correct' },
-      { number: 97, status: 'unanswered' },
-      { number: 98, status: 'unanswered' },
-      { number: 100, status: 'unanswered' }
-    ]
-  },
-  {
-    name: "[Part 4] Dạng bài: Telephone message - Tin nhắn thoại",
-    correct: 1,
-    wrong: 1,
-    skipped: 4,
-    accuracy: 50.00,
-    questions: [
-      { number: 83, status: 'unanswered' },
-      { number: 84, status: 'unanswered' },
-      { number: 85, status: 'unanswered' },
-      { number: 95, status: 'correct' },
-      { number: 96, status: 'wrong' },
-      { number: 97, status: 'unanswered' }
-    ]
-  },
-  // Add more categories as needed...
-])
+// Tab configuration
+const analysisTabsConfig = computed(() => {
+  const partTabs = state.analysis?.parts?.map(part => ({
+    id: part.partName,
+    label: part.partName
+  })) || [];
 
-const overviewData = ref([
-  {
-    name: "[Part 4] Câu hỏi kết hợp bảng biểu",
-    correct: 0,
-    wrong: 1,
-    skipped: 1,
-    accuracy: 0.00,
-    questions: [
-      { number: 96, status: 'wrong' },
-      { number: 99, status: 'unanswered' }
-    ]
-  },
-  {
-    name: "[Part 4] Dạng bài: Telephone message - Tin nhắn thoại",
-    correct: 1,
-    wrong: 1,
-    skipped: 4,
-    accuracy: 50.00,
-    questions: [
-      { number: 83, status: 'unanswered' },
-      { number: 84, status: 'unanswered' },
-      { number: 85, status: 'unanswered' },
-      { number: 95, status: 'correct' },
-      { number: 96, status: 'wrong' },
-      { number: 97, status: 'unanswered' }
-    ]
-  },
-  // Add more overview categories...
-])
+  return [
+    ...partTabs,
+    { id: 'overview', label: 'Tổng quát' },
+  ];
+});
+
+// Current analysis data from store
+const currentAnalysisData = computed(() => {
+  if (!state.analysis) return { parts: [], overall: [] };
+  console.log('state.analysis', state.analysis);
+
+  return state.analysis;
+});
+
+// Map a single question to the display format
+const mapQuestionForModal = (question: {
+  order: number;
+  correctOptions: Array<{ text: string; }>;
+  correctAnswers: string[];
+  userAnswer: string | null;
+  isCorrect: boolean | null;
+}): Question => ({
+  number: question.order,
+  status: !question.userAnswer ? 'unanswered' : question.isCorrect ? 'correct' : 'wrong',
+  userAnswer: question.userAnswer,
+  correct: question.correctOptions[0]?.text || question.correctAnswers[0] || ''
+});
 
 const answers = ref([
   { number: 71, correct: 'B', userAnswer: null, status: 'unanswered' },
@@ -203,10 +165,6 @@ const answers = ref([
   { number: 100, correct: 'D', userAnswer: null, status: 'unanswered' }
 ])
 
-const getCurrentTabData = computed(() => {
-  return activeTab.value === 'part4' ? part4Data.value : overviewData.value
-})
-
 const toggleGuide = () => {
   showGuide.value = !showGuide.value;
 };
@@ -216,7 +174,7 @@ const handleBackToTest = () => {
   console.log('Back to test clicked');
 };
 
-const handleActionClick = (actionType) => {
+const handleActionClick = (actionType: 'view-details' | 'retry-wrong') => {
   if (actionType === 'view-details') {
     // Handle view details action
     console.log('View details clicked');
@@ -226,8 +184,28 @@ const handleActionClick = (actionType) => {
   }
 };
 
-const openQuestionModal = (question) => {
-  selectedQuestion.value = question;
+interface Question {
+  number: number;
+  status: 'correct' | 'wrong' | 'unanswered';
+  userAnswer?: string | null;
+  correct: string;
+}
+
+interface AnalysisQuestion {
+  order: number;
+  context?: string;
+  correctOptions: Array<{ text: string; }>;
+  correctAnswers: string[];
+  userAnswer: string | null;
+  isCorrect: boolean | null;
+}
+
+const openQuestionModal = (rawQuestion: AnalysisQuestion | Question) => {
+  if ('status' in rawQuestion) {
+    selectedQuestion.value = rawQuestion as Question;
+  } else {
+    selectedQuestion.value = mapQuestionForModal(rawQuestion as AnalysisQuestion);
+  }
   showModal.value = true;
 };
 
@@ -236,14 +214,48 @@ const closeModal = () => {
   selectedQuestion.value = null;
 };
 
-const getStatusText = (status) => {
-  const statusMap = {
-    'correct': 'Đúng',
-    'wrong': 'Sai',
-    'unanswered': 'Chưa trả lời'
+const getStatusText = (status: 'correct' | 'wrong' | 'unanswered' | string) => {
+  const statusMap: Record<string, string> = {
+    correct: 'Đúng',
+    wrong: 'Sai',
+    unanswered: 'Chưa trả lời'
   };
   return statusMap[status] || status;
 };
+
+// Integrate Pinia store
+const route = useRoute();
+const attemptStore = useAttemptResultStore();
+const { loading, error, state, fetchTestResultOverall, fetchTestInfo, fetchTestAttemptAnalysis } = attemptStore;
+
+onMounted(async () => {
+  // Try to read params or query for IDs
+  const attemptId = route.params.attemptId as string || route.query.attemptId as string;
+  if (attemptId) {
+    await fetchTestResultOverall(attemptId);
+    await fetchTestInfo(attemptId);
+    await fetchTestAttemptAnalysis(attemptId);
+  }
+});
+
+// Map store overall result to component StatsOverview prop shape with fallback
+const statsFromStore = computed(() => {
+  const o = state.overallResult;
+  if (!o) return stats.value;
+
+  console.log('statsFromStore', o);
+
+  return {
+    completed: { current: o.correctAnswers, total: o.totalQuestions },
+    accuracy: o.accuracyPercentage,
+    correct: o.correctAnswers,
+    incorrect: o.incorrectAnswers,
+    skipped: o.skippedQuestions,
+    timeSpent: o.completionTime,
+  };
+
+  
+});
 </script>
 
 <style scoped>

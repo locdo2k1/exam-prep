@@ -2,20 +2,24 @@
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900 mb-2 flex items-center flex-wrap">
       {{ title }}
-      <span class="bg-orange-400 text-white px-3 py-1 rounded-md text-lg ml-2 font-medium">{{ partName }}</span>
+      <span v-for="(part, index) in partNames" :key="index"
+        class="bg-orange-400 text-white px-3 py-1 rounded-md text-lg ml-2 font-medium">
+        {{ part }}
+      </span>
     </h1>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineProps({
   title: {
     type: String,
     required: true
   },
-  partName: {
-    type: String,
-    required: true
+  partNames: {
+    type: Array,
+    required: true,
+    default: () => ([])
   }
 });
 </script>

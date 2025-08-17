@@ -1,21 +1,16 @@
 <template>
   <div class="mb-8">
     <h4 class="text-lg font-semibold text-gray-900 mb-4">Phân tích chi tiết</h4>
-    
+
     <!-- Tabs Navigation -->
     <div class="border-b border-gray-200 mb-6">
       <nav class="flex">
-        <button 
-          v-for="tab in tabs" 
-          :key="tab.id"
-          @click="$emit('update:activeTab', tab.id)" 
-          :class="[
-            'py-2 px-4 border-b-2 font-medium text-sm',
-            activeTab === tab.id 
-              ? 'border-blue-500 text-blue-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-          ]"
-        >
+        <button v-for="tab in tabs" :key="tab.id" @click="$emit('update:activeTab', tab.id)" :class="[
+          'py-2 px-4 border-b-2 font-medium text-sm',
+          activeTab === tab.id
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+        ]">
           {{ tab.label }}
         </button>
       </nav>
@@ -48,32 +43,40 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="(category, index) in getCurrentTabData" :key="index" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.name }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.correct }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.wrong }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.skipped }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.accuracy }}%</td>
-              <td class="px-6 py-4 text-sm">
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="question in category.questions"
-                    :key="question.number"
-                    @click="$emit('open-question', question)"
-                    :class="[
-                      'px-2 py-1 rounded text-xs font-medium',
-                      question.status === 'correct' 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : question.status === 'wrong'
-                        ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    ]"
-                  >
-                    {{ question.number }}
-                  </button>
-                </div>
+            <tr v-if="loading" class="hover:bg-gray-50">
+              <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                Loading...
               </td>
             </tr>
+            <tr v-else-if="error" class="hover:bg-gray-50">
+              <td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">
+                {{ error }}
+              </td>
+            </tr>
+            <template v-else>
+              <tr v-for="(category, index) in getCurrentTabData" :key="index" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.categoryName }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.correctNumber }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.incorrectNumber }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.skipNumber }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ category.accuracy }}%</td>
+                <td class="px-6 py-4 text-sm">
+                  <div class="flex flex-wrap gap-2">
+                    <button v-for="question in category.questions" :key="question.order"
+                      @click="$emit('open-question', mapQuestionForDisplay(question))" :class="[
+                        'px-2 py-1 rounded text-xs font-medium',
+                        question.isCorrect === true
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                          : question.isCorrect === false
+                            ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      ]">
+                      {{ question.order }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -81,34 +84,113 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 
-const props = defineProps({
-  activeTab: {
-    type: String,
-    required: true
-  },
-  tabs: {
-    type: Array,
-    required: true,
-    validator: (tabs) => {
-      return tabs.every(tab => 'id' in tab && 'label' in tab);
-    }
-  },
-  part4Data: {
-    type: Array,
-    required: true
-  },
-  overviewData: {
-    type: Array,
-    required: true
-  }
+interface Question {
+  order: number;
+  context: string;
+  explanation: string | null;
+  transcript: string | null;
+  isCorrect: boolean | null;
+  correctOptions: Array<{
+    id: string;
+    text: string;
+    correct: boolean;
+    selected: boolean;
+  }>;
+  correctAnswers: string[];
+  userAnswer: string | null;
+  options: Array<{
+    id: string;
+    text: string;
+    correct: boolean;
+    selected: boolean;
+  }>;
+  questionCategories: string[];
+}
+
+interface Category {
+  categoryName: string;
+  correctNumber: number;
+  incorrectNumber: number;
+  skipNumber: number;
+  accuracy: number;
+  questions: Question[];
+}
+
+interface Part {
+  order: number;
+  partName: string;
+  categories: Category[];
+}
+
+interface OverallAnalysis {
+  partName: string;
+  correctNumber: number;
+  incorrectNumber: number;
+  skipNumber: number;
+  accuracy: number;
+}
+
+interface Props {
+  activeTab: string;
+  tabs: Array<{
+    id: string;
+    label: string;
+  }>;
+  currentData: {
+    parts: Part[];
+    overall: OverallAnalysis[];
+  };
+  loading?: boolean;
+  error?: string | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  loading: false,
+  error: null
 });
 
-const emit = defineEmits(['update:activeTab', 'open-question']);
+const emit = defineEmits<{
+  (e: 'update:activeTab', value: string): void;
+  (e: 'open-question', question: {
+    number: number;
+    status: 'correct' | 'wrong' | 'unanswered';
+    userAnswer: string | null;
+    correct: string;
+  }): void;
+}>();
 
 const getCurrentTabData = computed(() => {
-  return props.activeTab === 'part4' ? props.part4Data : props.overviewData;
+  // Filter out parts with no categories or empty categories array
+  const validParts = props.currentData?.parts?.filter(
+    part => part?.categories?.length > 0
+  ) || [];
+
+  const activePart = validParts.find(
+    part => part.partName.toLowerCase().includes(props.activeTab.toLowerCase())
+  );
+
+  if (props.activeTab === 'overview') {
+    // Only include parts that have categories
+    const allCategories = validParts.flatMap(part => part.categories || []);
+    return allCategories.length > 0 ? allCategories : (props.currentData?.overall || []);
+  }
+
+  return activePart?.categories || [];
+});
+
+// Helper function to map question for display
+const mapQuestionForDisplay = (question: Question): {
+  number: number;
+  status: 'correct' | 'wrong' | 'unanswered';
+  userAnswer: string | null;
+  correct: string;
+} => ({
+  number: question.order,
+  status: question.isCorrect === null ? 'unanswered' : question.isCorrect ? 'correct' : 'wrong',
+  userAnswer: question.userAnswer,
+  correct: question.correctOptions[0]?.text || question.correctAnswers[0] || ''
 });
 </script>

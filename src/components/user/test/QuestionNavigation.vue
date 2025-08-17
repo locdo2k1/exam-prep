@@ -24,7 +24,7 @@
           <h3 class="text-base font-semibold text-gray-800 mb-3.5 flex items-center">
             {{ part.name || `Part ${partIndex + 1}` }}
           </h3>
-          <div class="grid grid-flow-col auto-cols-min gap-1.5">
+          <div class="flex flex-wrap gap-1.5">
             <div v-for="(question, qIndex) in getQuestionsForPart(part)" :key="`${partIndex}-${qIndex}`"
               class="relative cursor-pointer">
               <button @click="handleQuestionClick(question)" :class="getQuestionButtonClasses(question)">
@@ -39,7 +39,7 @@
           <h3 class="text-base font-semibold text-gray-800 mb-3.5 flex items-center">
             All Questions
           </h3>
-          <div class="grid grid-flow-col auto-cols-min gap-1.5">
+          <div class="flex flex-wrap gap-1.5">
             <div v-for="(question, index) in flattenedQuestions" :key="`all-${index}`" class="relative cursor-pointer">
               <button @click="handleQuestionClick(question)" :class="getQuestionButtonClasses(question)">
                 {{ question.order || index + 1 }}
