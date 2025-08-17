@@ -1,35 +1,6 @@
 <template>
   <div id="result-answers" class="mb-8">
-    <div class="flex items-center justify-between mb-4">
-      <h4 class="text-lg font-semibold text-gray-900">Đáp án</h4>
-      <div class="flex space-x-2">
-        <button 
-          v-for="(action, index) in actions" 
-          :key="index"
-          @click="$emit('action-click', action)"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-        >
-          {{ action.label }}
-        </button>
-      </div>
-    </div>
-    
-    <div v-if="showWarning" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-      <span class="text-red-700 text-sm font-italic">
-        Chú ý: Khi làm lại các câu sai, điểm trung bình của bạn sẽ KHÔNG BỊ ẢNH HƯỞNG.
-      </span>
-    </div>
-
-    <div class="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-start space-x-3">
-      <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-      </svg>
-      <div class="text-green-800 text-sm">
-        <strong>Tips:</strong> Khi xem chi tiết đáp án, bạn có thể tạo và lưu highlight từ vựng, keywords và tạo note đề học và tra cứu khi có nhu cầu ôn lại đề thi này trong tương lai.
-      </div>
-    </div>
-
-    <h5 class="text-md font-semibold text-gray-900 mb-4">{{ partTitle }}</h5>
+    <h5 v-if="partTitle" class="text-md font-semibold text-gray-900 mb-4">{{ partTitle }}</h5>
     
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
       <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
@@ -133,12 +104,7 @@ interface Answer {
   correct: string;
   status: AnswerStatus;
   userAnswer?: string;
-  [key: string]: any; // For any additional properties
-}
-
-interface Action {
-  type: string;
-  label: string;
+  [key: string]: any;
 }
 
 const props = defineProps({
@@ -157,13 +123,6 @@ const props = defineProps({
       });
     }
   },
-  actions: {
-    type: Array as PropType<Action[]>,
-    default: () => [
-      { type: 'view-details', label: 'Xem chi tiết đáp án' },
-      { type: 'retry-wrong', label: 'Làm lại các câu sai' }
-    ] as const
-  },
   showWarning: {
     type: Boolean,
     default: true
@@ -171,7 +130,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  (e: 'action-click', action: Action): void;
   (e: 'question-click', answer: Answer): void;
 }>();
 
