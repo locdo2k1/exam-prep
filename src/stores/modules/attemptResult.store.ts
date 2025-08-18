@@ -1,12 +1,13 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { getTestResultOverall, getTestInfo, getTestAttemptAnalysis } from "@/api/attemptResultApi";
-import type { TestResultOverallVM, TestInfoVM, AnalysisQuestionsVM } from "@/api/attemptResultApi";
+import { getTestResultOverall, getTestInfo, getTestAttemptAnalysis, getTestAnswers } from "@/api/attemptResultApi";
+import type { TestResultOverallVM, TestInfoVM, AnalysisQuestionsVM, AnswerResultVM } from "@/api/attemptResultApi";
 
 export interface AttemptResultState {
   overallResult?: TestResultOverallVM;
   testInfo?: TestInfoVM;
   analysis?: AnalysisQuestionsVM;
+  answers?: AnswerResultVM;
 }
 
 export const useAttemptResultStore = defineStore("attemptResult", () => {
@@ -72,6 +73,26 @@ export const useAttemptResultStore = defineStore("attemptResult", () => {
     }
   }
 
+  async function fetchTestAnswers(attemptId: string) {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await getTestAnswers(attemptId);
+      if (response.success) {
+        state.value.answers = response.data;
+        console.log("state.value.answers", state.value.answers);
+        
+      } else {
+        error.value = response.message;
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : "Failed to fetch test answers";
+    } finally {
+      loading.value = false;
+    }
+  }
+
   function reset() {
     state.value = {};
     loading.value = false;
@@ -88,6 +109,7 @@ export const useAttemptResultStore = defineStore("attemptResult", () => {
     fetchTestResultOverall,
     fetchTestInfo,
     fetchTestAttemptAnalysis,
+    fetchTestAnswers,
     reset,
   };
 });

@@ -1,5 +1,21 @@
 import apiClient from "./axios";
 
+export interface PartResultVM {
+  /** Order of the part in the test */
+  order: number;
+  /** Name of the part */
+  partName: string;
+  /** List of questions in this part */
+  questions: QuestionResultVM[];
+}
+
+export interface AnswerResultVM {
+  /** List of test parts with their questions and answers */
+  parts: PartResultVM[];
+  /** Flattened list of all questions across all parts */
+  overall: QuestionResultVM[];
+}
+
 export interface TestResultOverallVM {
   totalQuestions: number;
   correctAnswers: number;
@@ -110,6 +126,19 @@ export const getTestInfo = async (
   attemptId: string
 ): Promise<ApiResponse<TestInfoVM>> => {
   return apiClient.get(`/attempts/${attemptId}/test-info`);
+};
+
+/**
+ * Get all answers for a specific test attempt
+ * @param attemptId - The ID of the specific attempt
+ * @returns Promise containing the test answers with questions and selected options
+ */
+export const getTestAnswers = async (
+  attemptId: string
+): Promise<ApiResponse<AnswerResultVM>> => {
+  return apiClient.get(
+    `/attempts/${attemptId}/answers`
+  );
 };
 
 /**

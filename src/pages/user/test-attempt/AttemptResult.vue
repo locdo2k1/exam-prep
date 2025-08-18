@@ -51,8 +51,14 @@
         học và tra cứu khi có nhu cầu ôn lại đề thi này trong tương lai.
       </div>
     </div>
-    <AnswerSection part-title="Part 4" :answers="answers" @action-click="handleActionClick"
-      @question-click="openQuestionModal" />
+    <AnswerSection
+      v-for="section in answerSections"
+      :key="section.title"
+      :part-title="section.title"
+      :answers="section.answers"
+      @action-click="handleActionClick"
+      @question-click="openQuestionModal"
+    /> 
 
     <!-- Question Modal -->
     <QuestionModal :show="showModal" :question="selectedQuestion" @close="closeModal">
@@ -82,6 +88,7 @@ import StatsOverview from '@/components/user/test/StatsOverview.vue';
 import AnalysisTabs from '@/components/user/test/AnalysisTabs.vue';
 import AnswerSection from '@/components/user/test/AnswerSection.vue';
 import QuestionModal from '@/components/user/test/QuestionModal.vue';
+import type { QuestionResultVM, AnswerResultVM, PartResultVM } from '@/api/attemptResultApi';
 
 const showGuide = ref(false);
 const activeTab = ref('overview');
@@ -118,52 +125,48 @@ const currentAnalysisData = computed(() => {
   return state.analysis;
 });
 
-// Map a single question to the display format
-const mapQuestionForModal = (question: {
-  order: number;
-  correctOptions: Array<{ text: string; }>;
-  correctAnswers: string[];
-  userAnswer: string | null;
-  isCorrect: boolean | null;
-}): Question => ({
+// Map a single question result to the modal display format
+const mapQuestionForModal = (question: QuestionResultVM): Question => ({
   number: question.order,
-  status: !question.userAnswer ? 'unanswered' : question.isCorrect ? 'correct' : 'wrong',
+  status: !question.userAnswer
+    ? 'unanswered'
+    : question.isCorrect === true
+      ? 'correct'
+      : 'wrong',
   userAnswer: question.userAnswer,
-  correct: question.correctOptions[0]?.text || question.correctAnswers[0] || ''
+  correct: question.correctOptions?.[0]?.text || question.correctAnswers?.[0] || ''
 });
 
-const answers = ref([
-  { number: 71, correct: 'B', userAnswer: null, status: 'unanswered' },
-  { number: 72, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 73, correct: 'D', userAnswer: null, status: 'unanswered' },
-  { number: 74, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 75, correct: 'B', userAnswer: null, status: 'unanswered' },
-  { number: 76, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 77, correct: 'B', userAnswer: null, status: 'unanswered' },
-  { number: 78, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 79, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 80, correct: 'D', userAnswer: null, status: 'unanswered' },
-  { number: 81, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 82, correct: 'B', userAnswer: null, status: 'unanswered' },
-  { number: 83, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 84, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 85, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 86, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 87, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 88, correct: 'B', userAnswer: null, status: 'unanswered' },
-  { number: 89, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 90, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 91, correct: 'A', userAnswer: null, status: 'unanswered' },
-  { number: 92, correct: 'D', userAnswer: null, status: 'unanswered' },
-  { number: 93, correct: 'B', userAnswer: null, status: 'unanswered' },
-  { number: 94, correct: 'D', userAnswer: null, status: 'unanswered' },
-  { number: 95, correct: 'C', userAnswer: 'C', status: 'correct' },
-  { number: 96, correct: 'A', userAnswer: 'C', status: 'wrong' },
-  { number: 97, correct: 'D', userAnswer: null, status: 'unanswered' },
-  { number: 98, correct: 'D', userAnswer: null, status: 'unanswered' },
-  { number: 99, correct: 'C', userAnswer: null, status: 'unanswered' },
-  { number: 100, correct: 'D', userAnswer: null, status: 'unanswered' }
-])
+// Answer item shape expected by AnswerSection
+type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string };
+
+// Helper to map raw question model to AnswerSection's expected shape
+const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => ({
+  number: q.order,
+  correct: q.correctOptions?.[0]?.text || q.correctAnswers?.[0] || '',
+  userAnswer: q.userAnswer || undefined,
+  status: !q.userAnswer ? 'unanswered' : q.isCorrect === true ? 'correct' : 'wrong'
+});
+
+// Build sections for answers: per-part if available, otherwise overall
+const answerSections = computed((): { title: string; answers: AnswerItem[] }[] => {
+  const answersState: AnswerResultVM | undefined = state.answers;
+  if (!answersState) return [];
+
+  const parts: PartResultVM[] = answersState.parts ?? [];
+  if (parts.length > 0) {
+    return parts.map((p) => ({
+      title: p.partName || `Part ${p.order}`,
+      answers: (p.questions ?? []).map(mapRawToAnswer)
+    }));
+  }
+
+  const overall: QuestionResultVM[] = answersState.overall ?? [];
+  return [{
+    title: 'Overall',
+    answers: overall.map(mapRawToAnswer)
+  }];
+});
 
 const toggleGuide = () => {
   showGuide.value = !showGuide.value;
@@ -191,14 +194,7 @@ interface Question {
   correct: string;
 }
 
-interface AnalysisQuestion {
-  order: number;
-  context?: string;
-  correctOptions: Array<{ text: string; }>;
-  correctAnswers: string[];
-  userAnswer: string | null;
-  isCorrect: boolean | null;
-}
+type AnalysisQuestion = QuestionResultVM;
 
 const openQuestionModal = (rawQuestion: AnalysisQuestion | Question) => {
   if ('status' in rawQuestion) {
@@ -226,7 +222,7 @@ const getStatusText = (status: 'correct' | 'wrong' | 'unanswered' | string) => {
 // Integrate Pinia store
 const route = useRoute();
 const attemptStore = useAttemptResultStore();
-const { loading, error, state, fetchTestResultOverall, fetchTestInfo, fetchTestAttemptAnalysis } = attemptStore;
+const { loading, error, state, fetchTestResultOverall, fetchTestInfo, fetchTestAttemptAnalysis, fetchTestAnswers } = attemptStore;
 
 onMounted(async () => {
   // Try to read params or query for IDs
@@ -235,6 +231,7 @@ onMounted(async () => {
     await fetchTestResultOverall(attemptId);
     await fetchTestInfo(attemptId);
     await fetchTestAttemptAnalysis(attemptId);
+    await fetchTestAnswers(attemptId);
   }
 });
 
