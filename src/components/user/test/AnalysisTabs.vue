@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { mapQuestionForDisplay } from '@/utils/questionMappers';
 
 interface Question {
   order: number;
@@ -181,16 +182,5 @@ const getCurrentTabData = computed(() => {
   return activePart?.categories || [];
 });
 
-// Helper function to map question for display
-const mapQuestionForDisplay = (question: Question): {
-  number: number;
-  status: 'correct' | 'wrong' | 'unanswered';
-  userAnswer: string | null;
-  correct: string;
-} => ({
-  number: question.order,
-  status: question.isCorrect === null ? 'unanswered' : question.isCorrect ? 'correct' : 'wrong',
-  userAnswer: question.userAnswer,
-  correct: question.correctOptions[0]?.text || question.correctAnswers[0] || ''
-});
+// mapping now imported from utils/questionMappers
 </script>

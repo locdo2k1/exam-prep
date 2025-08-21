@@ -47,7 +47,7 @@ export interface OptionResultVM {
   /** Display text of the option */
   text: string;
   /** Indicates if this option was selected by the user */
-  isSelected: boolean;
+  selected: boolean;
   /** Indicates if this option is a correct answer */
   isCorrect: boolean;
 }
