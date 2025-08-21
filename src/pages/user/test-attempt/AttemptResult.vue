@@ -61,7 +61,7 @@
     /> 
 
     <!-- Question Modal -->
-    <QuestionModal :show="showModal" :question="selectedQuestion" @close="closeModal">
+    <QuestionModal :show="showModal" :question="selectedQuestion || undefined" @close="closeModal">
       <div v-if="selectedQuestion">
         <p class="mb-4">Nội dung chi tiết câu hỏi sẽ được hiển thị tại đây...</p>
         <div class="space-y-2">
@@ -89,11 +89,12 @@ import AnalysisTabs from '@/components/user/test/AnalysisTabs.vue';
 import AnswerSection from '@/components/user/test/AnswerSection.vue';
 import QuestionModal from '@/components/user/test/QuestionModal.vue';
 import type { QuestionResultVM, AnswerResultVM, PartResultVM } from '@/api/attemptResultApi';
+import { mapQuestionForModal, type ModalQuestion } from '@/utils/questionMappers';
 
 const showGuide = ref(false);
 const activeTab = ref('overview');
 const showModal = ref(false);
-const selectedQuestion = ref<Question | null>(null);
+const selectedQuestion = ref<ModalQuestion | null>(null);
 
 const stats = ref({
   completed: { current: 1, total: 30 },
@@ -125,30 +126,39 @@ const currentAnalysisData = computed(() => {
   return state.analysis;
 });
 
-// Map a single question result to the modal display format
-const mapQuestionForModal = (question: QuestionResultVM): Question => ({
-  number: question.order,
-  status: !question.userAnswer
-    ? 'unanswered'
-    : question.isCorrect === true
-      ? 'correct'
-      : 'wrong',
-  userAnswer: question.userAnswer,
-  correct: question.correctOptions?.[0]?.text || question.correctAnswers?.[0] || ''
-});
-
 // Answer item shape expected by AnswerSection
 type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string };
 
-// Helper to map raw question model to AnswerSection's expected shape
-const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => ({
-  number: q.order,
-  correct: q.correctOptions?.[0]?.text || q.correctAnswers?.[0] || '',
-  userAnswer: q.userAnswer || undefined,
-  status: !q.userAnswer ? 'unanswered' : q.isCorrect === true ? 'correct' : 'wrong'
-});
+// Helper to map raw question model to AnswerSection's expected shape (OLD behavior)
+const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => {
+  const selectedOptions = q.options?.filter(opt => opt.selected).map(opt => opt.text).join(', ') || '';
+  const userAnswer = selectedOptions || q.userAnswer || undefined;
+  return {
+    number: q.order,
+    correct: q.correctOptions?.map(opt => opt.text).join(', ') || q.correctAnswers?.join(', ') || '',
+    userAnswer,
+    status: !userAnswer ? 'unanswered' : q.isCorrect === true ? 'correct' : 'wrong'
+  };
+};
 
-// Build sections for answers: per-part if available, otherwise overall
+// Finder to resolve raw VM by order (used for opening modal)
+const findRawQuestionByOrder = (order: number) => {
+  const answersState: AnswerResultVM | undefined = state.answers;
+  if (!answersState) return null;
+
+  const parts: PartResultVM[] = answersState.parts ?? [];
+  if (parts.length > 0) {
+    for (const part of parts) {
+      const question = part.questions?.find(q => q.order === order);
+      if (question) return question;
+    }
+  }
+
+  const overall: QuestionResultVM[] = answersState.overall ?? [];
+  return overall.find(q => q.order === order);
+};
+
+// Build sections for answers: per-part if available, otherwise overall (uses OLD mapping)
 const answerSections = computed((): { title: string; answers: AnswerItem[] }[] => {
   const answersState: AnswerResultVM | undefined = state.answers;
   if (!answersState) return [];
@@ -187,20 +197,15 @@ const handleActionClick = (actionType: 'view-details' | 'retry-wrong') => {
   }
 };
 
-interface Question {
-  number: number;
-  status: 'correct' | 'wrong' | 'unanswered';
-  userAnswer?: string | null;
-  correct: string;
-}
-
-type AnalysisQuestion = QuestionResultVM;
-
-const openQuestionModal = (rawQuestion: AnalysisQuestion | Question) => {
-  if ('status' in rawQuestion) {
-    selectedQuestion.value = rawQuestion as Question;
-  } else {
-    selectedQuestion.value = mapQuestionForModal(rawQuestion as AnalysisQuestion);
+const openQuestionModal = (payload: QuestionResultVM | AnswerItem | ModalQuestion) => {
+  if ('order' in (payload as any)) {
+    // From AnalysisTabs: raw question VM
+    selectedQuestion.value = mapQuestionForModal(payload as QuestionResultVM);
+  } else if ('status' in (payload as any) && !('order' in (payload as any))) {
+    // From AnswerSection: has number/status; lookup VM by number to get full details
+    const order = (payload as AnswerItem).number;
+    const raw = findRawQuestionByOrder(order);
+    selectedQuestion.value = raw ? mapQuestionForModal(raw) : (payload as ModalQuestion);
   }
   showModal.value = true;
 };
