@@ -1,17 +1,17 @@
 <template>
     <div class="min-h-screen bg-[#F5F5F5] p-4">
         <div class="max-w-4xl mx-auto">
-            <!-- Header Tags -->
-            <div class="mb-4">
-                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">#IELTS
-                    Academic</span>
-                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">#Listening</span>
-            </div>
-
             <!-- Main Test Card -->
             <div class="bg-white rounded-lg shadow-sm mb-6">
-                <!-- Test Title with Check Icon -->
                 <div class="p-6">
+                    <slot name="tags">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">#IELTS
+                            Academic</span>
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">#Listening</span>
+                    </slot>
+                </div>
+                <!-- Test Title -->
+                <div class="p-6 pt-0">
                     <h1 class="text-2xl font-bold text-gray-900 flex items-center">
                         {{ test?.title || 'IELTS Simulation Listening test 1' }}
                         <svg class="w-6 h-6 text-green-500 ml-2" fill="currentColor" viewBox="0 0 20 20">
@@ -22,290 +22,228 @@
                     </h1>
                 </div>
 
-                <!-- Test Details Tabs -->
-                <div class="px-6 pt-2">
-                    <fwb-tabs v-model="activeTab" variant="pills" class="inline-flex p-1 rounded-lg">
-                        <fwb-tab name="test-info" title="Thông tin đề thi" :active="activeTab === 'test-info'" class="py-2 px-4 rounded-md text-sm font-medium" />
-                        <fwb-tab name="answers" title="Đáp án/transcript" :active="activeTab === 'answers'" class="py-2 px-4 rounded-md text-sm font-medium" />
-                    </fwb-tabs>
-                    
-                    <!-- Tab Panels -->
-                    <div class="mt-4">
-                        <div v-if="activeTab === 'test-info'" class="p-6">
-                            <!-- Test Stats -->
-                            <div class="flex items-center space-x-6 mb-4">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Thời gian làm bài: 40 phút | 4 phần thi | 40 câu hỏi | 3 | 67 bình luận
-                                </div>
-                            </div>
+                <!-- Main Tabs -->
+                <TestTabs v-model="activeTab" :tabs="tabs">
+                    <!-- Test Info Tab -->
+                    <template #test-info>
+                        <TestInfo :time-limit="'40 phút'" :parts-count="4" :question-count="40" :difficulty="3"
+                            :participants="114679">
+                            <InfoNote />
 
-                            <div class="flex items-center text-sm text-gray-600 mb-6">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                114679 người đã luyện tập đề thi này
-                            </div>
+                            <TestHistory :attempts="testHistory" @view-details="viewAttemptDetails" />
 
-                            <!-- Note -->
-                            <div class="bg-red-50 border border-red-200 rounded p-3 mb-6">
-                                <p class="text-sm text-red-600">
-                                    <strong>Chú ý:</strong> đề được quy đổi sang scaled score (và dy trên thang điểm
-                                    9.0 cho TOEIC hoặc 9.0 cho IELTS), vui lòng chọn chế độ làm FULL TEST
-                                </p>
-                            </div>
+                            <PracticeOptions v-model="practiceMode" :options="practiceOptions">
+                                <template #practice="{ option }">
+                                    <div class="space-y-4">
+                                        <ProTip />
+                                        <RecordingSelection v-model="selectedRecordings" />
+                                        <TimeLimit v-model="timeLimit" />
+                                        <!-- Start Test Button -->
+                                        <button
+                                            class="px-6 py-2 font-bold text-white uppercase bg-blue-700 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            LUYỆN TẬP
+                                        </button>
 
-                            <!-- Test History -->
-                            <div class="mb-6">
-                                <h3 class="text-lg font-semibold mb-4">Kết quả làm bài của bạn:</h3>
-
-                                <div class="overflow-x-auto">
-                                    <table class="w-full">
-                                        <thead>
-                                            <tr class="text-left text-sm text-gray-600 border-b">
-                                                <th class="pb-2">Ngày làm</th>
-                                                <th class="pb-2">Kết quả</th>
-                                                <th class="pb-2">Thời gian làm bài</th>
-                                                <th class="pb-2"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="text-sm">
-                                            <tr class="border-b">
-                                                <td class="py-3">
-                                                    <div>02/08/2025</div>
-                                                    <div class="flex space-x-1 mt-1">
-                                                        <span
-                                                            class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">PART
-                                                            1</span>
-                                                    </div>
-                                                </td>
-                                                <td class="py-3 text-blue-600 font-medium">0/40</td>
-                                                <td class="py-3">0:00:07</td>
-                                                <td class="py-3">
-                                                    <button class="text-blue-600 hover:text-blue-800 text-sm">Xem
-                                                        chi tiết</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="border-b">
-                                                <td class="py-3">
-                                                    <div>02/08/2025</div>
-                                                    <div class="flex space-x-1 mt-1">
-                                                        <span
-                                                            class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">Luyện
-                                                            tập 1</span>
-                                                        <span
-                                                            class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">Recording
-                                                            1</span>
-                                                        <span
-                                                            class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">Recording
-                                                            2</span>
-                                                    </div>
-                                                </td>
-                                                <td class="py-3 text-blue-600 font-medium">1/20</td>
-                                                <td class="py-3">0:00:15</td>
-                                                <td class="py-3">
-                                                    <button class="text-blue-600 hover:text-blue-800 text-sm">Xem
-                                                        chi tiết</button>
-                                                </td>
-                                            </tr>
-                                            <tr class="border-b">
-                                                <td class="py-3">
-                                                    <div>02/08/2025</div>
-                                                    <div class="flex space-x-1 mt-1">
-                                                        <span
-                                                            class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">Luyện
-                                                            tập 1</span>
-                                                        <span
-                                                            class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">Recording
-                                                            1</span>
-                                                    </div>
-                                                </td>
-                                                <td class="py-3 text-blue-600 font-medium">0/10</td>
-                                                <td class="py-3">0:00:46</td>
-                                                <td class="py-3">
-                                                    <button class="text-blue-600 hover:text-blue-800 text-sm">Xem
-                                                        chi tiết</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Practice Options Tabs -->
-                            <div class="mb-6">
-                                <div class="flex space-x-6 border-b border-gray-200">
-                                    <button
-                                        class="pb-2 border-b-2 border-blue-500 text-blue-600 font-medium text-sm">Luyện
-                                        tập</button>
-                                    <button class="pb-2 border-b-2 border-transparent text-gray-500 text-sm">Làm
-                                        full test</button>
-                                    <button class="pb-2 border-b-2 border-transparent text-gray-500 text-sm">Thảo
-                                        luận</button>
-                                </div>
-                            </div>
-
-                            <!-- Pro Tip -->
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                                <div class="flex items-start">
-                                    <svg class="w-5 h-5 text-green-600 mt-0.5 mr-2 flex-shrink-0"
-                                        fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    <div>
-                                        <p class="text-sm text-green-800">
-                                            <strong>💡 Pro tips:</strong> Hình thức luyện tập từng phần và chọn chức
-                                            thời gian phù hợp sẽ giúp bạn tập trung vào giải quyết các câu hỏi bài
-                                            thay vì phải chịu áp lực hoàn thành bài thi.
-                                        </p>
                                     </div>
-                                </div>
-                            </div>
+                                </template>
 
-                            <!-- Recording Selection -->
-                            <div class="mb-6">
-                                <h3 class="font-medium mb-4">Chọn phần thi bạn muốn làm</h3>
-
-                                <div class="space-y-3">
-                                    <label class="flex items-start space-x-3">
-                                        <input type="checkbox" class="mt-1" />
-                                        <div>
-                                            <div class="font-medium">Recording 1 (10 câu hỏi)</div>
-                                            <div class="text-sm text-gray-600">
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-2">#Listening|
-                                                    Note-Form Completion</span>
-                                            </div>
+                                <template #full-test="{ option }">
+                                    <div class="space-y-4">
+                                        <div class="flex items-start p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 border border-yellow-200"
+                                            role="alert">
+                                            <svg class="w-5 h-5 mr-2 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8.75-3.25a.75.75 0 111.5 0v3.5a.75.75 0 01-1.5 0v-3.5zM10 13a1 1 0 100 2 1 1 0 000-2z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="leading-relaxed">
+                                                Sẵn sàng để bắt đầu làm full test? Để đạt được kết quả tốt nhất, bạn cần
+                                                dành ra 120 phút cho bài test này.
+                                            </span>
                                         </div>
-                                    </label>
 
-                                    <label class="flex items-start space-x-3">
-                                        <input type="checkbox" class="mt-1" />
-                                        <div>
-                                            <div class="font-medium">Recording 2 (10 câu hỏi)</div>
-                                            <div class="text-sm text-gray-600">
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-2">#Listening|
-                                                    Table Completion</span>
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">#Listening|
-                                                    Multiple Choice</span>
-                                            </div>
-                                        </div>
-                                    </label>
+                                        <button
+                                            class="px-5 py-2 font-bold text-white bg-blue-700 rounded-md shadow hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            BẮT ĐẦU THI
+                                        </button>
 
-                                    <label class="flex items-start space-x-3">
-                                        <input type="checkbox" class="mt-1" />
-                                        <div>
-                                            <div class="font-medium">Recording 3 (10 câu hỏi)</div>
-                                            <div class="text-sm text-gray-600">
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-2">#Listening|
-                                                    Note-Form Completion</span>
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">#Listening|
-                                                    Table Completion</span>
-                                            </div>
-                                        </div>
-                                    </label>
+                                    </div>
+                                </template>
 
-                                    <label class="flex items-start space-x-3">
-                                        <input type="checkbox" class="mt-1" />
-                                        <div>
-                                            <div class="font-medium">Recording 4 (10 câu hỏi)</div>
-                                            <div class="text-sm text-gray-600">
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-2">#Listening|
-                                                    Summary/Flow-chart Completion</span>
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">#Listening|
-                                                    Matching</span>
-                                            </div>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
+                                <template #discuss="{ option }">
+                                    <div class="space-y-4">
+                                        <p class="text-gray-600">Tham gia thảo luận về bài kiểm tra này.</p>
+                                        <button
+                                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                                            @click="startDiscussion">
+                                            Vào phòng thảo luận
+                                        </button>
+                                    </div>
+                                </template>
+                            </PracticeOptions>
+                        </TestInfo>
+                    </template>
 
-                            <!-- Time Limit Dropdown -->
-                            <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Giới hạn thời gian (Để trống để làm bài không giới hạn)
-                                </label>
-                                <select class="w-full p-2 border border-gray-300 rounded-md bg-white">
-                                    <option>-- Chọn thời gian --</option>
-                                    <option>10 phút</option>
-                                    <option>20 phút</option>
-                                    <option>30 phút</option>
-                                    <option>40 phút</option>
-                                </select>
-                            </div>
-
-                            <!-- Start Button -->
-                            <button @click="startTest"
-                                class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-                                :disabled="loading">
-                                <span v-if="!loading">LUYỆN TẬP</span>
-                                <span v-else class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
-                                    </svg>
-                                    Loading...
-                                </span>
-                            </button>
+                    <!-- Answers Tab -->
+                    <template #answers>
+                        <div class="p-6">
+                            <p>Nội dung đáp án và transcript sẽ được hiển thị tại đây.</p>
                         </div>
-                    </div>
-                    
-                    <div v-if="activeTab === 'answers'" class="p-6">
-                        <p>Nội dung đáp án và transcript sẽ được hiển thị tại đây.</p>
-                    </div>
-                </div>
+                    </template>
+                </TestTabs>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
-import { FwbTabs, FwbTab } from 'flowbite-vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useTestStore } from '@/stores/test';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import TestTabs from './components/TestTabs.vue';
+import TestInfo from './components/TestInfo.vue';
+import TestHistory, { type TestAttempt } from './components/TestHistory.vue';
+import PracticeOptions from './components/PracticeOptions.vue';
+import RecordingSelection from './components/RecordingSelection.vue';
+import TimeLimit from './components/TimeLimit.vue';
+import InfoNote from './components/InfoNote.vue';
+import ProTip from './components/ProTip.vue';
+
+interface Tag {
+    type: string;
+    text: string;
+}
+
+interface Test {
+    title: string;
+    // Add other test properties as needed
+}
+
+// Define test part interface
+interface TestPart {
+    id: string;
+    title: string;
+    questionCount: number;
+    duration: string;
+}
+
+type PracticeMode = 'practice' | 'full-test' | 'discuss';
 
 const route = useRoute();
-const router = useRouter();
-const testStore = useTestStore();
 
+// State
+const activeTab = ref<string>('test-info');
+const tabs = ref([
+    { name: 'test-info', title: 'Thông tin đề thi' },
+    { name: 'answers', title: 'Đáp án/transcript' }
+]);
+const test = ref<Test>({
+    title: 'IELTS Simulation Listening test 1',
+    // Add other test properties as needed
+});
+const practiceMode = ref<PracticeMode>('practice');
 const selectedRecordings = ref<string[]>([]);
-const timeLimit = ref<string>('');
+const timeLimit = ref<number | null>(null);
 
-const test = computed(() => testStore.currentTest);
-const loading = computed(() => testStore.loading);
-const activeTab = ref('test-info');
+// Practice options
+const practiceOptions = [
+    {
+        value: 'practice',
+        label: 'Luyện tập',
+        description: 'Luyện tập từng phần của bài kiểm tra',
+        icon: 'practice'
+    },
+    {
+        value: 'full-test',
+        label: 'Làm full test',
+        description: 'Làm toàn bộ bài kiểm tra trong một lần',
+        icon: 'test'
+    },
+    {
+        value: 'discuss',
+        label: 'Thảo luận',
+        description: 'Thảo luận về bài kiểm tra',
+        icon: 'discussion'
+    }
+];
 
-const startTest = () => {
+// Test parts data
+const testParts = ref<TestPart[]>([
+    { id: 'part1', title: 'Phần 1: Hội thoại hàng ngày', questionCount: 10, duration: '10 phút' },
+    { id: 'part2', title: 'Phần 2: Độc thoại ngắn', questionCount: 10, duration: '10 phút' },
+    { id: 'part3', title: 'Phần 3: Hội thoại dài', questionCount: 10, duration: '10 phút' },
+    { id: 'part4', title: 'Phần 4: Bài nói dài', questionCount: 10, duration: '10 phút' },
+]);
+
+// Mock data for test history
+const testHistory: TestAttempt[] = [
+    {
+        id: '1',
+        date: '02/08/2025',
+        result: '0/40',
+        duration: '0:00:07',
+        tags: [
+            { type: 'part', text: 'PART 1' }
+        ]
+    } as TestAttempt,
+    {
+        date: '02/08/2025',
+        result: '1/20',
+        duration: '0:00:15',
+        tags: [
+            { type: 'practice', text: 'Luyện tập 1' },
+            { type: 'recording', text: 'Recording 1' },
+            { type: 'recording', text: 'Recording 2' }
+        ]
+    },
+    {
+        date: '02/08/2025',
+        result: '0/10',
+        duration: '0:00:46',
+        tags: [
+            { type: 'practice', text: 'Luyện tập 1' },
+            { type: 'recording', text: 'Recording 1' }
+        ]
+    }
+];
+
+// Methods
+const startTest = (): void => {
+    console.log('Starting test...');
+    console.log('Practice mode:', practiceMode.value);
+    console.log('Selected recordings:', selectedRecordings.value);
+    console.log('Time limit:', timeLimit.value);
+
     // Navigate to test taking page
-    router.push(`/test/${route.params.id}/take`);
+    // router.push(`/test/${route.params.id}/take`);
 };
 
-// Fetch test data on component mount
-onMounted(async () => {
+const viewAttemptDetails = (attempt: TestAttempt): void => {
+    console.log('Viewing attempt details:', attempt);
+    // Navigate to attempt details or show modal
+};
+
+// Tab action methods
+const startPractice = (partId: string) => {
+    console.log('Starting practice for part:', partId);
+    // Add your practice start logic here
+};
+
+const startFullTest = () => {
+    console.log('Starting full test');
+    // Add your full test start logic here
+};
+
+const startDiscussion = () => {
+    console.log('Starting discussion');
+    // Add your discussion start logic here
+};
+
+// You can fetch test data here if needed
+onMounted(() => {
     const testId = route.params.id as string;
     if (testId) {
-        try {
-            // await testStore.fetchTest(testId);
-        } catch (error) {
-            console.error('Failed to fetch test:', error);
-        }
+        // You can fetch test data here if needed
+        console.log('Test ID:', testId);
     }
 });
 </script>
