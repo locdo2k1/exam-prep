@@ -5,15 +5,22 @@
             <div class="bg-white rounded-lg shadow-sm mb-6">
                 <div class="p-6">
                     <slot name="tags">
-                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">#IELTS
-                            Academic</span>
-                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">#Listening</span>
+                        <template v-if="testInfo?.skills?.length">
+                            <span v-for="(skill, index) in testInfo.skills" :key="index"
+                                class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">
+                                {{ skill }}
+                            </span>
+                        </template>
+                        <template v-else>
+                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">#IELTS Academic</span>
+                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">#Listening</span>
+                        </template>
                     </slot>
                 </div>
                 <!-- Test Title -->
                 <div class="p-6 pt-0">
                     <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-                        {{ test?.title || 'IELTS Simulation Listening test 1' }}
+                        {{ testInfo?.testName || 'IELTS Simulation Listening test 1' }}
                         <svg class="w-6 h-6 text-green-500 ml-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -26,8 +33,8 @@
                 <TestTabs v-model="activeTab" :tabs="tabs">
                     <!-- Test Info Tab -->
                     <template #test-info>
-                        <TestInfo :time-limit="'40 phút'" :parts-count="4" :question-count="40" :difficulty="3"
-                            :participants="114679">
+                        <TestInfo :time-limit="testInfo?.duration" :parts-count="testInfo?.sections" :question-count="testInfo?.questions" :difficulty="3"
+                            :participants="testInfo?.practicedUsers">
                             <InfoNote />
 
                             <TestHistory :attempts="testHistory" @view-details="viewAttemptDetails" />
@@ -36,7 +43,10 @@
                                 <template #practice="{ option }">
                                     <div class="space-y-4">
                                         <ProTip />
-                                        <RecordingSelection v-model="selectedRecordings" />
+                                        <RecordingSelection 
+                                          v-model="selectedRecordings" 
+                                          :recordings="testParts"
+                                        />
                                         <TimeLimit v-model="timeLimit" />
                                         <!-- Start Test Button -->
                                         <button
@@ -97,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import TestTabs from './components/TestTabs.vue';
 import TestInfo from './components/TestInfo.vue';
@@ -107,23 +117,11 @@ import RecordingSelection from './components/RecordingSelection.vue';
 import TimeLimit from './components/TimeLimit.vue';
 import InfoNote from './components/InfoNote.vue';
 import ProTip from './components/ProTip.vue';
+import { getTestInfo, type PracticeTestInfoVM } from '../../../api/testInfoApi';
 
 interface Tag {
     type: string;
     text: string;
-}
-
-interface Test {
-    title: string;
-    // Add other test properties as needed
-}
-
-// Define test part interface
-interface TestPart {
-    id: string;
-    title: string;
-    questionCount: number;
-    duration: string;
 }
 
 type PracticeMode = 'practice' | 'full-test' | 'discuss';
@@ -136,13 +134,21 @@ const tabs = ref([
     { name: 'test-info', title: 'Thông tin đề thi' },
     { name: 'answers', title: 'Đáp án/transcript' }
 ]);
-const test = ref<Test>({
-    title: 'IELTS Simulation Listening test 1',
-    // Add other test properties as needed
-});
+const testInfo = ref<PracticeTestInfoVM | null>(null);
 const practiceMode = ref<PracticeMode>('practice');
 const selectedRecordings = ref<string[]>([]);
 const timeLimit = ref<number | null>(null);
+
+// Map test parts to recording format
+const testParts = computed(() => {
+  if (!testInfo.value?.testParts) return [];
+  return testInfo.value.testParts.map(part => ({
+    id: part.id,
+    name: part.title,
+    questionCount: part.questionCount,
+    tags: part.questionCategories || []
+  }));
+});
 
 // Practice options
 const practiceOptions = [
@@ -165,14 +171,6 @@ const practiceOptions = [
         icon: 'discussion'
     }
 ];
-
-// Test parts data
-const testParts = ref<TestPart[]>([
-    { id: 'part1', title: 'Phần 1: Hội thoại hàng ngày', questionCount: 10, duration: '10 phút' },
-    { id: 'part2', title: 'Phần 2: Độc thoại ngắn', questionCount: 10, duration: '10 phút' },
-    { id: 'part3', title: 'Phần 3: Hội thoại dài', questionCount: 10, duration: '10 phút' },
-    { id: 'part4', title: 'Phần 4: Bài nói dài', questionCount: 10, duration: '10 phút' },
-]);
 
 // Mock data for test history
 const testHistory: TestAttempt[] = [
@@ -238,12 +236,19 @@ const startDiscussion = () => {
     // Add your discussion start logic here
 };
 
-// You can fetch test data here if needed
-onMounted(() => {
+// Fetch test data
+onMounted(async () => {
     const testId = route.params.id as string;
-    if (testId) {
-        // You can fetch test data here if needed
-        console.log('Test ID:', testId);
+    if (!testId) return;
+    try {
+        const res = await getTestInfo(testId);
+        if (res.success) {
+            testInfo.value = res.data;
+        } else {
+            console.error('Failed to load test info:', res.message);
+        }
+    } catch (err: any) {
+        console.error('Error fetching test info:', err?.message || err);
     }
 });
 </script>
