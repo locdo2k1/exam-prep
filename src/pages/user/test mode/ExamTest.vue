@@ -46,6 +46,11 @@ import PracticeQuestionList from './PracticeQuestionList.vue';
 
 export default {
   name: 'ExamTest',
+  props: {
+    isPracticeMode: { type: Boolean, default: false },
+    partIds: { type: Array, default: () => [] },
+    timeLimit: { type: Number, default: null }
+  },
   components: {
     TestHeader,
     AudioPlayer,
@@ -53,7 +58,7 @@ export default {
     PracticePartList,
     PracticeQuestionList
   },
-  setup() {
+  setup(props) {
     const examStore = useExamTestStore();
     const route = useRoute();
 
@@ -67,7 +72,13 @@ export default {
         if (!testId) {
           throw new Error('Test ID is missing from the route');
         }
-        await examStore.fetchPracticeTestByParts(testId);
+        if (props.isPracticeMode) {
+          // Use selected part IDs if provided in practice mode
+          const parts = Array.isArray(props.partIds) && props.partIds.length > 0 ? props.partIds : undefined;
+          await examStore.fetchPracticeTestByParts(testId, parts);
+        } else {
+          await examStore.fetchPracticeTestByParts(testId);
+        }
         
         // Now we can use testData.value to access the reactive data
         console.log('Test data loaded:', testData.value);
@@ -130,6 +141,10 @@ export default {
     return {
       // Reactive data
       testData,
+      // Props
+      isPracticeMode: props.isPracticeMode,
+      partIds: props.partIds,
+      timeLimit: props.timeLimit,
       
       // Store getters/state
       testParts: examStore.testParts,

@@ -55,6 +55,17 @@ const routes = [
             meta: { requiresAuth: true }
          },
          {
+            path: 'tests/:id/practice',
+            name: 'practice-test',
+            component: ExamTest,
+            props: route => ({
+               isPracticeMode: true,
+               partIds: Array.isArray(route.query.part) ? route.query.part : [route.query.part].filter(Boolean),
+               timeLimit: route.query.time_limit ? parseInt(route.query.time_limit, 10) : null
+            }),
+            meta: { requiresAuth: true }
+         },
+         {
             path: 'test/attempt/:attemptId/result',
             name: 'attempt-result',
             component: AttemptResult,

@@ -50,6 +50,7 @@
                                         <TimeLimit v-model="timeLimit" />
                                         <!-- Start Test Button -->
                                         <button
+                                            @click="startPracticeTest"
                                             class="px-6 py-2 font-bold text-white uppercase bg-blue-700 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             LUYỆN TẬP
                                         </button>
@@ -108,7 +109,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import TestTabs from './components/TestTabs.vue';
 import TestInfo from './components/TestInfo.vue';
 import TestHistory, { type TestAttempt } from './components/TestHistory.vue';
@@ -127,6 +128,7 @@ interface Tag {
 type PracticeMode = 'practice' | 'full-test' | 'discuss';
 
 const route = useRoute();
+const router = useRouter();
 
 // State
 const activeTab = ref<string>('test-info');
@@ -205,6 +207,34 @@ const testHistory: TestAttempt[] = [
 ];
 
 // Methods
+const startPracticeTest = () => {
+    // Validate at least one part is selected
+    if (selectedRecordings.value.length === 0) {
+        console.warn('Vui lòng chọn ít nhất một phần để luyện tập');
+        return;
+    }
+    
+    // Validate time limit if provided
+    if (timeLimit.value !== null) {
+        const timeLimitNum = Number(timeLimit.value);
+        if (isNaN(timeLimitNum) || timeLimitNum <= 0) {
+            console.warn('Thời gian làm bài phải là một số dương');
+            return;
+        }
+    }
+    
+    const query = {
+        part: selectedRecordings.value,
+        ...(timeLimit.value && { time_limit: timeLimit.value.toString() })
+    };
+    
+    router.push({
+        name: 'practice-test',
+        params: { id: route.params.id },
+        query: query
+    });
+};
+
 const startTest = (): void => {
     console.log('Starting test...');
     console.log('Practice mode:', practiceMode.value);
