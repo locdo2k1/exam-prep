@@ -2,9 +2,13 @@
   <div class="bg-white p-6 rounded-xl shadow-xl max-w-md mx-auto border border-gray-100">
     <!-- Timer Section -->
     <div class="text-center mb-6">
-      <Timer ref="timerRef" @tick="onTimerTick" />
+      <Timer 
+        :time-limit="computedTimeLimit" 
+        @time-up="handleTimeUp"
+        @time-update="handleTimeUpdate"
+      />
       <!-- Submit Button -->
-      <button @click="handleSubmitTest" :class="[
+      <button @click="handleSubmitTestWithTime" :class="[
         'w-full py-1.5 rounded-xl font-semibold text-base mb-3 transition-all duration-200 transform hover:scale-[1.02]',
         'border-2 border-blue-500 text-blue-600 hover:bg-blue-50'
       ]">
@@ -56,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref } from 'vue';
+import { defineComponent, computed, ref, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import Timer from '@/components/common/Timer.vue';
 import { useExamTestStore } from '@/stores/examTestStore';
@@ -73,7 +77,15 @@ export default defineComponent({
     Timer
   },
 
-  setup(_, { emit }) {
+  props: {
+    // Time limit for the test in seconds
+    timeLimit: {
+      type: Number,
+      default: 0
+    }
+  },
+
+  setup(props, { emit }) {
     const examStore = useExamTestStore();
     const router = useRouter();
     const timerRef = ref<InstanceType<typeof Timer> | null>(null);
@@ -82,6 +94,7 @@ export default defineComponent({
     // Computed properties
     const testParts = computed(() => examStore.state.testData?.parts || []);
     const questionsAndQuestionSets = computed(() => examStore.state.testData?.questionAndQuestionSet || []);
+    const computedTimeLimit = computed(() => props.timeLimit || examStore.state.timeLimit || 0);
 
     // Flatten all questions from questionsAndQuestionSets
     const flattenedQuestions = computed(() => {
@@ -162,15 +175,39 @@ export default defineComponent({
       emit('question-click', question.order);
     };
 
-    // Add timer tick handler
-    const onTimerTick = (time: number) => {
-      elapsedTime.value = time;
+    // Handle time update from Timer
+    const handleTimeUpdate = (timeInSeconds: number) => {
+      // If we have a positive time limit, Timer emits remaining seconds (countdown)
+      // If time limit is 0, Timer emits elapsed seconds (count-up)
+      if (computedTimeLimit.value > 0) {
+        const totalTime = computedTimeLimit.value * 60;
+        const timeElapsed = totalTime - timeInSeconds; // timeInSeconds = remaining
+        elapsedTime.value = Math.max(0, Math.min(timeElapsed, totalTime));
+      } else {
+        // Count-up mode
+        elapsedTime.value = Math.max(0, timeInSeconds);
+      }
+
+      // Debug log (optional)
+      const minutes = Math.floor(elapsedTime.value / 60);
+      const seconds = elapsedTime.value % 60;
+      console.log(`Elapsed: ${minutes}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    // Handle when time is up
+    const handleTimeUp = async () => {
+      await handleSubmitTestWithTime();
+    };
+
+    const handleSubmitTest = () => {
+      if (confirm('Bạn có chắc chắn muốn nộp bài không?')) {
+      }
     };
 
     // Update handleSubmitTest to include elapsed time
-    const handleSubmitTest = async () => {
+    const handleSubmitTestWithTime = async () => {
       try {
-        // Get final time from timer
+        // Get final time from elapsed time
         const timeSpent = elapsedTime.value;
 
         console.log('Time Spent:', timeSpent);
@@ -204,7 +241,7 @@ export default defineComponent({
           const testId = examStore.state.testData.testId;
           const userId = '123e4567-e89b-12d3-a456-426614174001'; // Replace with actual user ID from auth store
 
-          await submitPracticeTestPart(
+          const response = await submitPracticeTestPart(
             testId,
             userId,
             questionAnswers,
@@ -219,11 +256,12 @@ export default defineComponent({
           examStore.clearResponses();
           examStore.clearReviewQuestions();
 
-          // Navigate to results page
-          router.push({
-            name: 'PracticeTestResults',
-            params: { testId }
-          });
+          // Navigate to results page with the attemptId from the response
+          if (response.data?.id) {
+            router.push({
+              path: `/user/test/attempt/${response.data.id}/result`
+            });
+          }
         }
       } catch (error) {
         console.error('Error submitting test:', error);
@@ -234,12 +272,21 @@ export default defineComponent({
     };
 
     return {
+      // Refs
+      timerRef,
+      elapsedTime,
+
+      // Data
+      timeLimit: computedTimeLimit,
+
       // Computed
+      computedTimeLimit,
       testParts,
       questionsAndQuestionSets,
       flattenedQuestions,
 
       // Methods
+      handleTimeUp,
       getQuestionsForPart,
       getQuestionNumber,
       isQuestionAnswered,
@@ -247,14 +294,11 @@ export default defineComponent({
       getQuestionButtonClasses,
       handleQuestionClick,
       handleSubmitTest,
-
-      // Refs
-      timerRef,
-      onTimerTick,
-      elapsedTime
+      handleSubmitTestWithTime,
+      handleTimeUpdate
     };
   },
 
-  emits: ['question-click', 'toggle-test']
+  emits: ['question-click', 'toggle-test'],
 });
 </script>

@@ -51,6 +51,8 @@
         học và tra cứu khi có nhu cầu ôn lại đề thi này trong tương lai.
       </div>
     </div>
+    <!-- Anchor for 'Xem đáp án' button -->
+    <div id="result-answers" class="h-0"></div>
     <AnswerSection
       v-for="section in answerSections"
       :key="section.title"
@@ -78,9 +80,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAttemptResultStore } from '@/stores/modules/attemptResult.store';
+import { storeToRefs } from 'pinia';
 import InfoBanner from '@/components/user/test/InfoBanner.vue';
 import ResultsHeader from '@/components/user/test/ResultsHeader.vue';
 import ActionButtons from '@/components/user/test/ActionButtons.vue';
@@ -107,7 +110,7 @@ const stats = ref({
 
 // Tab configuration
 const analysisTabsConfig = computed(() => {
-  const partTabs = state.analysis?.parts?.map(part => ({
+  const partTabs = state.value.analysis?.parts?.map(part => ({
     id: part.partName,
     label: part.partName
   })) || [];
@@ -120,10 +123,10 @@ const analysisTabsConfig = computed(() => {
 
 // Current analysis data from store
 const currentAnalysisData = computed(() => {
-  if (!state.analysis) return { parts: [], overall: [] };
-  console.log('state.analysis', state.analysis);
+  if (!state.value.analysis) return { parts: [], overall: [] };
+  console.log('state.analysis', state.value.analysis);
 
-  return state.analysis;
+  return state.value.analysis;
 });
 
 // Answer item shape expected by AnswerSection
@@ -143,7 +146,7 @@ const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => {
 
 // Finder to resolve raw VM by order (used for opening modal)
 const findRawQuestionByOrder = (order: number) => {
-  const answersState: AnswerResultVM | undefined = state.answers;
+  const answersState: AnswerResultVM | undefined = state.value.answers;
   if (!answersState) return null;
 
   const parts: PartResultVM[] = answersState.parts ?? [];
@@ -160,7 +163,7 @@ const findRawQuestionByOrder = (order: number) => {
 
 // Build sections for answers: per-part if available, otherwise overall (uses OLD mapping)
 const answerSections = computed((): { title: string; answers: AnswerItem[] }[] => {
-  const answersState: AnswerResultVM | undefined = state.answers;
+  const answersState: AnswerResultVM | undefined = state.value.answers;
   if (!answersState) return [];
 
   const parts: PartResultVM[] = answersState.parts ?? [];
@@ -227,22 +230,48 @@ const getStatusText = (status: 'correct' | 'wrong' | 'unanswered' | string) => {
 // Integrate Pinia store
 const route = useRoute();
 const attemptStore = useAttemptResultStore();
-const { loading, error, state, fetchTestResultOverall, fetchTestInfo, fetchTestAttemptAnalysis, fetchTestAnswers } = attemptStore;
+// Keep refs reactive when destructuring
+const { loading, error, state } = storeToRefs(attemptStore);
+// Actions stay on the store instance
+const { fetchTestResultOverall, fetchTestInfo, fetchTestAttemptAnalysis, fetchTestAnswers, reset } = attemptStore;
 
 onMounted(async () => {
   // Try to read params or query for IDs
   const attemptId = route.params.attemptId as string || route.query.attemptId as string;
   if (attemptId) {
-    await fetchTestResultOverall(attemptId);
-    await fetchTestInfo(attemptId);
-    await fetchTestAttemptAnalysis(attemptId);
-    await fetchTestAnswers(attemptId);
+    console.log('[AttemptResult] onMounted attemptId =', attemptId);
+    // Clear previous attempt data to avoid stale display
+    reset();
+    await Promise.all([
+      fetchTestResultOverall(attemptId),
+      fetchTestInfo(attemptId),
+      fetchTestAttemptAnalysis(attemptId),
+      fetchTestAnswers(attemptId)
+    ]);
   }
 });
 
+// React when attemptId changes (same component instance reused)
+watch(
+  () => route.params.attemptId as string | undefined,
+  async (newAttemptId) => {
+    if (newAttemptId) {
+      console.log('[AttemptResult] watcher newAttemptId =', newAttemptId);
+      // Clear previous attempt data before loading new
+      reset();
+      await Promise.all([
+        fetchTestResultOverall(newAttemptId),
+        fetchTestInfo(newAttemptId),
+        fetchTestAttemptAnalysis(newAttemptId),
+        fetchTestAnswers(newAttemptId)
+      ]);
+    }
+  }
+);
+
 // Map store overall result to component StatsOverview prop shape with fallback
 const statsFromStore = computed(() => {
-  const o = state.overallResult;
+  const o = state.value.overallResult;
   if (!o) return stats.value;
 
   console.log('statsFromStore', o);

@@ -18,6 +18,10 @@ interface PracticeTestState {
   error: string | null;
   userResponses: Set<Response>;
   listReviewQuestionIds: Set<string>;
+  timeLimit: number; // in minutes
+  timeLeft: number; // in seconds
+  timerInterval: number | null;
+  isTimeUp: boolean;
 }
 
 export const useExamTestStore = defineStore('examTest', () => {
@@ -27,7 +31,11 @@ export const useExamTestStore = defineStore('examTest', () => {
     loading: false,
     error: null,
     userResponses: new Set<Response>(),
-    listReviewQuestionIds: new Set<string>()
+    listReviewQuestionIds: new Set<string>(),
+    timeLimit: 0, // Default to 0, should be set when starting the test
+    timeLeft: 0, // Will be calculated based on timeLimit
+    timerInterval: null,
+    isTimeUp: false
   });
 
   // Actions
@@ -166,13 +174,57 @@ export const useExamTestStore = defineStore('examTest', () => {
     state.value.listReviewQuestionIds.clear();
   };
 
+  // Set time limit (in minutes)
+  const setTimeLimit = (minutes: number) => {
+    state.value.timeLimit = minutes;
+    state.value.timeLeft = minutes * 60;
+    state.value.isTimeUp = false;
+  };
+
+  // Start the timer
+  const startTimer = () => {
+    // Clear any existing timer
+    if (state.value.timerInterval) {
+      clearInterval(state.value.timerInterval);
+    }
+
+    // Start new timer
+    state.value.timerInterval = window.setInterval(() => {
+      if (state.value.timeLeft > 0) {
+        state.value.timeLeft--;
+      } else {
+        stopTimer();
+        state.value.isTimeUp = true;
+      }
+    }, 1000) as unknown as number;
+  };
+
+  // Stop the timer
+  const stopTimer = () => {
+    if (state.value.timerInterval) {
+      clearInterval(state.value.timerInterval);
+      state.value.timerInterval = null;
+    }
+  };
+
+  // Reset the timer to initial state
+  const resetTimer = () => {
+    stopTimer();
+    state.value.timeLeft = state.value.timeLimit * 60;
+    state.value.isTimeUp = false;
+  };
+
   const resetState = () => {
     state.value = {
       testData: null,
       loading: false,
       error: null,
       userResponses: new Set<Response>(),
-      listReviewQuestionIds: new Set<string>()
+      listReviewQuestionIds: new Set<string>(),
+      timeLimit: 0,
+      timeLeft: 0,
+      timerInterval: null,
+      isTimeUp: false
     };
   };
 
@@ -182,12 +234,29 @@ export const useExamTestStore = defineStore('examTest', () => {
     
     // Getters
     testData: () => state.value.testData,
+    allAnswers: () => {
+      const answers: Record<number, any> = {};
+      state.value.userResponses.forEach(response => {
+        // Assuming questionId is a number or can be converted to one
+        const questionNumber = parseInt(response.questionId, 10);
+        if (!isNaN(questionNumber)) {
+          answers[questionNumber] = response;
+        }
+      });
+      return answers;
+    },
     loading: () => state.value.loading,
     error: () => state.value.error,
     userResponses: () => state.value.userResponses,
     listReviewQuestionIds: () => state.value.listReviewQuestionIds,
+    timeLeft: () => state.value.timeLeft,
+    isTimeUp: () => state.value.isTimeUp,
     
     // Actions
+    setTimeLimit,
+    startTimer,
+    stopTimer,
+    resetTimer,
     fetchPracticeTestByParts,
     addResponse,
     updateResponse,

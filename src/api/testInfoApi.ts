@@ -16,6 +16,18 @@ export interface TestPartInfoVM {
   questionCategories: string[];
 }
 
+export interface TestAttemptInfoVM {
+  id: string;
+  userId: string;
+  testId: string;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  takeDate: string;
+  timeSpent: number; // in seconds
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'ABANDONED';
+}
+
 export interface PracticeTestInfoVM {
   skills: string[];
   testName: string;
@@ -35,5 +47,17 @@ export const getTestInfo = async (
 };
 
 export const getAllTests = async (): Promise<ApiResponse<string>> => {
-  return await apiClient.get(`${API_PATH}`);
+  return await apiClient.get(API_PATH);
+};
+
+export const getTestAttempts = async (
+  testId: string,
+  userId?: string,
+  timezone?: string
+): Promise<ApiResponse<TestAttemptInfoVM[]>> => {
+  const params = new URLSearchParams();
+  if (userId) params.append('userId', userId);
+  if (timezone) params.append('tz', timezone);
+  
+  return await apiClient.get(`${API_PATH}/${testId}/attempts${params.toString() ? `?${params.toString()}` : ''}`);
 };

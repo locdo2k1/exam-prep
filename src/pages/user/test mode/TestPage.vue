@@ -118,7 +118,7 @@ import RecordingSelection from './components/RecordingSelection.vue';
 import TimeLimit from './components/TimeLimit.vue';
 import InfoNote from './components/InfoNote.vue';
 import ProTip from './components/ProTip.vue';
-import { getTestInfo, type PracticeTestInfoVM } from '../../../api/testInfoApi';
+import { getTestInfo, getTestAttempts, type PracticeTestInfoVM } from '../../../api/testInfoApi';
 
 interface Tag {
     type: string;
@@ -174,37 +174,17 @@ const practiceOptions = [
     }
 ];
 
-// Mock data for test history
-const testHistory: TestAttempt[] = [
-    {
-        id: '1',
-        date: '02/08/2025',
-        result: '0/40',
-        duration: '0:00:07',
-        tags: [
-            { type: 'part', text: 'PART 1' }
-        ]
-    } as TestAttempt,
-    {
-        date: '02/08/2025',
-        result: '1/20',
-        duration: '0:00:15',
-        tags: [
-            { type: 'practice', text: 'Luyện tập 1' },
-            { type: 'recording', text: 'Recording 1' },
-            { type: 'recording', text: 'Recording 2' }
-        ]
-    },
-    {
-        date: '02/08/2025',
-        result: '0/10',
-        duration: '0:00:46',
-        tags: [
-            { type: 'practice', text: 'Luyện tập 1' },
-            { type: 'recording', text: 'Recording 1' }
-        ]
-    }
-];
+// Test history from API
+const testHistory = ref<TestAttempt[]>([]);
+
+const formatDuration = (totalSeconds: number): string => {
+    if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return '0:00:00';
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+};
 
 // Methods
 const startPracticeTest = () => {
@@ -276,6 +256,28 @@ onMounted(async () => {
             testInfo.value = res.data;
         } else {
             console.error('Failed to load test info:', res.message);
+        }
+        // Fetch attempts
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const attemptsRes = await getTestAttempts(testId, undefined, tz);
+        if (attemptsRes.success && Array.isArray(attemptsRes.data)) {
+            const attempts = attemptsRes.data as any[];
+            testHistory.value = attempts.map((a) => {
+                const date = a.takeDateLocal || (a.takeDate ? new Date(a.takeDate).toLocaleDateString('vi-VN') : '');
+                const durationSec = Number.isFinite(a.durationSeconds) ? a.durationSeconds : 0;
+                const modeTag = a.isPractice ? { type: 'practice', text: 'Luyện tập' } : { type: 'full', text: 'Full test' };
+                const partTags = Array.isArray(a.parts)
+                    ? a.parts.map((p: string) => ({ type: 'part', text: p }))
+                    : [];
+                return {
+                    date,
+                    result: `${a.correctAnswers}/${a.totalQuestions}`,
+                    duration: formatDuration(durationSec),
+                    tags: [modeTag, ...partTags]
+                } as TestAttempt;
+            });
+        } else if (!attemptsRes.success) {
+            console.error('Failed to load test attempts:', attemptsRes.message);
         }
     } catch (err: any) {
         console.error('Error fetching test info:', err?.message || err);
