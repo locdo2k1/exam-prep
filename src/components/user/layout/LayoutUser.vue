@@ -1,6 +1,6 @@
 <template>
-   <Header :key="route.fullPath" />
-   <router-view />
+   <Header/>
+   <router-view/>
    <Footer />
 </template>
 

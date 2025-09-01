@@ -22,7 +22,7 @@
             <QuestionNavigation 
               :total-questions="totalQuestions" 
               :current-answers="allAnswers"
-              :time-left="timeLeft"
+              :time-limit="timeLimit"
               :is-active="isTestActive"
               @question-click="scrollToQuestion" 
               @toggle-test="toggleTest"
@@ -65,23 +65,33 @@ export default {
     // Create a computed property for reactive testData
     const testData = computed(() => examStore.state.testData);
 
-    // Load test details when component mounts
+    // Set up time limit when component mounts
     onMounted(async () => {
       try {
         const testId = route.params.id;
         if (!testId) {
           throw new Error('Test ID is missing from the route');
         }
+        
+        // Set time limit if provided as prop
+        if (props.timeLimit) {
+          examStore.setTimeLimit(props.timeLimit);
+        }
+        
         if (props.isPracticeMode) {
           // Use selected part IDs if provided in practice mode
           const parts = Array.isArray(props.partIds) && props.partIds.length > 0 ? props.partIds : undefined;
           await examStore.fetchPracticeTestByParts(testId, parts);
         } else {
           await examStore.fetchPracticeTestByParts(testId);
+          
+          // If no time limit prop was provided, try to get it from test data
+          if (!props.timeLimit && testData.value?.timeLimit) {
+            examStore.setTimeLimit(testData.value.timeLimit);
+          }
         }
         
-        // Now we can use testData.value to access the reactive data
-        console.log('Test data loaded:', testData.value);
+        // Timer is now managed by the Timer component through props
         
       } catch (error) {
         console.error('Failed to load test details:', error);
@@ -135,6 +145,7 @@ export default {
 
     onUnmounted(() => {
       // Cleanup any resources when component is unmounted
+      examStore.stopTimer();
       // examStore.resetTest();
     });
 
@@ -150,7 +161,9 @@ export default {
       testParts: examStore.testParts,
       currentRecording: examStore.currentRecording,
       timeLeft: examStore.timeLeft,
+      formattedTimeLeft: examStore.formattedTimeLeft,
       isTestActive: examStore.isTestActive,
+      isTimeUp: examStore.isTimeUp,
       answers: examStore.answers,
       totalQuestions: computed(() => testData.value?.parts?.reduce((total, part) => 
         total + (part.questionsAndQuestionSets?.length || 0), 0) || 0
@@ -158,6 +171,7 @@ export default {
       allAnswers: examStore.allAnswers,
       
       // Methods
+      stopTimer: examStore.stopTimer,
       handleRecordingChange: examStore.handleRecordingChange,
       handleMultipleChoiceAnswer,
       handleCompletionAnswer,

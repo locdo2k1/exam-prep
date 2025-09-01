@@ -9,61 +9,105 @@
       <div class="text-sm font-medium text-gray-600">Thời gian làm bài</div>
     </div>
 
-    <div class="text-3xl font-bold text-blue-600 mb-5 bg-blue-50 py-3 px-6 rounded-lg inline-block">
+    <div class="text-3xl font-bold mb-5 py-3 px-6 rounded-lg inline-block transition-colors duration-300" :class="{
+      'text-red-600 bg-red-50': timeCritical,
+      'text-blue-600 bg-blue-50': !timeCritical
+    }">
       {{ formattedTime }}
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue';
+import { defineComponent, computed, ref, onMounted, onUnmounted } from 'vue';
 
 export default defineComponent({
-  name: 'Timer',
+  name: 'ExamTimer',
 
   props: {
-    // Whether the timer should start automatically when mounted
-    autoStart: {
+    // Time limit in minutes
+    timeLimit: {
+      type: Number,
+      required: true,
+      default: 0
+    },
+    // Whether to show time in red when limit is low
+    showWarning: {
       type: Boolean,
       default: true
     },
-    // Initial time in seconds (useful for resuming)
-    initialTime: {
+    // Time in minutes when to show warning (default: 5 minutes)
+    warningThreshold: {
       type: Number,
-      default: 0
+      default: 5
     }
   },
 
-  emits: ['tick'],
-
   setup(props, { emit }) {
-    const elapsedTime = ref<number>(props.initialTime);
+    const elapsedTime = ref(0);
+    const startTime = ref<number | null>(null);
     let timer: number | null = null;
 
+    // Format time as HH:MM:SS or MM:SS if less than an hour
     const formatTime = (seconds: number): string => {
       const hrs = Math.floor(seconds / 3600);
       const mins = Math.floor((seconds % 3600) / 60);
       const secs = seconds % 60;
 
-      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      if (hrs > 0) {
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     };
 
-    const formattedTime = computed<string>(() => formatTime(elapsedTime.value));
+    // Start count-up timer
+    const startCountUp = () => {
+      if (timer) clearInterval(timer);
+      startTime.value = Date.now();
+      elapsedTime.value = 0;
+      
+      timer = window.setInterval(() => {
+        if (startTime.value) {
+          elapsedTime.value = Math.floor((Date.now() - startTime.value) / 1000);
+          emit('time-update', elapsedTime.value);
+        }
+      }, 1000);
+    };
 
-    // Start the timer
-    const start = (): void => {
-      if (timer === null) {
-        timer = window.setInterval(() => {
-          elapsedTime.value++;
-          emit('tick', elapsedTime.value);
-        }, 1000);
-      }
+    // Start countdown timer
+    const startCountdown = () => {
+      if (timer) clearInterval(timer);
+      const totalTime = props.timeLimit * 60; // Convert minutes to seconds
+      startTime.value = Date.now();
+      elapsedTime.value = 0;
+
+      // Emit initial remaining time immediately
+      emit('time-update', totalTime);
+
+      timer = window.setInterval(() => {
+        if (startTime.value) {
+          const timeElapsed = Math.floor((Date.now() - startTime.value) / 1000);
+          const remainingTime = Math.max(0, totalTime - timeElapsed);
+          
+          // Always track actual time passed
+          elapsedTime.value = timeElapsed;
+          
+          // Emit remaining time for display
+          emit('time-update', remainingTime);
+          
+          if (remainingTime <= 0) {
+            clearInterval(timer!);
+            emit('time-up');
+          }
+        }
+      }, 1000);
     };
 
     const stop = (): void => {
       if (timer !== null) {
         clearInterval(timer);
         timer = null;
+        startTime.value = null;
       }
     };
 
@@ -72,25 +116,47 @@ export default defineComponent({
       elapsedTime.value = 0;
     };
 
-
-
+    // Initialize timer based on props
     onMounted(() => {
-      if (props.autoStart) {
-        start();
+      if (props.timeLimit > 0) {
+        startCountdown();
+      } else {
+        startCountUp();
       }
     });
 
+    // Clean up timer
     onUnmounted(() => {
-      stop();
+      if (timer) {
+        clearInterval(timer);
+      }
+    });
+
+    // Remaining seconds (for countdown); for count-up just equals elapsed
+    const remainingSeconds = computed<number>(() => {
+      if (props.timeLimit > 0) {
+        return Math.max(0, props.timeLimit * 60 - elapsedTime.value);
+      }
+      return elapsedTime.value;
+    });
+
+    // Format the time for display: show remaining in countdown, elapsed in count-up
+    const displayTime = computed<string>(() => {
+      const secondsToShow = props.timeLimit > 0 ? remainingSeconds.value : elapsedTime.value;
+      return formatTime(secondsToShow);
+    });
+
+    // Check if time is critical (only for countdown mode)
+    const timeCritical = computed<boolean>(() => {
+      return props.timeLimit > 0 &&
+        props.showWarning &&
+        (remainingSeconds.value / 60) <= props.warningThreshold;
     });
 
     return {
-      elapsedTime,
-      formattedTime,
-      start,
-      stop,
-      reset,
-      getCurrentTime: () => elapsedTime.value // Add this method
+      formattedTime: displayTime,
+      timeCritical,
+      stop
     };
   }
 });

@@ -1,5 +1,5 @@
 <template>
-  <div id="result-answers" class="mb-8">
+  <div class="mb-8">
     <h5 v-if="partTitle" class="text-md font-semibold text-gray-900 mb-4">{{ partTitle }}</h5>
     
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
