@@ -17,6 +17,7 @@ declare module "*.vue" {
 // This allows TypeScript to know about your .env file variables
 interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID: string;
+  readonly VITE_API_BASE_URL: string;
   // Add other env variables here as needed
 }
 
