@@ -404,18 +404,18 @@ onMounted(() => {
   });
 
   // Logo animation on scroll
-  window.addEventListener("scroll", () => {
-    const logoIcon = document.querySelector(".logo-icon");
-    if (window.scrollY > lastScrollY) {
-      logoIcon.style.transform = "rotate(5deg)";
-    } else {
-      logoIcon.style.transform = "rotate(-5deg)";
-    }
-    setTimeout(() => {
-      logoIcon.style.transform = "rotate(0deg)";
-    }, 200);
-    lastScrollY = window.scrollY;
-  });
+  // window.addEventListener("scroll", () => {
+  //   const logoIcon = document.querySelector(".logo-icon");
+  //   if (window.scrollY > lastScrollY) {
+  //     logoIcon.style.transform = "rotate(5deg)";
+  //   } else {
+  //     logoIcon.style.transform = "rotate(-5deg)";
+  //   }
+  //   setTimeout(() => {
+  //     logoIcon.style.transform = "rotate(0deg)";
+  //   }, 200);
+  //   lastScrollY = window.scrollY;
+  // });
 });
 </script>
 

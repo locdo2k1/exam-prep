@@ -1,14 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { signup } from '../../api/auth/signup';
 import { useRouter } from 'vue-router';
+import { useGoogleAuth } from '../../services/googleAuthService';
 
 // Form fields
 const userName = ref('');
 const email = ref('');
 const password = ref('');
 const rePassword = ref('');
-
 
 // Form validation state
 const formSubmitted = ref(false);
@@ -20,8 +20,37 @@ const formErrors = ref({
    passwordMatch: false
 });
 
+const signupError = ref('');
+
 //vue router
 const router = useRouter();
+
+// Google Auth
+const { initializeGoogleSignIn, promptSignIn, error: googleError, isGapiLoaded } = useGoogleAuth(
+   import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+);
+
+// Initialize Google Sign-In when component mounts
+onMounted(() => {
+   initializeGoogleSignIn(handleGoogleAuthCallback);
+});
+
+const handleGoogleAuthCallback = (response) => {
+   // This will be called after successful Google Sign-In
+   console.log('Google auth callback', response);
+};
+
+const handleGoogleSignIn = async () => {
+   try {
+      if (!isGapiLoaded.value) {
+         console.error('Google API not loaded yet');
+         return;
+      }
+      await promptSignIn('/user'); // Redirect to home after successful sign-in
+   } catch (error) {
+      console.error('Google Sign-In Error:', error);
+   }
+};
 
 // Toggle for password visibility
 const showPassword = ref(false);
@@ -86,6 +115,7 @@ const handleSubmit = async (event) => {
 
    if (!hasError) {
       try {
+         signupError.value = ''; // Clear any previous errors
          const response = await signup(userName.value, email.value, password.value);
          // Handle successful signup
          localStorage.setItem('token', response);
@@ -93,8 +123,7 @@ const handleSubmit = async (event) => {
          router.replace({ name: 'home' });
       } catch (error) {
          console.error(error);
-         // Handle signup error
-         // You can display an error message to the user
+         signupError.value = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại sau.';
       }
    }
 };
@@ -117,6 +146,10 @@ const resetForm = () => {
 
 <template>
    <div class="mx-auto w-md mt-10 mb-12 p-5 border border-gray-300 rounded-lg shadow-md">
+      <div v-if="signupError"
+         class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
+         {{ signupError }}
+      </div>
       <form @submit="handleSubmit" novalidate>
          <div class="grid gap-6 mb-4">
             <!-- User Name Field -->
@@ -223,6 +256,12 @@ const resetForm = () => {
             Quên mật khẩu?
          </p>
 
+         <!-- Google Sign-In Error Message -->
+         <div v-if="googleError"
+            class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
+            {{ googleError }}
+         </div>
+
          <button type="submit"
             class="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center dark:bg-blue-400 dark:hover:bg-blue-500 dark:focus:ring-blue-600 cursor-pointer">
             Đăng ký
@@ -241,8 +280,8 @@ const resetForm = () => {
             <div class="flex-1 border-t border-gray-300"></div>
          </div>
 
-         <button type="button"
-            class="w-full text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center dark:hover:bg-gray-700 dark:focus:ring-gray-600 dark:bg-gray-600 dark:text-white dark:border-gray-600 cursor-pointer">
+         <button type="button" @click="handleGoogleSignIn" :disabled="!isGapiLoaded"
+            class="w-full text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center dark:hover:bg-gray-700 dark:focus:ring-gray-600 dark:bg-gray-600 dark:text-white dark:border-gray-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
             <svg class="w-5 h-5 mr-2" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                <g clip-path="url(#clip0_13183_10121)">
                   <path
