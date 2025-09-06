@@ -22,6 +22,7 @@ const TestEdit = () => import(/* webpackChunkName: "admin-tests" */ '../pages/ad
 const Home = () => import(/* webpackChunkName: "user-home" */ '../components/user/layout/UserHome.vue')
 const TestPage = () => import(/* webpackChunkName: "user-test" */ '../pages/user/test mode/TestPage.vue')
 const ExamTest = () => import(/* webpackChunkName: "user-exam" */ '../pages/user/test mode/ExamTest.vue')
+const SolutionPage = () => import(/* webpackChunkName: "user-solution" */ '../pages/user/solution/SolutionPage.vue')
 const Login = () => import(/* webpackChunkName: "auth" */ '../pages/user/Login.vue')
 const Signup = () => import(/* webpackChunkName: "auth" */ '../pages/user/Signup.vue')
 const AdminLogin = () => import(/* webpackChunkName: "admin-auth" */ '../pages/admin/auth/Login.vue')
@@ -69,6 +70,13 @@ const routes = [
             path: 'test/attempt/:attemptId/result',
             name: 'attempt-result',
             component: AttemptResult,
+            meta: { requiresAuth: true },
+            props: true
+         },
+         {
+            path: 'solution/:attemptId',
+            name: 'solution-details',
+            component: SolutionPage,
             meta: { requiresAuth: true },
             props: true
          },
