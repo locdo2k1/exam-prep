@@ -28,6 +28,18 @@ export interface TestAttemptInfoVM {
   status: 'COMPLETED' | 'IN_PROGRESS' | 'ABANDONED';
 }
 
+export interface FlattenedQuestionVM {
+  order: number;
+  part: string;
+  answer: string;
+}
+
+export interface TestAnswerVM {
+  testId: string;
+  testName: string;
+  flattenedQuestions: FlattenedQuestionVM[];
+}
+
 export interface PracticeTestInfoVM {
   skills: string[];
   testName: string;
@@ -60,4 +72,15 @@ export const getTestAttempts = async (
   if (timezone) params.append('tz', timezone);
   
   return await apiClient.get(`${API_PATH}/${testId}/attempts${params.toString() ? `?${params.toString()}` : ''}`);
+};
+
+/**
+ * Get solutions for a specific test
+ * @param testId The ID of the test to get solutions for
+ * @returns Promise containing the test solutions
+ */
+export const getTestSolutions = async (
+  testId: string
+): Promise<ApiResponse<TestAnswerVM>> => {
+  return await apiClient.get(`${API_PATH}/${testId}/solutions`);
 };
