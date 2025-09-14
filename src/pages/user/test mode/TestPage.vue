@@ -74,6 +74,7 @@
                                         </div>
 
                                         <button
+                                            @click="startFullTest"
                                             class="px-5 py-2 font-bold text-white bg-blue-700 rounded-md shadow hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             BẮT ĐẦU THI
                                         </button>
@@ -188,12 +189,6 @@ const formatDuration = (totalSeconds: number): string => {
 
 // Methods
 const startPracticeTest = () => {
-    // Validate at least one part is selected
-    if (selectedRecordings.value.length === 0) {
-        console.warn('Vui lòng chọn ít nhất một phần để luyện tập');
-        return;
-    }
-    
     // Validate time limit if provided
     if (timeLimit.value !== null) {
         const timeLimitNum = Number(timeLimit.value);
@@ -237,8 +232,13 @@ const startPractice = (partId: string) => {
 };
 
 const startFullTest = () => {
-    console.log('Starting full test');
-    // Add your full test start logic here
+    const testId = route.params.id;
+    if (testId) {
+        router.push({
+            name: 'take-test',
+            params: { id: testId }
+        });
+    }
 };
 
 const startDiscussion = () => {

@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useExamTestStore } from '@/stores/examTestStore.ts';
 import TestHeader from '@/components/user/test/TestHeader.vue';
@@ -65,8 +65,8 @@ export default {
     // Create a computed property for reactive testData
     const testData = computed(() => examStore.state.testData);
 
-    // Set up time limit when component mounts
-    onMounted(async () => {
+    // Function to load test data
+    const loadTestData = async () => {
       try {
         const testId = route.params.id;
         if (!testId) {
@@ -90,12 +90,23 @@ export default {
             examStore.setTimeLimit(testData.value.timeLimit);
           }
         }
-        
-        // Timer is now managed by the Timer component through props
-        
       } catch (error) {
         console.error('Failed to load test details:', error);
         // You might want to show an error message to the user here
+      }
+    };
+
+    // Load test data when component mounts
+    onMounted(() => {
+      // Ensure any previous state is cleared when entering this page
+      examStore.resetState();
+      loadTestData();
+    });
+    
+    // Watch for route changes to reload test data
+    watch(() => route.params.id, (newId, oldId) => {
+      if (newId && newId !== oldId) {
+        loadTestData();
       }
     });
 
@@ -146,7 +157,8 @@ export default {
     onUnmounted(() => {
       // Cleanup any resources when component is unmounted
       examStore.stopTimer();
-      // examStore.resetTest();
+      // Also reset store so answers/checkboxes don't persist when navigating back and re-entering
+      examStore.resetState();
     });
 
     return {
