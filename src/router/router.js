@@ -74,11 +74,13 @@ const routes = [
             props: true
          },
          {
-            path: 'solution/:attemptId',
+            path: 'solution/:testId',
             name: 'solution-details',
             component: SolutionPage,
             meta: { requiresAuth: true },
-            props: true
+            props: route => ({
+               testId: route.params.testId
+            })
          },
          {
             path: 'login',
