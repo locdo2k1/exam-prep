@@ -131,8 +131,6 @@ const shouldShowAnswer = computed(() => {
 });
 
 const formatAnswer = (question) => {
-  console.log('Question data:', JSON.stringify(question, null, 2)); // Debug log
-
   // Handle questionAnswers array
   if (question.questionAnswers?.length) {
     return question.questionAnswers.join(', ');

@@ -333,6 +333,12 @@ import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSe
 import { partApi } from '@/api/admin/part/partApi';
 import QuestionSetModal from './QuestionSetModal.vue';
 
+const emit = defineEmits([
+  'update:modelValue', 
+  'save',
+  'select-question-set'
+]);
+
 const props = defineProps({
   modelValue: {
     type: Object,
@@ -355,11 +361,6 @@ const props = defineProps({
     default: false
   }
 });
-
-const emit = defineEmits([
-  'update:modelValue', 
-  'save'
-]);
 
 // Create a local copy of the test data for two-way binding
 const testData = ref(JSON.parse(JSON.stringify(props.modelValue)));

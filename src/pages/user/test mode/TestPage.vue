@@ -221,14 +221,11 @@ const startTest = (): void => {
 };
 
 const viewAttemptDetails = (attempt: TestAttempt): void => {
-    console.log('Viewing attempt details:', attempt);
-    // Navigate to attempt details or show modal
-};
-
-// Tab action methods
-const startPractice = (partId: string) => {
-    console.log('Starting practice for part:', partId);
-    // Add your practice start logic here
+    if (!attempt?.id) return;
+    router.push({
+        name: 'attempt-result',
+        params: { attemptId: attempt.id }
+    });
 };
 
 const startFullTest = () => {
@@ -264,12 +261,13 @@ onMounted(async () => {
             const attempts = attemptsRes.data as any[];
             testHistory.value = attempts.map((a) => {
                 const date = a.takeDateLocal || (a.takeDate ? new Date(a.takeDate).toLocaleDateString('vi-VN') : '');
-                const durationSec = Number.isFinite(a.durationSeconds) ? a.durationSeconds : 0;
+                const durationSec = Number.isFinite(a.timeSpent) ? a.timeSpent : (Number.isFinite(a.durationSeconds) ? a.durationSeconds : 0);
                 const modeTag = a.isPractice ? { type: 'practice', text: 'Luyện tập' } : { type: 'full', text: 'Full test' };
                 const partTags = Array.isArray(a.parts)
                     ? a.parts.map((p: string) => ({ type: 'part', text: p }))
                     : [];
                 return {
+                    id: a.id,
                     date,
                     result: `${a.correctAnswers}/${a.totalQuestions}`,
                     duration: formatDuration(durationSec),

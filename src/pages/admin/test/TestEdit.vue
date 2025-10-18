@@ -165,60 +165,54 @@ watch(
 
 // Utility to normalize loaded test data to local TestVM shape (types/index.d.ts)
 function normalizeTestVM(apiTest: any): TestVM {
-  // Extract info fields
-  const info: TestVM = {
-    ...(apiTest.info || {}),
-    testCategoryId: apiTest.testCategory?.id || apiTest.testCategoryId || '',
-    skillIds: Array.isArray(apiTest.listSkill)
-      ? apiTest.listSkill.map((s: any) => s.id)
-      : apiTest.skillIds || [],
-    // fallback to API fields if not present
-    id: apiTest.id || apiTest.info?.id || '',
-    title: apiTest.title || apiTest.info?.title || '',
-    duration: apiTest.duration || apiTest.info?.duration || 0,
-  };
-
+  // Extract duration first since it can come from multiple places
+  const duration = apiTest.durationMinutes || apiTest.duration || apiTest.info?.durationMinutes || 0;
+  
   // Normalize parts
-  const normalizedParts = (apiTest.listPart || []).map((part, idx) => {
+  const normalizedParts = (apiTest.listPart || []).map((part: any, idx: number) => {
     const questionItems = Array.isArray(part.questionItems)
-      ? part.questionItems.sort((a, b) => a.order - b.order)
+      ? part.questionItems.sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
       : [];
 
     const questions = questionItems
-      .map(item => {
+      .map((item: any) => {
         if (!item.question) return null;
         return {
           ...item.question,
           type: item.question.type || item.question.questionType?.name || item.question.questionType?.code || 'Unknown',
         };
       })
-      .filter(q => !!q);
+      .filter((q: any) => !!q);
+
     const questionSets = questionItems
-      .map(item => item.questionSet)
-      .filter(qs => !!qs);
-    const listQuestionAndQuestionSet = questionItems.map(item => {
-      if (item.question) {
-        return {
-          ...item.question,
-          type: item.question.type || item.question.questionType?.name || item.question.questionType?.code || 'Unknown',
-          correctAnswer: item.question.questionAnswers,
-        };
-      } else if (item.questionSet) {
-        // Map type for each question inside questionSet
-        return {
-          ...item.questionSet,
-          name: item.questionSet.name || item.questionSet.title,
-          questions: Array.isArray(item.questionSet.questions)
-            ? item.questionSet.questions.map(q => ({
-              ...q,
-              type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
-              correctAnswer: q.questionAnswers,
-            }))
-            : [],
-        };
-      }
-      return null;
-    }).filter(Boolean);
+      .map((item: any) => item.questionSet)
+      .filter((qs: any) => !!qs);
+
+    const listQuestionAndQuestionSet = questionItems
+      .map((item: any) => {
+        if (item.question) {
+          return {
+            ...item.question,
+            type: item.question.type || item.question.questionType?.name || item.question.questionType?.code || 'Unknown',
+            correctAnswer: item.question.questionAnswers,
+          };
+        } else if (item.questionSet) {
+          return {
+            ...item.questionSet,
+            name: item.questionSet.name || item.questionSet.title,
+            questions: Array.isArray(item.questionSet.questions)
+              ? item.questionSet.questions.map((q: any) => ({
+                  ...q,
+                  type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
+                  correctAnswer: q.questionAnswers,
+                }))
+              : [],
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
     return {
       id: part.id || `part-${idx}`,
       title: part.title || '',
@@ -231,12 +225,10 @@ function normalizeTestVM(apiTest: any): TestVM {
     };
   });
 
-
   // Compose listQuestionAndQuestionSet from listQuestionItem if present
-  let listQuestionAndQuestionSet: Array<any> = [];
+  const listQuestionAndQuestionSet: Array<any> = [];
   if (!apiTest.listPart || apiTest.listPart.length === 0) {
     if (Array.isArray(apiTest.listQuestionItem)) {
-      // Flatten: push question or questionSet directly
       apiTest.listQuestionItem.forEach((item: any) => {
         if (item.question) {
           listQuestionAndQuestionSet.push({
@@ -250,10 +242,10 @@ function normalizeTestVM(apiTest: any): TestVM {
             name: item.questionSet.name || item.questionSet.title,
             questions: Array.isArray(item.questionSet.questions)
               ? item.questionSet.questions.map((q: any) => ({
-                ...q,
-                type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
-                correctAnswer: q.questionAnswers,
-              }))
+                  ...q,
+                  type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
+                  correctAnswer: q.questionAnswers,
+                }))
               : [],
           });
         }
@@ -261,15 +253,19 @@ function normalizeTestVM(apiTest: any): TestVM {
     }
   }
 
+  // Create the final test object with all normalized data
   return {
-    id: apiTest.id,
-    duration: apiTest.duration,
+    ...(apiTest.info || {}),
+    testCategoryId: apiTest.testCategory?.id || apiTest.testCategoryId || '',
+    skillIds: Array.isArray(apiTest.listSkill)
+      ? apiTest.listSkill.map((s: any) => s.id)
+      : apiTest.skillIds || [],
+    id: apiTest.id || apiTest.info?.id || '',
+    title: apiTest.title || apiTest.info?.title || '',
+    duration: duration,
     listPart: normalizedParts,
-    listQuestionAndQuestionSet,
-    files: apiTest.files || [],
-    title: apiTest.title,
-    testCategoryId: apiTest.testCategory?.id,
-    skillIds: apiTest.skillIds
+    listQuestionAndQuestionSet: listQuestionAndQuestionSet,
+    files: apiTest.files || []
   };
 }
 
@@ -572,7 +568,7 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
 
     // Filter out any duplicate question sets
     const newQuestionSets = questionSets.filter(qs =>
-      !currentPart.questionSets?.some(existingQs => existingQs.id === qs.id)
+      !currentPart.listQuestionAndQuestionSet?.some(existingQs => existingQs.id === qs.id)
     );
 
     if (newQuestionSets.length === 0) {
@@ -586,6 +582,7 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
       try {
         // Add the question set reference with shared order
         const questionSetOrder = getNextOrder();
+        const questionCount = questionSet.questions?.length || 0;
         const newQuestionSet: QuestionSet = {
           id: questionSet.id,
           name: questionSet.name,
@@ -604,10 +601,11 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
             tags: q.tags || []
           })) || [],
           order: questionSetOrder,
-          questionCount: questionSet.questions?.length || 0,
+          questionCount: questionCount,
           tags: questionSet.tags
         };
         currentPart.listQuestionAndQuestionSet?.push(newQuestionSet);
+        totalQuestionsAdded += questionCount;
 
       } catch (error) {
         toast.error(`Failed to add question set: ${questionSet.name}`);
@@ -617,8 +615,10 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
     // Sort questions by order to ensure consistent display
     currentPart.questions.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    if (totalQuestionsAdded > 0) {
-      toast.success(`Added ${newQuestionSets.length} question set(s) with ${totalQuestionsAdded} total questions to "${currentPart.name || 'the part'}"`);
+    if (newQuestionSets.length > 0) {
+      const questionSetText = newQuestionSets.length > 1 ? 'question sets' : 'question set';
+      const questionText = totalQuestionsAdded !== 1 ? 'questions' : 'question';
+      toast.success(`Successfully added ${newQuestionSets.length} ${questionSetText} with ${totalQuestionsAdded} ${questionText} to "${currentPart.name || 'the part'}"`);
     }
   } catch (error) {
     toast.error('Failed to add question sets. Please try again.');
@@ -714,6 +714,7 @@ const handleSave = async () => {
     const payload: import('@/api/admin/test/testApi').TestEditVM = {
       id: test.value.id,
       title: test.value.title || 'Untitled Test',
+      durationMinutes: test.value.duration || 40, // Default to 40 minutes if not specified
       testCategoryId: test.value.testCategoryId,
       skillIds: test.value.skillIds || [],
       listPart: test.value.listPart.map(part => ({
