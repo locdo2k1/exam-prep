@@ -31,7 +31,14 @@ const AttemptResult = () => import(/* webpackChunkName: "user-attempt-result" */
 const routes = [
    {
       path: '/',
-      component: WelcomePage,
+      component: LayoutUser,
+      children: [
+         {
+            path: '',
+            name: 'welcome',
+            component: WelcomePage,
+         },
+      ]
    },
    {
       path: '/user',

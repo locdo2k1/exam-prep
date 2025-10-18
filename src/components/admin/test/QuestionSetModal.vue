@@ -733,15 +733,15 @@ const saveSelected = async () => {
     // Emit all selected question sets at once
     if (selectedSets.length > 0) {
       emit('select', selectedSets);
-      toast.success(`Successfully added ${selectedSets.length} question set(s)`);
+      // toast.success(`Successfully added ${selectedSets.length} question set(s)`);
       
       // Close the modal after successful selection
       emit('close');
     } else {
-      toast.warning('No valid question sets were selected');
+      // toast.warning('No valid question sets were selected');
     }
   } catch (error) {
-    toast.error('Failed to add selected question sets');
+    // toast.error('Failed to add selected question sets');
   }
 };
 

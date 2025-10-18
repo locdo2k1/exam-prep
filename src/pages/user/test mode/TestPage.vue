@@ -74,6 +74,7 @@
                                         </div>
 
                                         <button
+                                            @click="startFullTest"
                                             class="px-5 py-2 font-bold text-white bg-blue-700 rounded-md shadow hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             BẮT ĐẦU THI
                                         </button>
@@ -188,12 +189,6 @@ const formatDuration = (totalSeconds: number): string => {
 
 // Methods
 const startPracticeTest = () => {
-    // Validate at least one part is selected
-    if (selectedRecordings.value.length === 0) {
-        console.warn('Vui lòng chọn ít nhất một phần để luyện tập');
-        return;
-    }
-    
     // Validate time limit if provided
     if (timeLimit.value !== null) {
         const timeLimitNum = Number(timeLimit.value);
@@ -226,19 +221,21 @@ const startTest = (): void => {
 };
 
 const viewAttemptDetails = (attempt: TestAttempt): void => {
-    console.log('Viewing attempt details:', attempt);
-    // Navigate to attempt details or show modal
-};
-
-// Tab action methods
-const startPractice = (partId: string) => {
-    console.log('Starting practice for part:', partId);
-    // Add your practice start logic here
+    if (!attempt?.id) return;
+    router.push({
+        name: 'attempt-result',
+        params: { attemptId: attempt.id }
+    });
 };
 
 const startFullTest = () => {
-    console.log('Starting full test');
-    // Add your full test start logic here
+    const testId = route.params.id;
+    if (testId) {
+        router.push({
+            name: 'take-test',
+            params: { id: testId }
+        });
+    }
 };
 
 const startDiscussion = () => {
@@ -264,12 +261,13 @@ onMounted(async () => {
             const attempts = attemptsRes.data as any[];
             testHistory.value = attempts.map((a) => {
                 const date = a.takeDateLocal || (a.takeDate ? new Date(a.takeDate).toLocaleDateString('vi-VN') : '');
-                const durationSec = Number.isFinite(a.durationSeconds) ? a.durationSeconds : 0;
+                const durationSec = Number.isFinite(a.timeSpent) ? a.timeSpent : (Number.isFinite(a.durationSeconds) ? a.durationSeconds : 0);
                 const modeTag = a.isPractice ? { type: 'practice', text: 'Luyện tập' } : { type: 'full', text: 'Full test' };
                 const partTags = Array.isArray(a.parts)
                     ? a.parts.map((p: string) => ({ type: 'part', text: p }))
                     : [];
                 return {
+                    id: a.id,
                     date,
                     result: `${a.correctAnswers}/${a.totalQuestions}`,
                     duration: formatDuration(durationSec),

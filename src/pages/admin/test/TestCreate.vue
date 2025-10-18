@@ -142,29 +142,19 @@ const { isDarkMode } = inject('theme', {
 const showQuestionBank = ref(false);
 
 const test = ref<TestVM>({
-  info: {
-    id: '',
-    name: 'New Test',
-    description: '',
-    duration: 60, // Default duration in minutes
-    passingScore: 0,
-    maxAttempts: 1,
-    isPublished: false,
-    startTime: undefined,
-    endTime: undefined,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    testCategoryId: '',
-    skillIds: []
-  },
+  id: '',
+  title: '',
+  duration: 60, // Default duration in minutes
+  testCategoryId: '',
+  skillIds: [],
   listPart: [],
   listQuestionAndQuestionSet: [],
   files: []
 });
 
 // Computed properties for template
-const title = computed(() => test.value.info.name);
-const testCategoryId = computed(() => test.value.info.testCategoryId || '');
+const title = computed(() => test.value.title);
+const testCategoryId = computed(() => test.value.testCategoryId || '');
 
 // Get the next available order for questions and question sets
 // Uses a unified order for both questions and question sets
@@ -200,7 +190,7 @@ const getNextOrder = () => {
 
   return maxOrder + 1;
 };
-const skillIds = computed(() => test.value.info.skillIds || []);
+const skillIds = computed(() => test.value.skillIds || []);
 
 
 // Question editor state
@@ -229,6 +219,7 @@ const handleAddPart = (partData?: TestPart) => {
       description: '',
       order: newOrder,
       duration: 0,
+      questions: [],
       listQuestionAndQuestionSet: []
     };
     test.value.listPart.push(newPart);
@@ -607,14 +598,10 @@ const handleSave = async () => {
       return;
     }
 
-    // if (!test.value.testCategoryId) {
-    //   toast.error('Please select a test category');
-    //   return;
-    // }
-
     // Prepare the payload according to TestCreateVM interface
     const payload = {
       title: test.value.title || 'Untitled Test',
+      durationMinutes: test.value.duration || 40, // Default to 40 minutes if not specified
       testCategoryId: test.value.testCategoryId,
       skillIds: test.value.skillIds || [],
       listPart: test.value.listPart.map(part => ({

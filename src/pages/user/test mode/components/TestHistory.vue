@@ -59,6 +59,7 @@
   }
   
   export interface TestAttempt {
+    id: string;
     date: string;
     result: string;
     duration: string;
@@ -70,45 +71,7 @@
   }
   
   const props = withDefaults(defineProps<Props>(), {
-    attempts: () => [
-      {
-        date: '17/08/2025',
-        result: '0/6',
-        duration: '3:25:49',
-        tags: [
-          { type: 'practice', text: 'Luyện tập' },
-          { type: 'part', text: 'Part 1' }
-        ]
-      },
-      {
-        date: '29/06/2025',
-        result: '1/100',
-        duration: '0:01:51',
-        tags: [
-          { type: 'practice', text: 'Luyện tập' },
-          { type: 'part', text: 'Part 5' },
-          { type: 'part', text: 'Part 6' },
-          { type: 'part', text: 'Part 7' }
-        ]
-      },
-      {
-        date: '02/06/2025',
-        result: '0/6',
-        duration: '0:00:21',
-        tags: [
-          { type: 'practice', text: 'Luyện tập' },
-          { type: 'part', text: 'Part 1' }
-        ]
-      },
-      {
-        date: '02/06/2025',
-        result: '3/200 (Điểm: 25)',
-        duration: '0:00:28',
-        tags: [
-          { type: 'full', text: 'Full test' }
-        ]
-      }
-    ]
+    attempts: () => []
   });
   
   const getTagClass = (type: string) => {
