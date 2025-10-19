@@ -19,39 +19,55 @@
       </div>
       <!-- Recent Results Section -->
       <div class="grid md:grid-cols-2 gap-6 mb-8">
-        <!-- Course Results -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">2022-2023 Ôn luyện toàn phần</h3>
-            <span class="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-medium">
-              Đang học
-            </span>
-          </div>
-          <div class="space-y-2 text-sm text-gray-600">
-            <p>Năm học: Thứ - Sáng - CN thầy Tuấn</p>
-            <p>Nghiệp: THPT màu Trang Anh</p>
-            <p>Chính sách: - 95 chấm</p>
-            <p class="text-orange-600 font-medium">Học lần tại: 13/09/2023</p>
-            <p>Hôm lần học TOEIC: 03h30</p>
-            <p>T10 học: 175$</p>
-          </div>
-          <button class="mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm">
-            [Xem tài sao]
-          </button>
-        </div>
 
-        <!-- TOEIC Test Results -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">New Economy TOEIC Test 3</h3>
+        <!-- Test Attempts -->
+        <template v-if="testAttempts.isLoading">
+          <div class="bg-white rounded-lg shadow-md p-6 flex items-center justify-center">
+            <div class="animate-pulse text-gray-500">Đang tải kết quả...</div>
           </div>
-          <div class="space-y-2 text-sm text-gray-600">
-            <p>Năm học: 04/09/2023</p>
-            <p>Thời gian hoàn thành: 2:30:18</p>
-            <p>Kết quả: 2/10</p>
-            <p class="text-blue-600 font-medium mt-4">[Xem tài liệu]</p>
+        </template>
+        <template v-else-if="testAttempts.error">
+          <div class="bg-white rounded-lg shadow-md p-6 text-red-500">
+            {{ testAttempts.error }}
           </div>
-        </div>
+        </template>
+        <template v-else-if="testAttempts.data.length === 0">
+          <div class="bg-white rounded-lg shadow-md p-6 text-gray-500">
+            Chưa có bài kiểm tra nào gần đây
+          </div>
+        </template>
+        <template v-else>
+          <div v-for="attempt in testAttempts.data" :key="attempt.id" class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-800">{{ attempt.testName || 'Bài kiểm tra' }}</h3>
+              <span 
+                class="px-3 py-1 rounded-full text-sm font-medium"
+                :class="{
+                  'bg-green-100 text-green-600': attempt.status === 'COMPLETED',
+                  'bg-yellow-100 text-yellow-600': attempt.status === 'IN_PROGRESS',
+                  'bg-red-100 text-red-600': attempt.status === 'FAILED'
+                }"
+              >
+                {{ 
+                  attempt.status === 'COMPLETED' ? 'Hoàn thành' :
+                  attempt.status === 'IN_PROGRESS' ? 'Đang làm' :
+                  attempt.status === 'FAILED' ? 'Lỗi' : attempt.status
+                }}
+              </span>
+            </div>
+            <div class="space-y-2 text-sm text-gray-600">
+              <p>Ngày làm: {{ formatDate(attempt.takeDate) }}</p>
+              <p>Thời gian hoàn thành: {{ calculateDuration(attempt.startTime, attempt.endTime) }}</p>
+              <p>Kết quả: {{ calculateScore(attempt.correctAnswers, attempt.totalQuestions) }}</p>
+              <p 
+                class="text-blue-600 font-medium mt-4 cursor-pointer hover:underline"
+                @click="viewTestResult(attempt.id)"
+              >
+                [Xem chi tiết]
+              </p>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Study Banner -->
@@ -130,8 +146,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { getUserBasicInfo } from '@/api/userApi'
+import { getLatestTestAttempts } from '@/api/welcomePageApi'
 
 // Test card component
 const TestCard = {
@@ -240,6 +258,67 @@ const user = reactive({
   error: null
 })
 
+const testAttempts = reactive({
+  data: [],
+  isLoading: false,
+  error: null
+})
+
+// Format date to Vietnamese locale
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const options = { day: '2-digit', month: '2-digit', year: 'numeric' }
+  return new Date(dateString).toLocaleDateString('vi-VN', options)
+}
+
+// Calculate test duration in minutes
+const calculateDuration = (startTime, endTime) => {
+  if (!startTime || !endTime) return '--:--'
+  const start = new Date(startTime)
+  const end = new Date(endTime)
+  const durationMs = end - start
+  
+  const minutes = Math.floor(durationMs / 60000)
+  const seconds = Math.floor((durationMs % 60000) / 1000)
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+// Calculate score percentage
+const calculateScore = (correctAnswers, totalQuestions) => {
+  return `${correctAnswers}/${totalQuestions}`
+}
+
+// Navigate to test result page
+const router = useRouter()
+const viewTestResult = (attemptId) => {
+  router.push({ 
+    name: 'attempt-result',
+    params: { attemptId }
+  })
+}
+
+// Fetch test attempts
+const fetchTestAttempts = async () => {
+  if (!user.name) return // Wait for user data
+  
+  testAttempts.isLoading = true
+  testAttempts.error = null
+  
+  try {
+    const response = await getLatestTestAttempts(user.id || 'current-user', 2, 'Asia/Ho_Chi_Minh')
+    if (response.success) {
+      testAttempts.data = response.data || []
+    } else {
+      testAttempts.error = response.message || 'Failed to load test attempts'
+    }
+  } catch (error) {
+    console.error('Error fetching test attempts:', error)
+    testAttempts.error = 'An error occurred while loading test attempts'
+  } finally {
+    testAttempts.isLoading = false
+  }
+}
+
 // Fetch user data when component mounts
 onMounted(async () => {
   try {
@@ -247,6 +326,9 @@ onMounted(async () => {
     if (response.success) {
       user.name = response.data.username
       user.email = response.data.email
+      user.id = response.data.id
+      // Fetch test attempts after user data is loaded
+      await fetchTestAttempts()
     } else {
       user.error = response.message || 'Failed to load user data'
     }
