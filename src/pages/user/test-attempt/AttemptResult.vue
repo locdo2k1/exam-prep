@@ -65,7 +65,7 @@
     <!-- Question Modal -->
     <QuestionModal :show="showModal" :question="selectedQuestion || undefined" @close="closeModal">
       <div v-if="selectedQuestion">
-        <p class="mb-4">{{ selectedQuestion.context }}</p>
+        <div class="mb-4" v-html="selectedQuestion.context"></div>
         <div class="space-y-2">
           <p><strong>Trạng thái:</strong> {{ getStatusText(selectedQuestion.status) }}</p>
           <p v-if="selectedQuestion.status !== 'unanswered'">

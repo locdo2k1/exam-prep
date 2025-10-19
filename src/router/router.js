@@ -27,6 +27,7 @@ const Login = () => import(/* webpackChunkName: "auth" */ '../pages/user/Login.v
 const Signup = () => import(/* webpackChunkName: "auth" */ '../pages/user/Signup.vue')
 const AdminLogin = () => import(/* webpackChunkName: "admin-auth" */ '../pages/admin/auth/Login.vue')
 const AttemptResult = () => import(/* webpackChunkName: "user-attempt-result" */ '../pages/user/test-attempt/AttemptResult.vue')
+const ExamLibrary = () => import(/* webpackChunkName: "user-exam-library" */ '../pages/user/exam/ExamLibrary.vue')
 
 const routes = [
    {
@@ -87,6 +88,15 @@ const routes = [
             meta: { requiresAuth: true },
             props: route => ({
                testId: route.params.testId
+            })
+         },
+         {
+            path: 'tests',
+            name: 'test-category',
+            component: ExamLibrary,
+            meta: { requiresAuth: true },
+            props: route => ({
+               initialCategory: route.params.testCategory
             })
          },
          {

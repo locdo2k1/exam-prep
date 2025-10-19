@@ -30,7 +30,7 @@
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Giới thiệu</a>
                </li>
                <li>
-                  <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Đề thi online</a>
+                  <router-link to="/user/tests" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Đề thi online</router-link>
                </li>
                <li>
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Flashcards</a>
