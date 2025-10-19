@@ -19,10 +19,9 @@
       </div>
       <!-- Recent Results Section -->
       <div class="grid md:grid-cols-2 gap-6 mb-8">
-
         <!-- Test Attempts -->
         <template v-if="testAttempts.isLoading">
-          <div class="bg-white rounded-lg shadow-md p-6 flex items-center justify-center">
+          <div class="col-span-2 bg-white rounded-lg shadow-md p-6 flex items-center justify-center">
             <div class="animate-pulse text-gray-500">Đang tải kết quả...</div>
           </div>
         </template>
@@ -57,7 +56,7 @@
             </div>
             <div class="space-y-2 text-sm text-gray-600">
               <p>Ngày làm: {{ formatDate(attempt.takeDate) }}</p>
-              <p>Thời gian hoàn thành: {{ calculateDuration(attempt.startTime, attempt.endTime) }}</p>
+              <p>Thời gian hoàn thành: {{ formatDuration(attempt.durationSeconds) }}</p>
               <p>Kết quả: {{ calculateScore(attempt.correctAnswers, attempt.totalQuestions) }}</p>
               <p 
                 class="text-blue-600 font-medium mt-4 cursor-pointer hover:underline"
@@ -271,16 +270,41 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('vi-VN', options)
 }
 
-// Calculate test duration in minutes
-const calculateDuration = (startTime, endTime) => {
-  if (!startTime || !endTime) return '--:--'
-  const start = new Date(startTime)
-  const end = new Date(endTime)
-  const durationMs = end - start
+// Format duration to '0:01:04' (H:MM:SS) format
+const formatDuration = (timeInput) => {
+  // Handle null/undefined/empty
+  if (timeInput === null || timeInput === undefined || timeInput === '') return '--:--';
   
-  const minutes = Math.floor(durationMs / 60000)
-  const seconds = Math.floor((durationMs % 60000) / 1000)
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  let totalSeconds = 0;
+  
+  // Convert input to total seconds
+  if (typeof timeInput === 'number' || !isNaN(Number(timeInput))) {
+    totalSeconds = Math.floor(Number(timeInput));
+  } else if (typeof timeInput === 'string') {
+    if (timeInput.includes(':')) {
+      // Handle 'H:MM:SS' or 'MM:SS' format
+      const parts = timeInput.split(':').map(Number);
+      if (parts.length === 3) {
+        // H:MM:SS format
+        totalSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      } else if (parts.length === 2) {
+        // MM:SS format
+        totalSeconds = parts[0] * 60 + parts[1];
+      }
+    } else if (!isNaN(Number(timeInput))) {
+      totalSeconds = Math.floor(Number(timeInput));
+    }
+  }
+  
+  // If we couldn't parse the input, return default
+  if (isNaN(totalSeconds)) return '--:--';
+  
+  // Convert total seconds to H:MM:SS format
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // Calculate score percentage
