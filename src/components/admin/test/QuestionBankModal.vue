@@ -155,7 +155,7 @@
                     </div>
 
                     <!-- Question Options / Answers -->
-                    <div v-if="question.type === 'Multiple Choice' || question.questionType?.name === 'Multiple Choice'" class="mt-2 space-y-2">
+                    <div v-if="[QUESTION_TYPES.MULTIPLE_CHOICE, QUESTION_TYPES.SINGLE_CHOICE].includes(question.questionType.name) || [QUESTION_TYPES.MULTIPLE_CHOICE, QUESTION_TYPES.SINGLE_CHOICE].includes(question.questionType?.name)" class="mt-2 space-y-2">
                       <div v-if="question.options?.length" class="space-y-1.5">
                         <div v-for="(option, optIndex) in expandedQuestions.has(question.id) ? question.options : question.options.slice(0, 3)" :key="option.id" class="flex items-start">
                           <span class="inline-flex items-center justify-center w-4 h-4 mt-1 mr-2 text-xs rounded flex-shrink-0"
@@ -196,7 +196,7 @@
                       </div>
                     </div>
 
-                    <div v-else-if="question.type === 'Fill in the Blank' || question.questionType?.name === 'Fill in the Blank'" class="mt-2">
+                    <div v-else-if="question.type === QUESTION_TYPES.FILL_IN_BLANK || question.questionType?.name === QUESTION_TYPES.FILL_IN_BLANK" class="mt-2">
                       <div v-if="question.questionAnswers?.length" class="space-y-1.5">
                         <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Acceptable Answers:</div>
                         <div class="flex flex-wrap gap-1.5">
@@ -304,9 +304,10 @@ import type { Question } from '@/types';
 
 // Question type constants
 const QUESTION_TYPES = {
-  MULTIPLE_CHOICE: 'multiple_choice',
-  FILL_IN_BLANK: 'fill_in_blank',
-  ESSAY: 'essay'
+  MULTIPLE_CHOICE: 'Multiple Choice',
+  SINGLE_CHOICE: 'Single Choice',
+  FILL_IN_BLANK: 'Fill in the Blank',
+  ESSAY: 'Essay'
 } as const;
 
 type Category = QuestionCategory;

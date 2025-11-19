@@ -80,7 +80,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import type { TestInfoVM } from '@/api/attemptResultApi';
 import { useAttemptResultStore } from '@/stores/modules/attemptResult.store';
 import { storeToRefs } from 'pinia';
 import InfoBanner from '@/components/user/test/InfoBanner.vue';
@@ -184,9 +185,18 @@ const toggleGuide = () => {
   showGuide.value = !showGuide.value;
 };
 
+const router = useRouter();
+
 const handleBackToTest = () => {
-  // Handle back to test logic here
-  console.log('Back to test clicked');
+  const testId = attemptStore.state.testInfo?.testId;
+  if (testId) {
+    router.push({
+      name: 'test-details',
+      params: { id: testId }
+    });
+  } else {
+    console.warn('No test ID available for navigation');
+  }
 };
 
 const handleActionClick = (actionType: 'view-details' | 'retry-wrong') => {

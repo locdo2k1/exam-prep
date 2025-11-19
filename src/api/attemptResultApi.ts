@@ -37,6 +37,7 @@ interface ApiResponse<T> {
 
 // Test info for an attempt
 export interface TestInfoVM {
+  testId: string;
   testName: string;
   partNames: string[];
 }
