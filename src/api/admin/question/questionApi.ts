@@ -1,6 +1,7 @@
 // @src/api/admin/question/questionApi.ts
 
 import apiClient from "@/api/axios";
+import { log } from "console";
 
 interface FileInfoViewModel {
   id: string;
@@ -73,7 +74,8 @@ interface Option {
   // Define the shape of the Option object
   id: string;
   text: string;
-  isCorrect: boolean;
+  correct: boolean;
+  displayOrder: number;
 }
 
 interface QuestionFilter {
@@ -170,11 +172,15 @@ export const questionApi = {
         options.map((o) => {
           return {
             text: o.text,
-            correct: o.isCorrect,
+            correct: o.correct,
+            displayOrder: o.displayOrder
           };
         })
       )
     );
+
+    console.log(formData.get("options"));
+
     // Add blank answers as JSON string
     formData.append(
       "blankAnswers",
@@ -232,7 +238,8 @@ export const questionApi = {
         options.map((o) => {
           return {
             text: o.text,
-            correct: o.isCorrect,
+            displayOrder: o.displayOrder,
+            correct: o.correct,
           };
         })
       )
