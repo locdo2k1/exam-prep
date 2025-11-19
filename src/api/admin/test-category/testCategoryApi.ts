@@ -1,6 +1,41 @@
 import apiClient from '@/api/axios';
 import type { AxiosResponse, AxiosError } from 'axios';
 
+// Local type definitions for pagination
+interface Sort {
+  property: string;
+  direction?: 'asc' | 'desc';
+}
+
+interface Pageable {
+  page?: number;
+  size?: number;
+  sort?: Sort[];
+}
+
+interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+/**
+ * Test List Item View Model
+ */
+export interface TestListItemVM {
+  id: string;
+  skills: string[];
+  testName: string;
+  duration: string;
+  sections: number;
+  questions: number;
+  comments: number;
+  practicedUsers: number;
+  note: string;
+}
+
 /**
  * Test Category View Model
  */
@@ -125,6 +160,49 @@ export const checkNameExists = async (name: string): Promise<ApiResponse<boolean
   }
 };
 
+/**
+ * Get paginated list of tests with optional filtering and search
+ * @param testCategoryId Optional test category ID to filter by
+ * @param keyword Optional keyword to search in test names
+ * @param pageable Pagination parameters (page, size, sort)
+ * @returns Promise with paginated test list
+ */
+export const getTestList = async (
+  testCategoryId?: string,
+  keyword?: string,
+  pageable?: Pageable
+): Promise<ApiResponse<Page<TestListItemVM>>> => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (testCategoryId) {
+      params.append('testCategoryId', testCategoryId);
+    }
+    
+    if (keyword) {
+      params.append('keyword', keyword);
+    }
+    
+    if (pageable) {
+      if (pageable.page !== undefined) params.append('page', pageable.page.toString());
+      if (pageable.size !== undefined) params.append('size', pageable.size.toString());
+      if (pageable.sort) {
+        pageable.sort.forEach((sort: Sort) => {
+          params.append('sort', `${sort.property},${sort.direction || 'asc'}`);
+        });
+      }
+    }
+    
+    const response: AxiosResponse<ApiResponse<Page<TestListItemVM>>> = await apiClient.get(
+      `/test-info/list?${params.toString()}`
+    );
+    return response;
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse<Page<TestListItemVM>>>;
+    throw axiosError.response?.data || new Error('Failed to fetch test list');
+  }
+};
+
 // Export all API functions as default
 export default {
   getAllTestCategories,
@@ -133,5 +211,6 @@ export default {
   updateTestCategory,
   deleteTestCategory,
   checkCodeExists,
-  checkNameExists
+  checkNameExists,
+  getTestList
 };

@@ -101,10 +101,10 @@ export interface PracticeOptionVM {
 
 export interface PracticeFileInfoVM {
   id: string;
-  url: string;
-  name: string;
-  size: number;
-  // Add other properties from your Java PracticeFileInfoVM
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
 }
 
 export interface PracticeTestRequest {

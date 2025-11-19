@@ -1,6 +1,7 @@
 import type { QuestionResultVM } from '@/api/attemptResultApi';
 
 export type ModalQuestion = {
+  context: string,
   number: number;
   status: 'correct' | 'wrong' | 'unanswered';
   userAnswer: string | null;
@@ -16,6 +17,7 @@ export const mapQuestionForModal = (question: QuestionResultVM): ModalQuestion =
   const userAnswer = selectedOptions || question.userAnswer || null;
 
   return {
+    context: question.context || '',
     number: question.order,
     status: !userAnswer
       ? 'unanswered'
@@ -39,6 +41,7 @@ export type MinimalAnalysisQuestion = {
 
 // Map question to a lightweight display shape for AnalysisTabs
 export const mapQuestionForDisplay = (question: MinimalAnalysisQuestion): ModalQuestion => ({
+  context: '',
   number: question.order,
   status: question.isCorrect === null ? 'unanswered' : question.isCorrect ? 'correct' : 'wrong',
   userAnswer: question.userAnswer,

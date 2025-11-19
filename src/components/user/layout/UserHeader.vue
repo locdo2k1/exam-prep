@@ -30,7 +30,7 @@
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Giới thiệu</a>
                </li>
                <li>
-                  <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Đề thi online</a>
+                  <router-link to="/user/tests" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Đề thi online</router-link>
                </li>
                <li>
                   <a href="#" class="block py-2 text-gray-600 hover:text-blue-900 md:p-0">Flashcards</a>
@@ -85,16 +85,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 const isMobileMenuOpen = ref(false);
 const isUserMenuOpen = ref(false);
 const isAuthenticated = ref(false);
+const router = useRouter();
+
+const handleAuthChanged = () => {
+   isAuthenticated.value = !!localStorage.getItem('token');
+};
 
 const toggleMobileMenu = () => {
    isMobileMenuOpen.value = !isMobileMenuOpen.value;
    const navbarDefault = document.getElementById('navbar-default');
-   navbarDefault.classList.toggle('open');
+   if (navbarDefault) {
+      navbarDefault.classList.toggle('open');
+   }
 };
 
 const toggleUserMenu = () => {
@@ -105,15 +113,21 @@ const logout = () => {
    // Implement your logout logic here
    isAuthenticated.value = false;
    localStorage.removeItem('token');
+   window.dispatchEvent(new Event('auth-changed'));
    // Example: redirect to home page or login page
-   // router.push('/');
+   router.push('/');
+   window.location.reload();
 };
 
 onMounted(() => {
+   // Listen for auth changes (login/logout)
+   window.addEventListener('auth-changed', handleAuthChanged);
+
    // Close user menu when clicking outside
-   document.addEventListener('click', (event) => {
-      const userMenu = document.querySelector('.relative');
-      if (userMenu && !userMenu.contains(event.target) && isUserMenuOpen.value) {
+   document.addEventListener('click', (event: MouseEvent) => {
+      const userMenu = document.querySelector('.relative') as HTMLElement | null;
+      const target = event.target as Node | null;
+      if (userMenu && target && !userMenu.contains(target) && isUserMenuOpen.value) {
          isUserMenuOpen.value = false;
       }
    });
@@ -123,6 +137,10 @@ onMounted(() => {
    // isAuthenticated.value = this.$store.getters.isAuthenticated;
    // or
    isAuthenticated.value = !!localStorage.getItem('token');
+});
+
+onUnmounted(() => {
+   window.removeEventListener('auth-changed', handleAuthChanged);
 });
 </script>
 
