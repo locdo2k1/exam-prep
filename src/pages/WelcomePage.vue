@@ -7,7 +7,7 @@
           <div>
             <h1 class="text-2xl font-bold text-blue-600">
               <template v-if="user.isLoading">Loading...</template>
-              <template v-else-if="user.error">{{ user.error }}</template>
+              <template v-else-if="user.error">Xin chào</template>
               <template v-else>Xin chào, {{ user.name || 'Học viên' }}!</template>
             </h1>
             <p class="text-gray-600 mt-1">Kết quả luyện thi mới nhất</p>
@@ -31,7 +31,7 @@
           </div>
         </template>
         <template v-else-if="testAttempts.data.length === 0">
-          <div class="bg-white rounded-lg shadow-md p-6 text-gray-500">
+          <div class="col-span-full bg-white rounded-lg shadow-md p-6 text-gray-500">
             Chưa có bài kiểm tra nào gần đây
           </div>
         </template>

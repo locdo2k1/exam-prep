@@ -104,12 +104,7 @@ const routes = [
             name: 'login',
             component: Login,
             beforeEnter: (to, from, next) => {
-               // If user is already authenticated, redirect to /user
-               if (isAuthenticated()) {
-                  next('/user')
-               } else {
-                  next()
-               }
+               next()
             }
          },
          {

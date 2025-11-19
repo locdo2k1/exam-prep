@@ -16,7 +16,6 @@
     <!-- Audio Players -->
     <div v-if="hasAudio" class="mb-4 space-y-4">
       <div v-for="(audio, index) in question.questionAudios" :key="index" class="audio-player-wrapper">
-        <div class="text-sm text-gray-500 mb-1">Audio {{ index + 1 }}</div>
         <AudioPlayer :audio-url="audio.fileUrl" />
       </div>
     </div>

@@ -160,17 +160,17 @@
                         <div v-for="(option, optIndex) in expandedQuestions.has(question.id) ? question.options : question.options.slice(0, 3)" :key="option.id" class="flex items-start">
                           <span class="inline-flex items-center justify-center w-4 h-4 mt-1 mr-2 text-xs rounded flex-shrink-0"
                             :class="{
-                              'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200': option.isCorrect || option.correct,
-                              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200': !(option.isCorrect || option.correct)
+                              'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200':option.correct,
+                              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200': !option.correct
                             }">
                             {{ String.fromCharCode(65 + optIndex) }}
                           </span>
                           <div class="flex-1 min-w-0">
                             <span class="text-sm text-gray-700 dark:text-gray-300 break-words"
-                              :class="{ 'font-medium': option.isCorrect || option.correct }">
-                              {{ option.content || option.text || `Option ${optIndex + 1}` }}
+                              :class="{ 'font-medium': option.correct || option.correct }">
+                              {{ option.text || `Option ${optIndex + 1}` }}
                             </span>
-                            <span v-if="option.isCorrect || option.correct" class="ml-1.5 text-green-500">
+                            <span v-if="option.correct || option.correct" class="ml-1.5 text-green-500">
                               <i class="fas fa-check text-xs"></i>
                               <span class="sr-only">Correct Answer</span>
                             </span>
@@ -471,7 +471,7 @@ const initializeData = async () => {
 
   try {
     // First load categories and question types
-    await Promise.all([
+    await globalThis.Promise.all([
       fetchCategories(),
       fetchQuestionTypes()
     ]);
@@ -554,15 +554,36 @@ const resetFilters = resetAllFilters;
 const selectedCount = computed<number>(() => selectedQuestions.value.size);
 
 // Get question by ID
-const getQuestionById = (id: string): Question | undefined => {
-  return questions.value.find(q => q.id === id);
+const getQuestionById = async (id: string): globalThis.Promise<Question | undefined> => {
+  const response = await questionApi.getById(id);
+  const q = response?.data;
+  if (!q) return undefined;
+
+  const question: Question = {
+    ...q,
+    id: q.id,
+    prompt: q.prompt || '',
+    content: q.prompt || '',
+    type: q.questionType?.name || '',
+    category: q.questionCategory?.name || 'Uncategorized',
+    points: q.score || 0,
+    difficulty: 'medium',
+    duration: 60,
+    explanation: '',
+    tags: [],
+    questionAnswers: Array.isArray(q.questionAnswers) ? q.questionAnswers : [],
+    options: Array.isArray(q.options) ? q.options : []
+  };
+
+  return question;
 };
 
 // Get selected questions data
-const getSelectedQuestions = (): Question[] => {
-  return Array.from(selectedQuestions.value)
-    .map(id => getQuestionById(id))
-    .filter((q): q is Question => q !== undefined);
+const getSelectedQuestions = async (): globalThis.Promise<Question[]> => {
+  const results = await globalThis.Promise.all(
+    Array.from(selectedQuestions.value).map(id => getQuestionById(id))
+  );
+  return results.filter((q): q is Question => q !== undefined);
 };
 
 // Methods
@@ -593,7 +614,7 @@ const closeModal = () => {
 const saveSelected = async () => {
   try {
     loadingStates.value.saving = true;
-    const selected = getSelectedQuestions();
+    const selected = await getSelectedQuestions();
     emit('select', selected);
     closeModal();
   } catch (error) {
@@ -614,13 +635,11 @@ const toggleQuestionOptions = (questionId: string) => {
 };
 
 const toggleQuestion = (question: Question) => {
-  const newSelected = new Set<string>(selectedQuestions.value);
-  if (newSelected.has(question.id)) {
-    newSelected.delete(question.id);
-  } else {
-    newSelected.add(question.id);
-  }
-  selectedQuestions.value = newSelected;
+  selectedQuestions.value = new Set(
+    selectedQuestions.value.has(question.id)
+      ? [...selectedQuestions.value].filter(id => id !== question.id)
+      : [...selectedQuestions.value, question.id]
+  );
 };
 
 const isQuestionSelected = (questionId: string) => {

@@ -13,12 +13,13 @@ const handleLoginSubmit = async (credentials) => {
       errorMessage.value = '' // Clear any previous errors
       const response = await login(credentials.username, credentials.password)
       localStorage.setItem('token', response.data)
+      window.dispatchEvent(new Event('auth-changed'))
 
       // Get redirect param (if any)
       const redirect = route.query.redirect
 
       // Navigate without keeping query string
-      router.push({ path: redirect || '/user' })
+      router.push({ path: redirect || '/' })
    } catch (error) {
       console.error('Login error:', error)
       errorMessage.value = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.'

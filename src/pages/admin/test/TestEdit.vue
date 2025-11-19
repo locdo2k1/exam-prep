@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto">
       <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Create New Test</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit Test</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Set up your test by adding parts and questions</p>
       </div>
 
@@ -103,7 +103,23 @@ const handleQuestionsSelected = (questions: Question[]) => {
     if (!test.value.listQuestionAndQuestionSet) {
       test.value.listQuestionAndQuestionSet = [];
     }
-    test.value.listQuestionAndQuestionSet.push(...newQuestions);
+    // Build a set of existing question IDs (exclude question sets)
+    const existingIds = new Set(
+      test.value.listQuestionAndQuestionSet
+        .filter((item: any) => !('questions' in item))
+        .map((q: any) => q.id)
+    );
+    const deduped = newQuestions.filter(q => !existingIds.has(q.id));
+    const skipped = newQuestions.length - deduped.length;
+    if (deduped.length === 0) {
+      toast.info('All selected questions are already added');
+    } else {
+      test.value.listQuestionAndQuestionSet.push(...deduped);
+      if (skipped > 0) {
+        toast.info(`${skipped} duplicate question(s) skipped`);
+      }
+      toast.success(`Added ${deduped.length} question(s)`);
+    }
   } else {
     // If there are parts, add questions to the currently active part
     const currentPartIndex = activePartIndex.value;
@@ -118,11 +134,31 @@ const handleQuestionsSelected = (questions: Question[]) => {
     if (!test.value.listPart[currentPartIndex].questions) {
       test.value.listPart[currentPartIndex].questions = [];
     }
+    // Ensure the part has a listQuestionAndQuestionSet array
+    if (!test.value.listPart[currentPartIndex].listQuestionAndQuestionSet) {
+      test.value.listPart[currentPartIndex].listQuestionAndQuestionSet = [] as any;
+    }
     // Also add to listQuestionAndQuestionSet for the question bank view
     if (!test.value.listQuestionAndQuestionSet) {
       test.value.listQuestionAndQuestionSet = [];
     }
-    test.value.listPart[currentPartIndex].listQuestionAndQuestionSet.push(...newQuestions);
+    // Build a set of existing question IDs in the target part (exclude question sets)
+    const partExistingIds = new Set(
+      test.value.listPart[currentPartIndex].listQuestionAndQuestionSet
+        .filter((item: any) => !('questions' in item))
+        .map((q: any) => q.id)
+    );
+    const partDeduped = newQuestions.filter(q => !partExistingIds.has(q.id));
+    const partSkipped = newQuestions.length - partDeduped.length;
+    if (partDeduped.length === 0) {
+      toast.info('All selected questions are already in this part');
+    } else {
+      test.value.listPart[currentPartIndex].listQuestionAndQuestionSet.push(...partDeduped);
+      if (partSkipped > 0) {
+        toast.info(`${partSkipped} duplicate question(s) skipped`);
+      }
+      toast.success(`Added ${partDeduped.length} question(s) to the part`);
+    }
 
     // Sort questions by order to ensure consistent display
     test.value.listPart[currentPartIndex].questions.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -343,6 +379,16 @@ const handleAddPart = (partData?: TestPart) => {
     : 1;
 
   if (partData) {
+    // Prevent duplicates by id or title (case-insensitive)
+    const normalizedTitle = partData.title?.trim().toLowerCase();
+    const exists = test.value.listPart.some(p =>
+      (partData.id && p.id === partData.id) ||
+      (normalizedTitle && (p.title?.trim().toLowerCase() === normalizedTitle))
+    );
+    if (exists) {
+      toast.info('This part already exists');
+      return;
+    }
     // Ensure the part has a proper order when added
     const partToAdd = {
       ...partData,
@@ -350,10 +396,20 @@ const handleAddPart = (partData?: TestPart) => {
     };
     test.value.listPart.push(partToAdd);
   } else {
+    // Generate a unique default name/title like "Part N"
+    const existingTitles = new Set(
+      test.value.listPart.map(p => (p.title || '').trim().toLowerCase())
+    );
+    let idx = newOrder;
+    let proposed = `Part ${idx}`;
+    while (existingTitles.has(proposed.toLowerCase())) {
+      idx++;
+      proposed = `Part ${idx}`;
+    }
     const newPart: TestPart = {
       id: `part-${Date.now()}`,
-      name: `Part ${newOrder}`,
-      title: `Part ${newOrder}`,
+      name: proposed,
+      title: proposed,
       description: '',
       order: newOrder,
       duration: 0,
