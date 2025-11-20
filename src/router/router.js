@@ -4,6 +4,11 @@ import AdminLayoutWrapper from '../components/admin/layout/AdminLayoutWrapper.vu
 // Layout components
 const WelcomePage = () => import(/* webpackChunkName: "welcome" */ '../pages/WelcomePage.vue')
 const LayoutUser = () => import(/* webpackChunkName: "layout-user" */ '../components/user/Layout/LayoutUser.vue')
+
+// Flashcard components
+const FlashcardList = () => import(/* webpackChunkName: "flashcard" */ '../flashcard/pages/FlashcardList.vue')
+const FlashcardStudy = () => import(/* webpackChunkName: "flashcard" */ '../flashcard/pages/FlashcardStudy.vue')
+const FlashcardEdit = () => import(/* webpackChunkName: "flashcard" */ '../flashcard/pages/FlashcardEdit.vue')
 // const AdminLayoutWrapper = () => import(/* webpackChunkName: "layout-admin" */ '../components/admin/layout/AdminLayoutWrapper.vue')
 
 // Admin components
@@ -70,7 +75,8 @@ const routes = [
             props: route => ({
                isPracticeMode: true,
                partIds: Array.isArray(route.query.part) ? route.query.part : [route.query.part].filter(Boolean),
-               timeLimit: route.query.time_limit ? parseInt(route.query.time_limit, 10) : null
+               timeLimit: route.query.time_limit ? parseInt(route.query.time_limit, 10) : null,
+               refId: route.query.ref_id ?? null
             }),
             meta: { requiresAuth: true }
          },
@@ -98,6 +104,26 @@ const routes = [
             props: route => ({
                initialCategory: route.params.testCategory
             })
+         },
+         {
+            path: 'flashcards',
+            name: 'flashcard-list',
+            component: FlashcardList,
+            meta: { requiresAuth: true }
+         },
+         {
+            path: 'flashcards/:setId/study',
+            name: 'flashcard-study',
+            component: FlashcardStudy,
+            meta: { requiresAuth: true },
+            props: true
+         },
+         {
+            path: 'flashcards/:setId/edit',
+            name: 'flashcard-edit',
+            component: FlashcardEdit,
+            meta: { requiresAuth: true },
+            props: true
          },
          {
             path: 'login',

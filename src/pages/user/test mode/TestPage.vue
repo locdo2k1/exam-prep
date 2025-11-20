@@ -12,8 +12,10 @@
                             </span>
                         </template>
                         <template v-else>
-                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">#IELTS Academic</span>
-                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">#Listening</span>
+                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">#IELTS
+                                Academic</span>
+                            <span
+                                class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">#Listening</span>
                         </template>
                     </slot>
                 </div>
@@ -33,7 +35,8 @@
                 <TestTabs v-model="activeTab" :tabs="tabs">
                     <!-- Test Info Tab -->
                     <template #test-info>
-                        <TestInfo :time-limit="testInfo?.duration" :parts-count="testInfo?.sections" :question-count="testInfo?.questions" :difficulty="3"
+                        <TestInfo :time-limit="testInfo?.duration" :parts-count="testInfo?.sections"
+                            :question-count="testInfo?.questions" :difficulty="3"
                             :participants="testInfo?.practicedUsers">
                             <InfoNote />
 
@@ -43,14 +46,10 @@
                                 <template #practice="{ option }">
                                     <div class="space-y-4">
                                         <ProTip />
-                                        <RecordingSelection 
-                                          v-model="selectedRecordings" 
-                                          :recordings="testParts"
-                                        />
+                                        <RecordingSelection v-model="selectedRecordings" :recordings="testParts" />
                                         <TimeLimit v-model="timeLimit" />
                                         <!-- Start Test Button -->
-                                        <button
-                                            @click="startPracticeTest"
+                                        <button @click="startPracticeTest"
                                             class="px-6 py-2 font-bold text-white uppercase bg-blue-700 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             LUYỆN TẬP
                                         </button>
@@ -73,8 +72,7 @@
                                             </span>
                                         </div>
 
-                                        <button
-                                            @click="startFullTest"
+                                        <button @click="startFullTest"
                                             class="px-5 py-2 font-bold text-white bg-blue-700 rounded-md shadow hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             BẮT ĐẦU THI
                                         </button>
@@ -98,8 +96,26 @@
 
                     <!-- Answers Tab -->
                     <template #answers>
-                        <div class="p-6">
-                            <p>Nội dung đáp án và transcript sẽ được hiển thị tại đây.</p>
+                        <div class="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-900 mb-2">Xem Đáp án & Transcript</h3>
+                                    <p class="text-gray-600 text-sm">Khám phá chi tiết đáp án, transcript và giải thích
+                                        cho từng câu hỏi</p>
+                                </div>
+                            </div>
+
+                            <button @click="viewSolution"
+                                class="w-full px-8 py-4 font-bold text-white text-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Xem Đáp án & Transcript Ngay
+                            </button>
+
+                            <p class="text-xs text-gray-500 mt-4 text-center">💡 Tip: Hãy lưu lại các từ vựng khó để học
+                                và ôn tập sau này!</p>
                         </div>
                     </template>
                 </TestTabs>
@@ -144,13 +160,13 @@ const timeLimit = ref<number | null>(null);
 
 // Map test parts to recording format
 const testParts = computed(() => {
-  if (!testInfo.value?.testParts) return [];
-  return testInfo.value.testParts.map(part => ({
-    id: part.id,
-    name: part.title,
-    questionCount: part.questionCount,
-    tags: part.questionCategories || []
-  }));
+    if (!testInfo.value?.testParts) return [];
+    return testInfo.value.testParts.map(part => ({
+        id: part.id,
+        name: part.title,
+        questionCount: part.questionCount,
+        tags: part.questionCategories || []
+    }));
 });
 
 // Practice options
@@ -197,12 +213,12 @@ const startPracticeTest = () => {
             return;
         }
     }
-    
+
     const query = {
         part: selectedRecordings.value,
         ...(timeLimit.value && { time_limit: timeLimit.value.toString() })
     };
-    
+
     router.push({
         name: 'practice-test',
         params: { id: route.params.id },
@@ -241,6 +257,16 @@ const startFullTest = () => {
 const startDiscussion = () => {
     console.log('Starting discussion');
     // Add your discussion start logic here
+};
+
+const viewSolution = () => {
+    const testId = route.params.id as string;
+    if (testId) {
+        router.push({
+            name: 'solution-details',
+            params: { testId }
+        });
+    }
 };
 
 // Fetch test data

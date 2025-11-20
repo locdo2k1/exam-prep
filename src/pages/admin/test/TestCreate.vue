@@ -698,11 +698,11 @@ const handleSave = async () => {
       toast.success('Test created successfully!');
       // Redirect to edit page with the new test ID
       router.push({ 
-        name: 'admin-test-edit',
+        name: 'admin-question-bank-tests-edit',
         params: { id: response.data.id }
       });
     } else {
-      throw new Error(response.message || 'Failed to save test');
+    throw new Error(response.message || 'Failed to save test');
     }
   } catch (error: any) {
     console.error('Error saving test:', error);

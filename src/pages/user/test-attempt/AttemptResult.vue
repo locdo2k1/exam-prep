@@ -29,7 +29,8 @@
         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           Xem chi tiết đáp án
         </button>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button @click="handleRetryWrongAnswers"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           Làm lại các câu sai
         </button>
       </div>
@@ -53,14 +54,8 @@
     </div>
     <!-- Anchor for 'Xem đáp án' button -->
     <div id="result-answers" class="h-0"></div>
-    <AnswerSection
-      v-for="section in answerSections"
-      :key="section.title"
-      :part-title="section.title"
-      :answers="section.answers"
-      @action-click="handleActionClick"
-      @question-click="openQuestionModal"
-    /> 
+    <AnswerSection v-for="section in answerSections" :key="section.title" :part-title="section.title"
+      :answers="section.answers" @action-click="handleActionClick" @question-click="openQuestionModal" />
 
     <!-- Question Modal -->
     <QuestionModal :show="showModal" :question="selectedQuestion || undefined" @close="closeModal">
@@ -80,7 +75,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import type { TestInfoVM } from '@/api/attemptResultApi';
 import { useAttemptResultStore } from '@/stores/modules/attemptResult.store';
 import { storeToRefs } from 'pinia';
 import InfoBanner from '@/components/user/test/InfoBanner.vue';
@@ -184,9 +180,18 @@ const toggleGuide = () => {
   showGuide.value = !showGuide.value;
 };
 
+const router = useRouter();
+
 const handleBackToTest = () => {
-  // Handle back to test logic here
-  console.log('Back to test clicked');
+  const testId = attemptStore.state.testInfo?.testId;
+  if (testId) {
+    router.push({
+      name: 'test-details',
+      params: { id: testId }
+    });
+  } else {
+    console.warn('No test ID available for navigation');
+  }
 };
 
 const handleActionClick = (actionType: 'view-details' | 'retry-wrong') => {
@@ -196,6 +201,28 @@ const handleActionClick = (actionType: 'view-details' | 'retry-wrong') => {
   } else if (actionType === 'retry-wrong') {
     // Handle retry wrong answers action
     console.log('Retry wrong answers clicked');
+  }
+};
+
+const handleRetryWrongAnswers = () => {
+  const testId = attemptStore.state.testInfo?.testId;
+  const partIds = state.value.overallResult?.parts?.map(p => p.id).filter(Boolean);
+  if (testId) {
+    const query: Record<string, any> = {
+      ref_id: route.params.attemptId
+    };
+
+    if (partIds && partIds.length > 0) {
+      query.part = partIds;
+    }
+
+    router.push({
+      name: 'practice-test',
+      params: { id: testId },
+      query
+    });
+  } else {
+    console.warn('No test ID available for navigation');
   }
 };
 
@@ -284,7 +311,7 @@ const statsFromStore = computed(() => {
     timeSpent: o.completionTime,
   };
 
-  
+
 });
 </script>
 
