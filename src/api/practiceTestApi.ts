@@ -1,3 +1,4 @@
+import { UUID } from 'node:crypto';
 import apiClient from './axios';
 
 const API_PATH = '/practice-tests';
@@ -87,9 +88,8 @@ export interface PracticeQuestionVM {
   order: number;
   options: PracticeOptionVM[];
   questionAudios: PracticeFileInfoVM[];
-
-  // Alias for text to match Java getter
   prompt?: string;
+  correct?: boolean;
 }
 
 export interface PracticeOptionVM {
@@ -110,6 +110,7 @@ export interface PracticeFileInfoVM {
 export interface PracticeTestRequest {
   testId: string;
   partIds?: string[];
+  refId?: UUID;
 }
 
 export interface QuestionAnswerRequest {
@@ -205,9 +206,10 @@ export const getPracticeParts = async (testId: string): Promise<ApiResponse<any>
  */
 export const getPracticeTestByParts = async (
   testId: string,
-  partIds?: string[]
+  partIds?: string[],
+  refId?: string,
 ): Promise<ApiResponse<PracticeTestVM>> => {
-  const requestBody: PracticeTestRequest = { testId, partIds };
+  const requestBody: PracticeTestRequest = { testId, partIds, refId };
   return await apiClient.post(
     `${API_PATH}/tests/${testId}/practice`,
     requestBody

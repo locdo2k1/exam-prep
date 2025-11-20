@@ -70,7 +70,8 @@ const routes = [
             props: route => ({
                isPracticeMode: true,
                partIds: Array.isArray(route.query.part) ? route.query.part : [route.query.part].filter(Boolean),
-               timeLimit: route.query.time_limit ? parseInt(route.query.time_limit, 10) : null
+               timeLimit: route.query.time_limit ? parseInt(route.query.time_limit, 10) : null,
+               refId: route.query.ref_id ?? null
             }),
             meta: { requiresAuth: true }
          },

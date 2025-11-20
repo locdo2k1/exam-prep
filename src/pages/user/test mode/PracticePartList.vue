@@ -31,21 +31,13 @@
         <div v-if="activePart">
           <!-- Questions and Question Sets -->
           <div v-if="hasQuestions" class="space-y-6">
-            <div v-for="(item, index) in activePart.questionsAndQuestionSets" :key="item.id"
-              class="p-4">
+            <div v-for="(item, index) in activePart.questionsAndQuestionSets" :key="item.id" class="p-4">
 
               <!-- Question Set (if exists) -->
-              <QuestionSetDisplay 
-                v-if="item.questionSet" 
-                :question-set="item.questionSet" 
-              />
+              <QuestionSetDisplay v-if="item.questionSet" :question-set="item.questionSet" />
 
               <!-- Individual Question -->
-              <QuestionDisplay 
-                v-if="item.question" 
-                :question="item.question" 
-                class="mt-4" 
-              />
+              <QuestionDisplay v-if="item.question" :question="item.question" class="mt-4" />
             </div>
           </div>
 
@@ -67,13 +59,13 @@ import QuestionSetDisplay from '@/components/question/QuestionSetDisplay.vue';
 
 export default defineComponent({
   name: 'PracticePartList',
-  
+
   components: {
     QuestionDisplay,
     QuestionSetDisplay
   },
 
-  setup() {
+  setup(props, { emit }) {
     const examStore = useExamTestStore();
     const activeTabIndex = ref(0);
     const isLoading = ref(true);
@@ -90,6 +82,12 @@ export default defineComponent({
       return (activePart.value?.questionsAndQuestionSets?.length || 0) > 0;
     });
 
+    const setActiveTab = (index: number) => {
+      activeTabIndex.value = index;
+      // Emit event so parent can know which part is active
+      emit('part-changed', index);
+    };
+
     // Debug watcher
     watch(testData, (newValue) => {
       // Reset active tab if needed
@@ -100,12 +98,7 @@ export default defineComponent({
       }
     }, { immediate: true, deep: true });
 
-    // Methods
-    const setActiveTab = (index: number) => {
-      if (testData.value?.parts && index >= 0 && index < testData.value.parts.length) {
-        activeTabIndex.value = index;
-      }
-    };
+    // Methods - setActiveTab is already defined above, no need to redefine
 
     return {
       // State

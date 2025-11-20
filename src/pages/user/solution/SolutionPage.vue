@@ -22,24 +22,18 @@
             <h1 class="text-2xl font-bold text-gray-800">
               Đáp án/transcript: {{ testName || 'Loading test...' }}
             </h1>
-            <button
-              class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
-            >
+            <button @click="handleExit"
+              class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">
               Thoát
             </button>
           </div>
 
           <!-- Tabs -->
           <div class="flex gap-2 mb-6 overflow-x-auto pb-2" v-if="hasParts">
-            <button
-              v-for="part in parts"
-              :key="part"
-              @click="activePart = part"
-              class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
-              :class="activePart === part
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:bg-gray-100'"
-            >
+            <button v-for="part in parts" :key="part" @click="activePart = part"
+              class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap" :class="activePart === part
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100'">
               {{ part }}
             </button>
           </div>
@@ -47,42 +41,28 @@
 
         <!-- Questions List -->
         <div v-if="hasQuestions" class="space-y-4">
-          <div 
-            v-for="q in displayQuestions" 
-            :key="q.order" 
-            class="bg-white rounded-xl shadow-sm p-6"
-            :data-question="q.order"
-          >
+          <div v-for="q in displayQuestions" :key="q.order" class="bg-white rounded-xl shadow-sm p-6"
+            :data-question="q.order">
             <div class="flex items-start gap-4">
-              <div class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-50 text-blue-600 font-semibold rounded-lg">
+              <div
+                class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-50 text-blue-600 font-semibold rounded-lg">
                 {{ q.order }}
               </div>
               <div class="flex-1">
                 <p class="text-gray-700 font-medium">
                   Đáp án đúng: <span class="text-green-600">{{ q.answer }}</span>
                 </p>
-                <button
-                  @click="toggleTranscript(q.order)"
-                  class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1"
-                >
+                <button @click="toggleTranscript(q.order)"
+                  class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">
                   {{ q.showTranscript ? 'Ẩn' : 'Hiện' }} Transcript
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 transition-transform duration-200"
-                    :class="{ 'rotate-180': q.showTranscript }"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200"
+                    :class="{ 'rotate-180': q.showTranscript }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 <!-- Transcript -->
-                <div 
-                  v-if="q.showTranscript" 
-                  class="mt-3 pl-4 py-2 border-l-2 border-blue-200 text-gray-600 text-sm"
-                >
+                <div v-if="q.showTranscript" class="mt-3 pl-4 py-2 border-l-2 border-blue-200 text-gray-600 text-sm">
                   {{ q.transcript }}
                 </div>
               </div>
@@ -103,16 +83,12 @@
               <div>
                 <h4 class="text-sm font-medium text-gray-500 mb-2">{{ part }}</h4>
                 <div class="flex flex-wrap gap-1.5">
-                  <button
-                    v-for="q in questionsByPart(part)"
-                    :key="q.order"
-                    @click="scrollToQuestion(q)"
+                  <button v-for="q in questionsByPart(part)" :key="q.order" @click="scrollToQuestion(q)"
                     class="h-[30px] w-[30px] flex items-center justify-center rounded text-xs font-medium transition-colors"
                     :class="{
                       'bg-green-100 text-green-700': true,
                       'hover:bg-green-50': true
-                    }"
-                  >
+                    }">
                     {{ q.order }}
                   </button>
                 </div>
@@ -121,16 +97,12 @@
           </div>
           <div v-else>
             <div class="flex flex-wrap gap-1.5">
-              <button
-                v-for="q in questions"
-                :key="q.order"
-                @click="scrollToQuestion(q)"
+              <button v-for="q in questions" :key="q.order" @click="scrollToQuestion(q)"
                 class="h-[30px] w-[30px] flex items-center justify-center rounded text-xs font-medium transition-colors"
                 :class="{
                   'bg-green-100 text-green-700': true,
                   'hover:bg-green-50': true
-                }"
-              >
+                }">
                 {{ q.order }}
               </button>
             </div>
@@ -143,6 +115,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { useRouter } from "vue-router";
 import { getTestSolutions } from "@/api/testInfoApi";
 
 interface QuestionAnswerVM {
@@ -168,6 +141,7 @@ const props = defineProps<{
   testId: string;
 }>();
 
+const router = useRouter();
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
@@ -191,9 +165,9 @@ const fetchTestSolutions = async () => {
   try {
     isLoading.value = true;
     error.value = null;
-    
+
     const response = await getTestSolutions(props.testId);
-    
+
     if (response.success && response.data) {
       testName.value = response.data.testName || 'Test';
       questions.value = response.data.flattenedQuestions.map((q: any) => ({
@@ -240,6 +214,10 @@ const displayQuestions = computed(() => {
   if (!activePart.value) return questions.value;
   return questions.value.filter(q => q.part === activePart.value);
 });
+
+const handleExit = () => {
+  router.back();
+};
 
 const toggleTranscript = (order: number) => {
   const question = questions.value.find((q) => q.order === order);

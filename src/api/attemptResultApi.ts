@@ -16,6 +16,13 @@ export interface AnswerResultVM {
   overall: QuestionResultVM[];
 }
 
+export interface PartResultSummaryVM {
+  /** ID of the part */
+  id: string;
+  /** Name of the part */
+  name: string;
+}
+
 export interface TestResultOverallVM {
   totalQuestions: number;
   correctAnswers: number;
@@ -25,6 +32,8 @@ export interface TestResultOverallVM {
   score: number;
   completionTime: string; // format: HH:mm:ss
   attemptedQuestions: number;
+  /** Breakdown of results by test parts */
+  parts: PartResultSummaryVM[];
 }
 
 interface ApiResponse<T> {
@@ -112,9 +121,7 @@ export interface AnalysisQuestionsVM {
  * @param attemptId - The ID of the specific attempt
  * @returns Promise containing the test result data
  */
-export const getTestResultOverall = async (
-  attemptId: string
-): Promise<ApiResponse<TestResultOverallVM>> => {
+export const getTestResultOverall = async (attemptId: string): Promise<ApiResponse<TestResultOverallVM>> => {
   return apiClient.get(`/tests/results/overall/${attemptId}`);
 };
 
@@ -123,9 +130,7 @@ export const getTestResultOverall = async (
  * @param attemptId - The ID of the specific attempt
  * @returns Promise containing the test info (name and part names)
  */
-export const getTestInfo = async (
-  attemptId: string
-): Promise<ApiResponse<TestInfoVM>> => {
+export const getTestInfo = async (attemptId: string): Promise<ApiResponse<TestInfoVM>> => {
   return apiClient.get(`/attempts/${attemptId}/test-info`);
 };
 
@@ -134,12 +139,8 @@ export const getTestInfo = async (
  * @param attemptId - The ID of the specific attempt
  * @returns Promise containing the test answers with questions and selected options
  */
-export const getTestAnswers = async (
-  attemptId: string
-): Promise<ApiResponse<AnswerResultVM>> => {
-  return apiClient.get(
-    `/attempts/${attemptId}/answers`
-  );
+export const getTestAnswers = async (attemptId: string): Promise<ApiResponse<AnswerResultVM>> => {
+  return apiClient.get(`/attempts/${attemptId}/answers`);
 };
 
 /**
@@ -148,8 +149,6 @@ export const getTestAnswers = async (
  * @returns Promise containing the detailed analysis including question-wise performance,
  *          time spent, and skill-wise breakdown
  */
-export const getTestAttemptAnalysis = async (
-  attemptId: string
-): Promise<ApiResponse<AnalysisQuestionsVM>> => {
+export const getTestAttemptAnalysis = async (attemptId: string): Promise<ApiResponse<AnalysisQuestionsVM>> => {
   return apiClient.get(`/attempts/${attemptId}/analysis`);
 };

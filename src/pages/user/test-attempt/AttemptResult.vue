@@ -29,7 +29,8 @@
         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           Xem chi tiết đáp án
         </button>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button @click="handleRetryWrongAnswers"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           Làm lại các câu sai
         </button>
       </div>
@@ -53,14 +54,8 @@
     </div>
     <!-- Anchor for 'Xem đáp án' button -->
     <div id="result-answers" class="h-0"></div>
-    <AnswerSection
-      v-for="section in answerSections"
-      :key="section.title"
-      :part-title="section.title"
-      :answers="section.answers"
-      @action-click="handleActionClick"
-      @question-click="openQuestionModal"
-    /> 
+    <AnswerSection v-for="section in answerSections" :key="section.title" :part-title="section.title"
+      :answers="section.answers" @action-click="handleActionClick" @question-click="openQuestionModal" />
 
     <!-- Question Modal -->
     <QuestionModal :show="showModal" :question="selectedQuestion || undefined" @close="closeModal">
@@ -209,6 +204,28 @@ const handleActionClick = (actionType: 'view-details' | 'retry-wrong') => {
   }
 };
 
+const handleRetryWrongAnswers = () => {
+  const testId = attemptStore.state.testInfo?.testId;
+  const partIds = state.value.overallResult?.parts?.map(p => p.id).filter(Boolean);
+  if (testId) {
+    const query: Record<string, any> = {
+      ref_id: route.params.attemptId
+    };
+
+    if (partIds && partIds.length > 0) {
+      query.part = partIds;
+    }
+
+    router.push({
+      name: 'practice-test',
+      params: { id: testId },
+      query
+    });
+  } else {
+    console.warn('No test ID available for navigation');
+  }
+};
+
 const openQuestionModal = (payload: QuestionResultVM | AnswerItem | ModalQuestion) => {
   if ('order' in (payload as any)) {
     // From AnalysisTabs: raw question VM
@@ -294,7 +311,7 @@ const statsFromStore = computed(() => {
     timeSpent: o.completionTime,
   };
 
-  
+
 });
 </script>
 

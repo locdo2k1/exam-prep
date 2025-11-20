@@ -10,6 +10,7 @@ interface Response {
   questionId: string;
   selectedOptionIds: string[]; // Changed to array to support multiple selections
   answer: string | null;
+  correct?: boolean; // Track if the answer is correct
 }
 
 interface PracticeTestState {
@@ -121,12 +122,12 @@ export const useExamTestStore = defineStore('examTest', () => {
     state.value.userResponses.clear();
   };
 
-  const fetchPracticeTestByParts = async (testId: string, partIds?: string[]) => {
+  const fetchPracticeTestByParts = async (testId: string, partIds?: string[], refId?: string) => {
     state.value.loading = true;
     state.value.error = null;
     
     try {
-      const response: ApiResponse<PracticeTestVM> = await getPracticeTestByParts(testId, partIds);
+      const response: ApiResponse<PracticeTestVM> = await getPracticeTestByParts(testId, partIds, refId);
       
       if (response.success) {
         state.value.testData = response.data;

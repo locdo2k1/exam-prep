@@ -2,11 +2,7 @@
   <div class="bg-white p-6 rounded-xl shadow-xl max-w-md mx-auto border border-gray-100">
     <!-- Timer Section -->
     <div class="text-center mb-6">
-      <Timer 
-        :time-limit="computedTimeLimit" 
-        @time-up="handleTimeUp"
-        @time-update="handleTimeUpdate"
-      />
+      <Timer :time-limit="computedTimeLimit" @time-up="handleTimeUp" @time-update="handleTimeUpdate" />
       <!-- Submit Button -->
       <button @click="handleSubmitTestWithTime" :class="[
         'w-full py-1.5 rounded-xl font-semibold text-base mb-3 transition-all duration-200 transform hover:scale-[1.02]',
@@ -126,6 +122,17 @@ export default defineComponent({
       return questionsFromSets;
     };
 
+    const getPartIdForQuestion = (questionId: string): string | undefined => {
+      // Find which part contains this question
+      for (const part of testParts.value) {
+        const questions = getQuestionsForPart(part);
+        if (questions.some(q => q.id === questionId)) {
+          return part.id;
+        }
+      }
+      return undefined;
+    };
+
     const getQuestionNumber = (partIndex: number, questionIndex: number): number => {
       let count = 0;
       for (let i = 0; i < partIndex; i++) {
@@ -143,6 +150,8 @@ export default defineComponent({
       if (!questionId) return false;
       return examStore.isAnswered(questionId);
     };
+
+
 
     const getQuestionButtonClasses = (question: PracticeQuestionVM) => {
       const baseClasses = [
@@ -165,14 +174,32 @@ export default defineComponent({
         ];
       }
 
+      // Check correct/incorrect status first
+      if (question?.correct === true) {
+        return [
+          ...baseClasses,
+          'bg-green-50 text-green-700 border-green-200 shadow-xs focus:ring-green-100'
+        ];
+      }
+
+      if (question?.correct === false) {
+        return [
+          ...baseClasses,
+          'bg-red-50 text-red-700 border-red-200 shadow-xs focus:ring-red-100'
+        ];
+      }
+
+
       return [
         ...baseClasses,
         'bg-white text-gray-700 border-gray-200 hover:border-blue-200 hover:bg-blue-50 focus:ring-blue-200'
       ];
-    };
+    };;
 
     const handleQuestionClick = (question: PracticeQuestionVM) => {
-      emit('question-click', question.order);
+      const partId = getPartIdForQuestion(question.id);
+      const enrichedQuestion = { ...question, partId };
+      emit('question-click', enrichedQuestion);
     };
 
     // Handle time update from Timer
