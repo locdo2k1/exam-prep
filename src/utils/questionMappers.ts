@@ -53,22 +53,36 @@ export type MinimalAnalysisQuestion = {
   userAnswer: string | null;
   correctOptions?: { text: string }[];
   correctAnswers?: string[];
+  context?: string;
+  transcript?: string;
+  outerContent?: string;
+  explanation?: string;
+  questionAudios?: QuestionAudioVM[];
+  options?: OptionResultVM[];
+  questionType?: string;
 };
 
 // Map question to a lightweight display shape for AnalysisTabs
 export const mapQuestionForDisplay = (question: MinimalAnalysisQuestion): ModalQuestion => ({
-  context: "",
+  context: question.context || "",
   number: question.order,
   status: question.isCorrect === null ? "unanswered" : question.isCorrect ? "correct" : "wrong",
   userAnswer: question.userAnswer,
   correct: question.correctOptions?.[0]?.text || question.correctAnswers?.[0] || "",
   // Convert minimal correctOptions shape to OptionResultVM-like objects for consistent rendering
-  options: question.correctOptions
-    ? question.correctOptions.map((o) => ({ id: "", text: o.text, selected: false, isCorrect: true }))
-    : undefined,
+  options:
+    question.options ||
+    (question.correctOptions
+      ? question.correctOptions.map((o) => ({ id: "", text: o.text, selected: false, isCorrect: true }))
+      : undefined),
   correctOptions: question.correctOptions
     ? question.correctOptions.map((o) => ({ id: "", text: o.text, selected: false, isCorrect: true }))
     : undefined,
   correctAnswers: question.correctAnswers || undefined,
   selectedOptions: [],
+  transcript: question.transcript,
+  outerContent: question.outerContent,
+  explanation: question.explanation,
+  questionAudios: question.questionAudios || [],
+  questionType: question.questionType,
 });

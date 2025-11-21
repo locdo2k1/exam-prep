@@ -110,6 +110,7 @@ interface Question {
     selected: boolean;
   }>;
   questionCategories: string[];
+  questionType?: string;
   questionAudios?: Array<{
     id: string;
     fileUrl: string;

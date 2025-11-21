@@ -303,7 +303,7 @@
               </button>
               <div v-if="showTranscript"
                 class="p-6 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200 shadow-sm">
-                <p class="text-gray-800 leading-relaxed whitespace-pre-wrap text-sm">{{ question.transcript }}</p>
+                <p class="text-gray-800 leading-relaxed whitespace-pre-wrap text-sm" v-html="question.transcript"></p>
               </div>
             </div>
 

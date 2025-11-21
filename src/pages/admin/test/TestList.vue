@@ -4,7 +4,8 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-6">
       <div class="space-y-2">
         <h1
-          class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent"
+          style="line-height: 1.5;">
           Test Management</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">Manage and organize your test collection</p>
       </div>

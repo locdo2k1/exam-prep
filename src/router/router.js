@@ -22,6 +22,7 @@ const QuestionSetEdit = () => import(/* webpackChunkName: "admin-question-set" *
 const TestList = () => import(/* webpackChunkName: "admin-tests" */ '../pages/admin/test/TestList.vue')
 const TestCreate = () => import(/* webpackChunkName: "admin-tests" */ '../pages/admin/test/TestCreate.vue')
 const TestEdit = () => import(/* webpackChunkName: "admin-tests" */ '../pages/admin/test/TestEdit.vue')
+const TypeCategoryManagement = () => import(/* webpackChunkName: "admin-type-category" */ '../pages/admin/type-category/TypeCategoryManagement.vue')
 
 // User components
 const Home = () => import(/* webpackChunkName: "user-home" */ '../components/user/layout/UserHome.vue')
@@ -240,6 +241,13 @@ const routes = [
                   ]
                },
             ]
+         },
+         // Type & Category Management
+         {
+            path: 'type-category',
+            name: 'admin-type-category',
+            component: TypeCategoryManagement,
+            meta: { requiresAuth: true, title: 'Types & Categories' }
          },
          // Legacy redirects
          {

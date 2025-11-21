@@ -81,7 +81,7 @@
           <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-for="(item, rowIndex) in paginatedData" :key="rowIndex"
               class="hover:bg-gray-50 dark:hover:bg-gray-800">
-              <td v-for="(column, colIndex) in props.columns" :key="colIndex" :class="[tdClass, {
+              <td v-for="(column, colIndex) in props.columns" :key="colIndex" :class="[props.tdClass, {
                 'hidden md:table-cell': column.hideOnMobile,
                 'font-medium': column.key === primaryColumn
               }]">

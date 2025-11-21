@@ -226,6 +226,11 @@ const menuGroups: MenuGroup[] = [
     title: "Question Bank",
     items: [
       {
+        icon: CategoryIcon,
+        name: "Types & Categories",
+        path: "/admin/type-category"
+      },
+      {
         icon: ListIcon,
         name: "Question Set",
         subItems: [
@@ -258,11 +263,6 @@ const menuGroups: MenuGroup[] = [
   {
     title: "Configuration",
     items: [
-      {
-        icon: CategoryIcon,
-        name: "Types & Categories",
-        path: "/type-category"
-      },
       {
         icon: SettingsIcon,
         name: "System Settings",
