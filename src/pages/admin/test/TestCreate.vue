@@ -28,14 +28,9 @@
 
         <!-- Right Panel - Test Information -->
         <div class="lg:col-span-1">
-          <TestInfoForm 
-            v-model="test"
-            @add-part="handleAddPart" 
-            @add-question="handleAddQuestion"
-            @add-question-set="handleAddQuestionSet"
-            @select-question-set="handleSelectQuestionSet"
-            @save="handleSave" 
-          />
+          <TestInfoForm v-model="test" @add-part="handleAddPart" @add-question="handleAddQuestion"
+            @add-question-set="handleAddQuestionSet" @select-question-set="handleSelectQuestionSet"
+            @save="handleSave" />
         </div>
       </div>
 
@@ -213,7 +208,7 @@ const getNextOrder = () => {
   const allItems = [
     ...items,
     ...test.value.listPart.flatMap(p => [
-      ...(p.listQuestionAndQuestionSet || []).flatMap(qs => 
+      ...(p.listQuestionAndQuestionSet || []).flatMap(qs =>
         qs.questions ? qs.questions : [qs] // Include questions from question sets or the question set itself
       )
     ])
@@ -236,10 +231,10 @@ const activePartIndex = ref<number>(0); // Track the currently active part index
 
 // Handlers
 const handleAddPart = (partData?: TestPart) => {
-  const newOrder = test.value.listPart.length > 0 
-    ? Math.max(...test.value.listPart.map(p => p.order || 0)) + 1 
+  const newOrder = test.value.listPart.length > 0
+    ? Math.max(...test.value.listPart.map(p => p.order || 0)) + 1
     : 1;
-    
+
   if (partData) {
     const normalizedTitle = partData.title?.trim().toLowerCase();
     const exists = test.value.listPart.some(p =>
@@ -493,7 +488,7 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
     }
 
     // Process each new question set
-    let totalQuestionsAdded = 0;
+    const totalQuestionsAdded = 0;
     for (const questionSet of newQuestionSets) {
       try {
         // Add the question set reference with shared order
@@ -588,20 +583,107 @@ const handleSaveQuestion = (updatedQuestion: Question) => {
 };
 
 const handleRemoveQuestionSet = (questionSetId: string) => {
-  // Remove from the main question and question set list
-  const initialLength = test.value.listQuestionAndQuestionSet.length;
-  test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
-    (item: Question | QuestionSet) => {
-      if ('questions' in item) { // This is a question set
-        return item.id !== questionSetId;
-      }
-      return true; // Keep all questions
-    }
-  );
+  // Check if we're in a part or in the main question bank
+  if (test.value.listPart && test.value.listPart.length > 0) {
+    // Find which part contains the question set
+    const partIndex = test.value.listPart.findIndex(part => {
+      if (!part.listQuestionAndQuestionSet) return false;
+      return part.listQuestionAndQuestionSet.some((item: Question | QuestionSet) =>
+        'questions' in item && item.id === questionSetId
+      );
+    });
 
-  // If we removed a question set, show a success message
-  if (test.value.listQuestionAndQuestionSet.length < initialLength) {
-    toast.success('Question set removed');
+    if (partIndex !== -1 && test.value.listPart[partIndex].listQuestionAndQuestionSet) {
+      // Remove the question set from the part
+      const initialLength = test.value.listPart[partIndex].listQuestionAndQuestionSet!.length;
+      test.value.listPart[partIndex].listQuestionAndQuestionSet =
+        test.value.listPart[partIndex].listQuestionAndQuestionSet!.filter(
+          (item: Question | QuestionSet) => {
+            if ('questions' in item) {
+              return item.id !== questionSetId;
+            }
+            return true; // Keep all questions
+          }
+        );
+
+      // Reorder remaining items with continuous numbering
+      if (test.value.listPart[partIndex].listQuestionAndQuestionSet!.length < initialLength) {
+        let currentOrder = 1;
+        test.value.listPart[partIndex].listQuestionAndQuestionSet =
+          test.value.listPart[partIndex].listQuestionAndQuestionSet!.map((item) => {
+            if ('questions' in item) {
+              // Question set: assign order to the set and its questions
+              const questionSetOrder = currentOrder;
+              const reorderedQuestions = item.questions?.map((q: any) => {
+                const questionOrder = currentOrder;
+                currentOrder++;
+                return {
+                  ...q,
+                  order: questionOrder
+                };
+              });
+              return {
+                ...item,
+                order: questionSetOrder,
+                questions: reorderedQuestions
+              };
+            }
+            // Regular question
+            const questionOrder = currentOrder;
+            currentOrder++;
+            return {
+              ...item,
+              order: questionOrder
+            };
+          });
+
+        toast.success('Question set removed and list reordered');
+      }
+    }
+  } else {
+    // Remove from the main question and question set list
+    const initialLength = test.value.listQuestionAndQuestionSet.length;
+    test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
+      (item: Question | QuestionSet) => {
+        if ('questions' in item) { // This is a question set
+          return item.id !== questionSetId;
+        }
+        return true; // Keep all questions
+      }
+    );
+
+    // If we removed a question set, reorder remaining items
+    if (test.value.listQuestionAndQuestionSet.length < initialLength) {
+      let currentOrder = 1;
+      test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.map((item) => {
+        if ('questions' in item) {
+          // Question set: assign order to the set and its questions
+          const questionSetOrder = currentOrder;
+          const reorderedQuestions = item.questions?.map((q: any) => {
+            const questionOrder = currentOrder;
+            currentOrder++;
+            return {
+              ...q,
+              order: questionOrder
+            };
+          });
+          return {
+            ...item,
+            order: questionSetOrder,
+            questions: reorderedQuestions
+          };
+        }
+        // Regular question
+        const questionOrder = currentOrder;
+        currentOrder++;
+        return {
+          ...item,
+          order: questionOrder
+        };
+      });
+
+      toast.success('Question set removed and list reordered');
+    }
   }
 };
 
@@ -626,6 +708,54 @@ const handleRemoveQuestion = (questionId: string | number) => {
             (typeof questionId === 'number' ? idx !== questionId : true);
         }
       );
+
+      // Reorder remaining questions sequentially
+      test.value.listPart[partIndex].questions = test.value.listPart[partIndex].questions!.map((q, idx) => ({
+        ...q,
+        order: idx + 1
+      }));
+
+      // Also update listQuestionAndQuestionSet for this part
+      if (test.value.listPart[partIndex].listQuestionAndQuestionSet) {
+        test.value.listPart[partIndex].listQuestionAndQuestionSet =
+          test.value.listPart[partIndex].listQuestionAndQuestionSet!.filter(
+            (item: Question | QuestionSet) => {
+              if ('questions' in item) return true; // Keep question sets
+              return (item.id ? item.id !== questionId : true) &&
+                (typeof questionId === 'number' ? false : true);
+            }
+          );
+
+        // Reorder items in listQuestionAndQuestionSet with continuous numbering
+        let currentOrder = 1;
+        test.value.listPart[partIndex].listQuestionAndQuestionSet =
+          test.value.listPart[partIndex].listQuestionAndQuestionSet!.map((item) => {
+            if ('questions' in item) {
+              // Question set: assign order to the set and its questions
+              const questionSetOrder = currentOrder;
+              const reorderedQuestions = item.questions?.map((q: any) => {
+                const questionOrder = currentOrder;
+                currentOrder++;
+                return {
+                  ...q,
+                  order: questionOrder
+                };
+              });
+              return {
+                ...item,
+                order: questionSetOrder,
+                questions: reorderedQuestions
+              };
+            }
+            // Regular question
+            const questionOrder = currentOrder;
+            currentOrder++;
+            return {
+              ...item,
+              order: questionOrder
+            };
+          });
+      }
     }
   } else {
     // Remove from the main question and question set list
@@ -641,7 +771,38 @@ const handleRemoveQuestion = (questionId: string | number) => {
         }
       );
     }
+
+    // Reorder remaining items sequentially with continuous numbering
+    let currentOrder = 1;
+    test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.map((item) => {
+      if ('questions' in item) {
+        // Question set: assign order to the set and its questions
+        const questionSetOrder = currentOrder;
+        const reorderedQuestions = item.questions?.map((q: any) => {
+          const questionOrder = currentOrder;
+          currentOrder++;
+          return {
+            ...q,
+            order: questionOrder
+          };
+        });
+        return {
+          ...item,
+          order: questionSetOrder,
+          questions: reorderedQuestions
+        };
+      }
+      // Regular question
+      const questionOrder = currentOrder;
+      currentOrder++;
+      return {
+        ...item,
+        order: questionOrder
+      };
+    });
   }
+
+  toast.success('Question removed and list reordered');
 };
 
 const handleSave = async () => {
@@ -693,16 +854,16 @@ const handleSave = async () => {
 
     // Call the API to create the test
     const response = await testApi.createTest(payload);
-    
+
     if (response.success && response.data) {
       toast.success('Test created successfully!');
       // Redirect to edit page with the new test ID
-      router.push({ 
+      router.push({
         name: 'admin-question-bank-tests-edit',
         params: { id: response.data.id }
       });
     } else {
-    throw new Error(response.message || 'Failed to save test');
+      throw new Error(response.message || 'Failed to save test');
     }
   } catch (error: any) {
     console.error('Error saving test:', error);
