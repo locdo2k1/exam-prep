@@ -14,6 +14,8 @@ export interface AnswerResultVM {
   parts: PartResultVM[];
   /** Flattened list of all questions across all parts */
   overall: QuestionResultVM[];
+  /** List of audio files associated with the test */
+  audioFiles?: QuestionAudioVM[];
 }
 
 export interface PartResultSummaryVM {

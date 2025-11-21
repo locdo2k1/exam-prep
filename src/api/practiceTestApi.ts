@@ -1,7 +1,7 @@
-import { UUID } from 'node:crypto';
-import apiClient from './axios';
+import { UUID } from "node:crypto";
+import apiClient from "./axios";
 
-const API_PATH = '/practice-tests';
+const API_PATH = "/practice-tests";
 
 /**
  * API Response Type
@@ -19,7 +19,7 @@ export interface TestAttemptVM {
   startedAt: string;
   completedAt?: string;
   score?: number;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'GRADED';
+  status: "IN_PROGRESS" | "COMPLETED" | "GRADED";
 }
 
 export interface TestPartAttemptVM {
@@ -29,7 +29,7 @@ export interface TestPartAttemptVM {
   startedAt: string;
   submittedAt?: string;
   score?: number;
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'GRADED';
+  status: "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "GRADED";
 }
 
 export interface PracticeTestResultVM {
@@ -53,6 +53,7 @@ export interface PracticeTestVM {
   testName: string;
   parts: PracticePartVM[];
   questionAndQuestionSet: PracticeQuestionAndQuestionSetVM[];
+  audioFiles?: PracticeFileInfoVM[];
 }
 
 export interface PracticePartVM {
@@ -110,7 +111,7 @@ export interface PracticeFileInfoVM {
 export interface PracticeTestRequest {
   testId: string;
   partIds?: string[];
-  refId?: UUID;
+  refId?: string;
 }
 
 export interface QuestionAnswerRequest {
@@ -133,15 +134,10 @@ interface SubmitPracticeTestPartRequest {
  * @param userId - The ID of the user starting the practice
  * @returns The started test attempt
  */
-export const startPracticeTest = async (
-  testId: string,
-  userId: string
-): Promise<ApiResponse<TestAttemptVM>> => {
-  const response = await apiClient.post<ApiResponse<TestAttemptVM>>(
-    `${API_PATH}/${testId}/start`,
-    null,
-    { params: { userId } }
-  );
+export const startPracticeTest = async (testId: string, userId: string): Promise<ApiResponse<TestAttemptVM>> => {
+  const response = await apiClient.post<ApiResponse<TestAttemptVM>>(`${API_PATH}/${testId}/start`, null, {
+    params: { userId },
+  });
   return response.data;
 };
 
@@ -150,12 +146,8 @@ export const startPracticeTest = async (
  * @param testAttemptId - The ID of the test attempt
  * @returns List of test part attempts
  */
-export const getTestPartAttempts = async (
-  testAttemptId: string
-): Promise<ApiResponse<TestPartAttemptVM[]>> => {
-  const response = await apiClient.get<ApiResponse<TestPartAttemptVM[]>>(
-    `${API_PATH}/attempts/${testAttemptId}/parts`
-  );
+export const getTestPartAttempts = async (testAttemptId: string): Promise<ApiResponse<TestPartAttemptVM[]>> => {
+  const response = await apiClient.get<ApiResponse<TestPartAttemptVM[]>>(`${API_PATH}/attempts/${testAttemptId}/parts`);
   return response.data;
 };
 
@@ -192,9 +184,7 @@ export const getPracticeTestById = async (testId: string): Promise<ApiResponse<P
  * @returns List of practice parts for the test
  */
 export const getPracticeParts = async (testId: string): Promise<ApiResponse<any>> => {
-  const response = await apiClient.get<ApiResponse<any>>(
-    `${API_PATH}/tests/${testId}/parts`
-  );
+  const response = await apiClient.get<ApiResponse<any>>(`${API_PATH}/tests/${testId}/parts`);
   return response.data;
 };
 
@@ -207,13 +197,10 @@ export const getPracticeParts = async (testId: string): Promise<ApiResponse<any>
 export const getPracticeTestByParts = async (
   testId: string,
   partIds?: string[],
-  refId?: string,
+  refId?: string
 ): Promise<ApiResponse<PracticeTestVM>> => {
   const requestBody: PracticeTestRequest = { testId, partIds, refId };
-  return await apiClient.post(
-    `${API_PATH}/tests/${testId}/practice`,
-    requestBody
-  );
+  return await apiClient.post(`${API_PATH}/tests/${testId}/practice`, requestBody);
 };
 
 /**
@@ -237,11 +224,8 @@ export const submitPracticeTestPart = async (
     userId,
     questionAnswers,
     listPartId: partIds,
-    duration
+    duration,
   };
 
-  return await apiClient.post(
-    `${API_PATH}/attempts/submit`,
-    requestBody
-  );
+  return await apiClient.post(`${API_PATH}/attempts/submit`, requestBody);
 };

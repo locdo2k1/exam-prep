@@ -144,8 +144,11 @@ interface ApiResponse<T> {
 export const createTest = async (testData: TestCreateVM, files?: File[]): Promise<ApiResponse<TestVM>> => {
   const formData = new FormData();
 
-  // Add test data as JSON
-  formData.append("testData", JSON.stringify(testData));
+  // Remove files from testData before sending as JSON
+  const { files: _, ...testDataWithoutFiles } = testData;
+
+  // Add test data as JSON (without files)
+  formData.append("testData", JSON.stringify(testDataWithoutFiles));
 
   // Add files if any
   if (files && files.length > 0) {
@@ -203,7 +206,11 @@ export interface TestEditVM extends TestCreateVM {
 
 export const updateTest = async (id: string, testData: TestEditVM, files?: File[]): Promise<ApiResponse<TestVM>> => {
   const formData = new FormData();
-  formData.append("testData", JSON.stringify(testData));
+
+  // Remove files from testData before sending as JSON
+  const { files: _, ...testDataWithoutFiles } = testData;
+
+  formData.append("testData", JSON.stringify(testDataWithoutFiles));
   if (files && files.length > 0) {
     files.forEach((file) => {
       formData.append("files", file);

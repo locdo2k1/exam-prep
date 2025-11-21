@@ -840,7 +840,7 @@ const handleSave = async () => {
     };
 
     // Call the API to create the test
-    const response = await testApi.createTest(payload);
+    const response = await testApi.createTest(payload, test.value.files || []);
 
     if (response.success && response.data) {
       toast.success('Test created successfully!');

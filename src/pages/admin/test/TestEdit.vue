@@ -290,6 +290,24 @@ function normalizeTestVM(apiTest: any): TestVM {
     }
   }
 
+  // Extract audio file from files array if present
+  let audioFile = null;
+  if (apiTest.files && apiTest.files.length > 0) {
+    // Find the first audio file in the files array
+    const audioFileInfo = apiTest.files.find((f: any) => f.fileType?.startsWith('audio/'));
+    if (audioFileInfo) {
+      // Create a pseudo-File object for display purposes
+      audioFile = {
+        name: audioFileInfo.fileName,
+        size: audioFileInfo.fileSize,
+        type: audioFileInfo.fileType,
+        url: audioFileInfo.url,
+        id: audioFileInfo.id,
+        isExisting: true // Flag to indicate this is from the server
+      };
+    }
+  }
+
   // Create the final test object with all normalized data
   return {
     ...(apiTest.info || {}),
@@ -302,7 +320,8 @@ function normalizeTestVM(apiTest: any): TestVM {
     duration: duration,
     listPart: normalizedParts,
     listQuestionAndQuestionSet: listQuestionAndQuestionSet,
-    files: apiTest.files || []
+    files: apiTest.files || [],
+    audioFile: audioFile
   };
 }
 
@@ -964,7 +983,7 @@ const handleSave = async () => {
     };
 
     // Call the API to update the test (edit mode)
-    const response = await testApi.updateTest(payload.id, payload);
+    const response = await testApi.updateTest(payload.id, payload, test.value.files || []);
     if (response.success && response.data) {
       toast.success('Test saved successfully!');
       // Optionally, redirect or update state after saving

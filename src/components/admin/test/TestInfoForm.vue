@@ -151,7 +151,12 @@
             <div
               class="flex-1 flex items-center px-4 py-2.5 rounded-r-lg border border-l-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-500 dark:text-gray-400 truncate">
               <div class="flex-1 truncate">
-                {{ testData.audioFile?.name || 'No file selected' }}
+                <span v-if="testData.audioFile">
+                  {{ testData.audioFile.name }}
+                  <span v-if="testData.audioFile.isExisting"
+                    class="text-xs text-green-600 dark:text-green-400 ml-1">(Existing)</span>
+                </span>
+                <span v-else>No file selected</span>
               </div>
               <button v-if="testData.audioFile" @click.stop="clearAudioFile"
                 class="ml-2 text-gray-400 hover:text-red-500" aria-label="Remove file">
@@ -693,11 +698,32 @@ const handleFileUpload = (event) => {
   }
 
   testData.value.audioFile = file;
+
+  // Also add to files array for API upload
+  if (!testData.value.files) {
+    testData.value.files = [];
+  }
+  // Remove any existing audio file from files array (including existing server files)
+  testData.value.files = testData.value.files.filter(f => {
+    const fileType = f.type || f.fileType;
+    return !fileType?.startsWith('audio/');
+  });
+  // Add the new audio file
+  testData.value.files.push(file);
 };
 
 // Clear audio file
 const clearAudioFile = () => {
   testData.value.audioFile = null;
+
+  // Also remove from files array (including existing server files)
+  if (testData.value.files) {
+    testData.value.files = testData.value.files.filter(f => {
+      const fileType = f.type || f.fileType;
+      return !fileType?.startsWith('audio/');
+    });
+  }
+
   // Reset the file input
   const fileInput = document.querySelector('input[type="file"][accept="audio/*"]');
   if (fileInput) {
