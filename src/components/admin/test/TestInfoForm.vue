@@ -71,7 +71,7 @@
           </div>
 
           <div v-if="isCategoryDropdownOpen"
-            class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
+            class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto">
             <div v-for="category in testCategories" :key="category.id" @click="selectCategory(category)"
               class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
               {{ category.name }} ({{ category.code }})
@@ -82,6 +82,52 @@
             Please select a test category
           </div>
         </div>
+      </div>
+
+      <!-- Skills Multi-Select -->
+      <div class="group relative w-full">
+        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
+          Skills
+          <span class="text-gray-400 text-xs ml-1">(Optional)</span>
+        </label>
+        <div class="relative">
+          <div @click="toggleSkillsDropdown"
+            class="w-full px-4 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer">
+            <div v-if="selectedSkills.length > 0" class="flex flex-wrap gap-2">
+              <span v-for="skill in selectedSkills" :key="skill.id"
+                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                {{ skill.name }}
+                <button @click.stop="removeSkill(skill.id)" class="ml-1.5 hover:text-blue-900 dark:hover:text-blue-100">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            </div>
+            <div v-else class="flex items-center justify-between text-gray-400">
+              <span>Select skills</span>
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+
+          <div v-if="isSkillsDropdownOpen"
+            class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+            <div v-if="availableSkills.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+              No skills available
+            </div>
+            <div v-for="skill in availableSkills" :key="skill.id" @click="toggleSkill(skill)"
+              class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center justify-between">
+              <span>{{ skill.name }} ({{ skill.code }})</span>
+              <svg v-if="isSkillSelected(skill.id)" class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Select the skills tested in this test</p>
       </div>
 
       <!-- Audio File Input -->
@@ -289,9 +335,10 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { DocumentTextIcon } from '@heroicons/vue/24/outline';
 import { getAllTestCategories } from '@/api/admin/test-category/testCategoryApi';
+import { getAllSkills } from '@/api/admin/skill/skillApi';
 import DropdownMenu from '@/components/admin/common/DropdownMenu.vue';
 import SearchableSelect from '@/components/admin/forms/FormElements/SearchableSelect.vue';
 import { partApi } from '@/api/admin/part/partApi';
@@ -343,10 +390,17 @@ const deepCloneWithFiles = (obj) => {
 };
 
 // Create a local copy of the test data for two-way binding
-const testData = ref(deepCloneWithFiles(props.modelValue));
+const initialData = deepCloneWithFiles(props.modelValue);
+// Ensure skillIds is always an array
+if (!initialData.skillIds) {
+  initialData.skillIds = [];
+}
+const testData = ref(initialData);
 const testCategories = ref([]);
+const availableSkills = ref([]);
 const isFormSubmitted = ref(false);
 const isCategoryDropdownOpen = ref(false);
+const isSkillsDropdownOpen = ref(false);
 
 const selectedCategoryName = computed(() => {
   if (!testData.value.testCategoryId) return '';
@@ -363,16 +417,101 @@ const selectCategory = (category) => {
   isCategoryDropdownOpen.value = false;
 };
 
+// Skills dropdown and selection
+const toggleSkillsDropdown = () => {
+  isSkillsDropdownOpen.value = !isSkillsDropdownOpen.value;
+};
+
+const selectedSkills = computed(() => {
+  if (!testData.value.skillIds || !Array.isArray(testData.value.skillIds)) {
+    return [];
+  }
+  
+  // Check if skillIds contains objects or IDs
+  const firstItem = testData.value.skillIds[0];
+  if (firstItem && typeof firstItem === 'object') {
+    // skillIds contains full skill objects
+    return testData.value.skillIds;
+  }
+  
+  // skillIds contains IDs, filter from available skills
+  return availableSkills.value.filter(skill =>
+    testData.value.skillIds.includes(skill.id)
+  );
+});
+
+const isSkillSelected = (skillId) => {
+  if (!testData.value.skillIds) return false;
+  
+  // Check if skillIds contains objects or IDs
+  const firstItem = testData.value.skillIds[0];
+  if (firstItem && typeof firstItem === 'object') {
+    // skillIds contains full skill objects
+    return testData.value.skillIds.some(s => s.id === skillId);
+  }
+  
+  // skillIds contains IDs
+  return testData.value.skillIds.includes(skillId);
+};
+
+const toggleSkill = (skill) => {
+  if (!testData.value.skillIds) {
+    testData.value.skillIds = [];
+  }
+  
+  // Normalize to array of IDs
+  const firstItem = testData.value.skillIds[0];
+  if (firstItem && typeof firstItem === 'object') {
+    // Convert objects to IDs
+    testData.value.skillIds = testData.value.skillIds.map(s => s.id);
+  }
+
+  const index = testData.value.skillIds.indexOf(skill.id);
+  if (index > -1) {
+    testData.value.skillIds.splice(index, 1);
+  } else {
+    testData.value.skillIds.push(skill.id);
+  }
+};
+
+const removeSkill = (skillId) => {
+  if (!testData.value.skillIds) return;
+  
+  // Normalize to array of IDs if needed
+  const firstItem = testData.value.skillIds[0];
+  if (firstItem && typeof firstItem === 'object') {
+    // Convert objects to IDs
+    testData.value.skillIds = testData.value.skillIds.map(s => s.id);
+  }
+  
+  const index = testData.value.skillIds.indexOf(skillId);
+  if (index > -1) {
+    testData.value.skillIds.splice(index, 1);
+  }
+};
+
 // Watch for changes in the modelValue prop and update the local copy
 watch(() => props.modelValue, (newValue) => {
   // Preserve the current audioFile if it exists
   const currentAudioFile = testData.value.audioFile;
   testData.value = deepCloneWithFiles(newValue);
+  
+  // Ensure skillIds is always an array and normalize format
+  if (!testData.value.skillIds) {
+    testData.value.skillIds = [];
+  } else if (Array.isArray(testData.value.skillIds) && testData.value.skillIds.length > 0) {
+    const firstItem = testData.value.skillIds[0];
+    // If skillIds contains full objects, extract just the IDs for internal use
+    if (firstItem && typeof firstItem === 'object' && firstItem.id) {
+      testData.value.skillIds = testData.value.skillIds.map(s => s.id);
+    }
+  }
+  
   // Restore audioFile if it was cleared in the update
   if (currentAudioFile && !testData.value.audioFile) {
     testData.value.audioFile = currentAudioFile;
   }
-}, { deep: true });
+}, { deep: true, immediate: true });
 
 // Emit update when local data changes
 watch(() => ({
@@ -450,16 +589,42 @@ const fetchTestCategories = async () => {
   }
 };
 
+// Fetch skills
+const fetchSkills = async () => {
+  try {
+    const response = await getAllSkills();
+    availableSkills.value = response.data || [];
+  } catch (error) {
+    console.error('Error fetching skills:', error);
+    error.value = 'Failed to load skills. Please try again later.';
+  }
+};
+
 // Get category name by ID
 const getCategoryName = (categoryId) => {
   const category = testCategories.value.find(cat => cat.id === categoryId);
   return category ? `${category.name} (${category.code})` : 'Unknown Category';
 };
 
+// Close dropdowns when clicking outside
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.group')) {
+    isCategoryDropdownOpen.value = false;
+    isSkillsDropdownOpen.value = false;
+  }
+};
+
 // Initial load
 onMounted(async () => {
   await fetchTestCategories();
+  await fetchSkills();
   fetchParts();
+  document.addEventListener('click', handleClickOutside);
+});
+
+// Cleanup
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 
 const handleSearch = (query) => {
@@ -498,11 +663,6 @@ const isFormValid = computed(() => {
     testData.value?.duration > 0 &&
     testData.value?.testCategoryId;
 });
-
-// Watch for changes in the form data
-watch(testData, (newValue) => {
-  emit('update:modelValue', newValue);
-}, { deep: true });
 
 // Handle file upload
 const handleFileUpload = (event) => {
