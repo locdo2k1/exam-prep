@@ -426,14 +426,14 @@ const selectedSkills = computed(() => {
   if (!testData.value.skillIds || !Array.isArray(testData.value.skillIds)) {
     return [];
   }
-  
+
   // Check if skillIds contains objects or IDs
   const firstItem = testData.value.skillIds[0];
   if (firstItem && typeof firstItem === 'object') {
     // skillIds contains full skill objects
     return testData.value.skillIds;
   }
-  
+
   // skillIds contains IDs, filter from available skills
   return availableSkills.value.filter(skill =>
     testData.value.skillIds.includes(skill.id)
@@ -442,14 +442,14 @@ const selectedSkills = computed(() => {
 
 const isSkillSelected = (skillId) => {
   if (!testData.value.skillIds) return false;
-  
+
   // Check if skillIds contains objects or IDs
   const firstItem = testData.value.skillIds[0];
   if (firstItem && typeof firstItem === 'object') {
     // skillIds contains full skill objects
     return testData.value.skillIds.some(s => s.id === skillId);
   }
-  
+
   // skillIds contains IDs
   return testData.value.skillIds.includes(skillId);
 };
@@ -458,7 +458,7 @@ const toggleSkill = (skill) => {
   if (!testData.value.skillIds) {
     testData.value.skillIds = [];
   }
-  
+
   // Normalize to array of IDs
   const firstItem = testData.value.skillIds[0];
   if (firstItem && typeof firstItem === 'object') {
@@ -476,14 +476,14 @@ const toggleSkill = (skill) => {
 
 const removeSkill = (skillId) => {
   if (!testData.value.skillIds) return;
-  
+
   // Normalize to array of IDs if needed
   const firstItem = testData.value.skillIds[0];
   if (firstItem && typeof firstItem === 'object') {
     // Convert objects to IDs
     testData.value.skillIds = testData.value.skillIds.map(s => s.id);
   }
-  
+
   const index = testData.value.skillIds.indexOf(skillId);
   if (index > -1) {
     testData.value.skillIds.splice(index, 1);
@@ -495,7 +495,7 @@ watch(() => props.modelValue, (newValue) => {
   // Preserve the current audioFile if it exists
   const currentAudioFile = testData.value.audioFile;
   testData.value = deepCloneWithFiles(newValue);
-  
+
   // Ensure skillIds is always an array and normalize format
   if (!testData.value.skillIds) {
     testData.value.skillIds = [];
@@ -506,7 +506,7 @@ watch(() => props.modelValue, (newValue) => {
       testData.value.skillIds = testData.value.skillIds.map(s => s.id);
     }
   }
-  
+
   // Restore audioFile if it was cleared in the update
   if (currentAudioFile && !testData.value.audioFile) {
     testData.value.audioFile = currentAudioFile;
