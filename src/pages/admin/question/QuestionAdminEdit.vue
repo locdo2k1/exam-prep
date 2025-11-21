@@ -13,6 +13,15 @@
             class="dark:bg-gray-900 dark:border-gray-700" />
         </div>
 
+        <!-- Question Transcript -->
+        <div class="mb-4.5">
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Question Transcript
+          </label>
+          <Editor v-model="question.transcript" placeholder="Write the transcript for this question..."
+            class="dark:bg-gray-900 dark:border-gray-700" />
+        </div>
+
         <!-- Question Type and Category -->
         <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-4.5">
           <div class="grid grid-cols-2 gap-6">
@@ -63,7 +72,8 @@
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div
                   class="flex w-full items-start gap-3 rounded-lg border p-4 shadow-sm bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700">
-                  <div class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <div
+                    class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {{ index + 1 }}
                   </div>
                   <!-- Left Side: Checkbox + Delete -->
@@ -125,7 +135,8 @@
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div
                   class="flex w-full items-start gap-3 rounded-lg border p-4 shadow-sm bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700">
-                  <div class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <div
+                    class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {{ index + 1 }}
                   </div>
                   <div class="flex flex-col items-center gap-3 pt-1">
@@ -166,7 +177,8 @@
             </button>
           </div>
           <!-- the fill-in blank section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.FILL_IN_THE_BLANK"
+          <div
+            v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.FILL_IN_THE_BLANK"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
@@ -226,7 +238,7 @@
             Audio Files
           </label>
           <AudioUploader :max-files="1" :max-size="20" :show-progress="true" :auto-upload="false"
-            :initial-files="question.audioFiles" class="dark:border-gray-700" @files-added="handleAudioFilesAdded" 
+            :initial-files="question.audioFiles" class="dark:border-gray-700" @files-added="handleAudioFilesAdded"
             @file-removed="handleAudioFileRemoved" @error="handleAudioUploadError" @clear-all="handleClearAudio" />
         </div>
       </div>
@@ -276,6 +288,7 @@ const deletedFiles = ref([])
 const question = ref({
   score: 1,
   prompt: '',
+  transcript: '',
   category: null,
   type: null,
   options: [],
@@ -295,7 +308,7 @@ const fetchQuestion = async () => {
   try {
     isPageLoading.value = true;
     const { data: responseData, success, message } = await questionApi.getById(questionId.value);
-    
+
     if (!success) {
       throw new Error(message || 'Failed to fetch question details');
     }
@@ -304,6 +317,7 @@ const fetchQuestion = async () => {
       question.value = {
         score: responseData.score,
         prompt: responseData.prompt || '',
+        transcript: responseData.transcript || '',
         category: responseData.questionCategory ? responseData.questionCategory.id : null,
         type: responseData.questionType ? responseData.questionType.id : null,
         blanks: (responseData.questionAnswers || []).map(blank => ({
@@ -359,7 +373,7 @@ const fetchQuestionTypes = async () => {
       sort: 'name',
       direction: 'asc'
     });
-    
+
     if (!success) {
       throw new Error(message || 'Failed to fetch question types');
     }
@@ -392,7 +406,7 @@ const fetchQuestionCategories = async () => {
       sort: 'name',
       direction: 'asc'
     });
-    
+
     if (!success) {
       throw new Error(message || 'Failed to fetch categories');
     }
@@ -402,7 +416,7 @@ const fetchQuestionCategories = async () => {
         value: category.id,
         label: category.name
       }));
-      
+
       hasMore.value = responseData.totalPages > 1;
     }
   } catch (error) {
@@ -428,7 +442,7 @@ const handleCategorySearch = async (searchQuery) => {
       sort: 'name',
       direction: 'asc'
     });
-    
+
     if (!success) {
       throw new Error(message || 'Failed to search categories');
     }
@@ -438,7 +452,7 @@ const handleCategorySearch = async (searchQuery) => {
         value: category.id,
         label: category.name
       }));
-      
+
       page.value = 0;
       hasMore.value = responseData.totalPages > 1;
     }
@@ -464,20 +478,20 @@ const loadMore = async (searchQuery) => {
       sort: 'name',
       direction: 'asc'
     });
-    
+
     if (!success) {
       throw new Error(message || 'Failed to load more categories');
     }
 
     if (responseData && Array.isArray(responseData.content)) {
       questionCategories.value = [
-        ...questionCategories.value, 
+        ...questionCategories.value,
         ...responseData.content.map(category => ({
           value: category.id,
           label: category.name
         }))
       ];
-      
+
       page.value++;
       hasMore.value = responseData.content.length === 10;
     }
@@ -499,6 +513,7 @@ const updateQuestion = async () => {
   try {
     const payload = {
       prompt: question.value.prompt,
+      transcript: question.value.transcript || '',
       questionTypeId: question.value.type || '',
       categoryId: question.value.category || '',
       options: (question.value.options || []).map((o, i) => ({
@@ -513,7 +528,7 @@ const updateQuestion = async () => {
     };
 
     const { success, message, data } = await questionApi.update(questionId.value, payload);
-    
+
     if (!success) {
       throw new Error(message || 'Failed to update question');
     }
@@ -522,7 +537,7 @@ const updateQuestion = async () => {
       timeout: 3000,
       position: 'top-right'
     });
-    
+
     // Uncomment when ready to navigate
     // router.push({ name: 'admin-question-list' });
   } catch (error) {
@@ -568,7 +583,7 @@ const validateForm = () => {
       toast.error('At least one blank answer is required')
       return false
     }
-    
+
     // Check if any blank is empty
     const emptyBlank = question.value.blanks.some(blank => !blank.answer || !blank.answer.trim())
     if (emptyBlank) {

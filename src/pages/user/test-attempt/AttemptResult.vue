@@ -59,7 +59,8 @@
 
     <!-- Question Modal -->
     <QuestionModal :show="showModal" :question="selectedQuestion || undefined" @close="closeModal">
-      <div v-if="selectedQuestion">
+      <!-- <div v-if="selectedQuestion">
+        
         <div class="mb-4" v-html="selectedQuestion.context"></div>
         <div class="space-y-2">
           <p><strong>Trạng thái:</strong> {{ getStatusText(selectedQuestion.status) }}</p>
@@ -68,7 +69,7 @@
           </p>
           <p><strong>Đáp án đúng:</strong> {{ selectedQuestion.correct }}</p>
         </div>
-      </div>
+      </div> -->
     </QuestionModal>
   </div>
 </template>
@@ -125,7 +126,7 @@ const currentAnalysisData = computed(() => {
 });
 
 // Answer item shape expected by AnswerSection
-type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string };
+type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string; transcript?: string; outerContent?: string };
 
 // Helper to map raw question model to AnswerSection's expected shape (OLD behavior)
 const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => {
@@ -135,6 +136,8 @@ const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => {
     number: q.order,
     correct: q.correctOptions?.map(opt => opt.text).join(', ') || q.correctAnswers?.join(', ') || '',
     userAnswer,
+    transcript: q.transcript,
+    outerContent: q.outerContent,
     status: !userAnswer ? 'unanswered' : q.isCorrect === true ? 'correct' : 'wrong'
   };
 };

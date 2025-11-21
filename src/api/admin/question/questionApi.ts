@@ -1,7 +1,6 @@
 // @src/api/admin/question/questionApi.ts
 
 import apiClient from "@/api/axios";
-import { log } from "console";
 
 interface FileInfoViewModel {
   id: string;
@@ -33,6 +32,7 @@ interface QuestionCategoryViewModel {
 export interface QuestionViewModel {
   id: string;
   prompt: string;
+  transcript: string;
   questionCategory: QuestionCategoryViewModel;
   questionType: QuestionTypeViewModel;
   score: number;
@@ -51,6 +51,7 @@ interface PageResponse<T> {
 
 interface CreateQuestionViewModel {
   prompt: string;
+  transcript: string;
   questionTypeId: string;
   categoryId: string;
   options: Option[];
@@ -61,6 +62,7 @@ interface CreateQuestionViewModel {
 
 interface UpdateQuestionViewModel {
   prompt: string;
+  transcript: string;
   questionTypeId: string;
   categoryId: string;
   options: Option[];
@@ -113,29 +115,27 @@ export const questionApi = {
    */
   getAll: async (filter: QuestionFilter = {}): Promise<ApiResponse<PageResponse<QuestionViewModel>>> => {
     const params = new URLSearchParams();
-    
-    // Add filter parameters if they exist
-    if (filter.questionTypeId) params.append('questionTypeId', filter.questionTypeId);
-    if (filter.categoryId) params.append('categoryId', filter.categoryId);
-    if (filter.minScore !== undefined) params.append('minScore', filter.minScore.toString());
-    if (filter.maxScore !== undefined) params.append('maxScore', filter.maxScore.toString());
-    if (filter.clipNumber !== undefined) params.append('clipNumber', filter.clipNumber.toString());
-    if (filter.prompt) params.append('prompt', filter.prompt);
-    
-    // Add pagination with defaults
-    params.append('page', (filter.page ?? 0).toString());
-    params.append('size', (filter.size ?? 10).toString());
-    
-    // Add sorting with defaults
-    const sortParam = filter.sort 
-      ? (filter.direction === 'desc' ? `${filter.sort},desc` : filter.sort)
-      : 'id,asc';
-    params.append('sort', sortParam);
 
-    const response = await apiClient.get<PageResponse<QuestionViewModel>>(
+    // Add filter parameters if they exist
+    if (filter.questionTypeId) params.append("questionTypeId", filter.questionTypeId);
+    if (filter.categoryId) params.append("categoryId", filter.categoryId);
+    if (filter.minScore !== undefined) params.append("minScore", filter.minScore.toString());
+    if (filter.maxScore !== undefined) params.append("maxScore", filter.maxScore.toString());
+    if (filter.clipNumber !== undefined) params.append("clipNumber", filter.clipNumber.toString());
+    if (filter.prompt) params.append("prompt", filter.prompt);
+
+    // Add pagination with defaults
+    params.append("page", (filter.page ?? 0).toString());
+    params.append("size", (filter.size ?? 10).toString());
+
+    // Add sorting with defaults
+    const sortParam = filter.sort ? (filter.direction === "desc" ? `${filter.sort},desc` : filter.sort) : "id,asc";
+    params.append("sort", sortParam);
+
+    const response = (await apiClient.get<PageResponse<QuestionViewModel>>(
       `${BASE_URL}?${params.toString()}`
-    ) as unknown as ApiResponse<PageResponse<QuestionViewModel>>;
-    
+    )) as unknown as ApiResponse<PageResponse<QuestionViewModel>>;
+
     return response;
   },
 
@@ -146,7 +146,9 @@ export const questionApi = {
    * Get a question by ID
    */
   getById: async (id: string): Promise<ApiResponse<QuestionViewModel>> => {
-    const response = await apiClient.get<QuestionViewModel>(`${BASE_URL}/${id}`) as unknown as ApiResponse<QuestionViewModel>;
+    const response = (await apiClient.get<QuestionViewModel>(
+      `${BASE_URL}/${id}`
+    )) as unknown as ApiResponse<QuestionViewModel>;
     return response;
   },
 
@@ -157,10 +159,12 @@ export const questionApi = {
    * Create a new question
    */
   create: async (createQuestionViewModel: CreateQuestionViewModel): Promise<ApiResponse<QuestionViewModel>> => {
-    const { prompt, questionTypeId, categoryId, options, blankAnswers, audios, score } = createQuestionViewModel;
+    const { prompt, transcript, questionTypeId, categoryId, options, blankAnswers, audios, score } =
+      createQuestionViewModel;
 
     const formData = new FormData();
     formData.append("prompt", prompt);
+    formData.append("transcript", transcript);
     formData.append("questionTypeId", questionTypeId);
     formData.append("categoryId", categoryId);
     formData.append("score", score.toString());
@@ -173,7 +177,7 @@ export const questionApi = {
           return {
             text: o.text,
             correct: o.correct,
-            displayOrder: o.displayOrder
+            displayOrder: o.displayOrder,
           };
         })
       )
@@ -186,7 +190,7 @@ export const questionApi = {
       "blankAnswers",
       JSON.stringify(
         blankAnswers.map((ba) => {
-          return ba.answer
+          return ba.answer;
         })
       )
     );
@@ -200,16 +204,12 @@ export const questionApi = {
       }
     });
 
-    const response = await apiClient.post<QuestionViewModel>(
-      BASE_URL, 
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    ) as unknown as ApiResponse<QuestionViewModel>;
-    
+    const response = (await apiClient.post<QuestionViewModel>(BASE_URL, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })) as unknown as ApiResponse<QuestionViewModel>;
+
     return response;
   },
 
@@ -220,13 +220,24 @@ export const questionApi = {
    * Update an existing question
    */
   update: async (
-    id: string, 
+    id: string,
     updateQuestionViewModel: UpdateQuestionViewModel
   ): Promise<ApiResponse<QuestionViewModel>> => {
-    const { prompt, questionTypeId, categoryId, options, blanks, audios, score, deletedFileIds = [] } = updateQuestionViewModel;
+    const {
+      prompt,
+      transcript,
+      questionTypeId,
+      categoryId,
+      options,
+      blanks,
+      audios,
+      score,
+      deletedFileIds = [],
+    } = updateQuestionViewModel;
 
     const formData = new FormData();
     formData.append("prompt", prompt);
+    formData.append("transcript", transcript);
     formData.append("questionTypeId", questionTypeId);
     formData.append("categoryId", categoryId);
     formData.append("score", score.toString());
@@ -249,7 +260,7 @@ export const questionApi = {
       "blankAnswers",
       JSON.stringify(
         blanks.map((ba) => {
-          return ba
+          return ba;
         })
       )
     );
@@ -268,16 +279,12 @@ export const questionApi = {
       formData.append("deletedAudiosIds", JSON.stringify(deletedFileIds));
     }
 
-    const response = await apiClient.put<QuestionViewModel>(
-      `${BASE_URL}/${id}`, 
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    ) as unknown as ApiResponse<QuestionViewModel>;
-    
+    const response = (await apiClient.put<QuestionViewModel>(`${BASE_URL}/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })) as unknown as ApiResponse<QuestionViewModel>;
+
     return response;
   },
 
@@ -288,7 +295,7 @@ export const questionApi = {
    * Delete a question by ID
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    const response = await apiClient.delete<void>(`${BASE_URL}/${id}`) as unknown as ApiResponse<void>;
+    const response = (await apiClient.delete<void>(`${BASE_URL}/${id}`)) as unknown as ApiResponse<void>;
     return response;
   },
 };

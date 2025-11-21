@@ -1,16 +1,13 @@
 <template>
   <div class="mb-8">
     <h5 v-if="partTitle" class="text-md font-semibold text-gray-900 mb-4">{{ partTitle }}</h5>
-    
+
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
       <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
         <!-- First column -->
         <div class="divide-y divide-gray-200">
-          <div 
-            v-for="answer in firstColumnAnswers"
-            :key="answer.number"
-            class="flex items-center justify-between p-5 hover:bg-gray-50"
-          >
+          <div v-for="answer in firstColumnAnswers" :key="answer.number"
+            class="flex items-center justify-between p-5 hover:bg-gray-50">
             <div class="flex items-center space-x-4">
               <span class="font-bold text-gray-900 min-w-[1.5rem]">{{ answer.number }}</span>
               <div class="flex items-center space-x-2">
@@ -25,12 +22,15 @@
                   <span v-else-if="answer.status === 'wrong'" class="text-sm line-through text-gray-500">
                     {{ answer.userAnswer }}
                   </span>
-                  
-                  <svg v-if="answer.status === 'correct'" class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                  <svg v-if="answer.status === 'correct'" class="w-4 h-4 text-green-600" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  <svg v-else-if="answer.status === 'wrong'" class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  <svg v-else-if="answer.status === 'wrong'" class="w-4 h-4 text-red-600" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
                   </svg>
                   <svg v-else class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
@@ -38,22 +38,17 @@
                 </div>
               </div>
             </div>
-            <button 
-              @click="$emit('question-click', answer)" 
-              class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
+            <button @click="$emit('question-click', answer)"
+              class="text-blue-600 hover:text-blue-800 text-sm font-medium">
               [Chi tiết]
             </button>
           </div>
         </div>
-        
+
         <!-- Second column -->
         <div class="divide-y divide-gray-200">
-          <div 
-            v-for="answer in secondColumnAnswers"
-            :key="answer.number"
-            class="flex items-center justify-between p-5 hover:bg-gray-50"
-          >
+          <div v-for="answer in secondColumnAnswers" :key="answer.number"
+            class="flex items-center justify-between p-5 hover:bg-gray-50">
             <div class="flex items-center space-x-4">
               <span class="font-bold text-gray-900 min-w-[1.5rem]">{{ answer.number }}</span>
               <div class="flex items-center space-x-2">
@@ -68,12 +63,15 @@
                   <span v-else-if="answer.status === 'wrong'" class="text-sm line-through text-gray-500">
                     {{ answer.userAnswer }}
                   </span>
-                  
-                  <svg v-if="answer.status === 'correct'" class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                  <svg v-if="answer.status === 'correct'" class="w-4 h-4 text-green-600" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  <svg v-else-if="answer.status === 'wrong'" class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  <svg v-else-if="answer.status === 'wrong'" class="w-4 h-4 text-red-600" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
                   </svg>
                   <svg v-else class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
@@ -81,10 +79,8 @@
                 </div>
               </div>
             </div>
-            <button 
-              @click="$emit('question-click', answer)" 
-              class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
+            <button @click="$emit('question-click', answer)"
+              class="text-blue-600 hover:text-blue-800 text-sm font-medium">
               [Chi tiết]
             </button>
           </div>
@@ -104,6 +100,8 @@ interface Answer {
   correct: string;
   status: AnswerStatus;
   userAnswer?: string;
+  transcript?: string;
+  outerContent?: string;
   [key: string]: any;
 }
 

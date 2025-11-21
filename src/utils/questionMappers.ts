@@ -1,32 +1,40 @@
-import type { QuestionResultVM } from '@/api/attemptResultApi';
+import type { QuestionResultVM, OptionResultVM } from "@/api/attemptResultApi";
 
 export type ModalQuestion = {
-  context: string,
+  context: string;
   number: number;
-  status: 'correct' | 'wrong' | 'unanswered';
+  status: "correct" | "wrong" | "unanswered";
+  // For text answers this is the user's input, for options it's a comma joined string
   userAnswer: string | null;
+  // Human readable single-line correct summary (kept for compatibility)
   correct: string;
+  // Full shapes for richer rendering in the modal
+  options?: OptionResultVM[];
+  correctOptions?: OptionResultVM[];
+  correctAnswers?: string[];
+  // Selected options (full objects) for easier rendering
+  selectedOptions?: OptionResultVM[];
+  transcript?: string;
+  outerContent?: string;
 };
 
 export const mapQuestionForModal = (question: QuestionResultVM): ModalQuestion => {
-  const selectedOptions = question.options
-    ?.filter(opt => opt.selected)
-    .map(opt => opt.text)
-    .join(', ') || '';
-
-  const userAnswer = selectedOptions || question.userAnswer || null;
+  const selectedObjs = question.options?.filter((opt) => opt.selected) || [];
+  const selectedOptionsText = selectedObjs.map((o) => o.text).join(", ");
+  const userAnswer = selectedOptionsText || question.userAnswer || null;
 
   return {
-    context: question.context || '',
+    context: question.context || "",
     number: question.order,
-    status: !userAnswer
-      ? 'unanswered'
-      : question.isCorrect === true
-        ? 'correct'
-        : 'wrong',
+    status: !userAnswer ? "unanswered" : question.isCorrect === true ? "correct" : "wrong",
     userAnswer,
-    correct: question.correctOptions?.map(opt => opt.text).join(', ') ||
-             question.correctAnswers?.join(', ') || ''
+    correct: question.correctOptions?.map((opt) => opt.text).join(", ") || question.correctAnswers?.join(", ") || "",
+    options: question.options || [],
+    correctOptions: question.correctOptions || [],
+    correctAnswers: question.correctAnswers || [],
+    selectedOptions: selectedObjs,
+    transcript: question.transcript,
+    outerContent: question.outerContent,
   };
 };
 
@@ -41,9 +49,18 @@ export type MinimalAnalysisQuestion = {
 
 // Map question to a lightweight display shape for AnalysisTabs
 export const mapQuestionForDisplay = (question: MinimalAnalysisQuestion): ModalQuestion => ({
-  context: '',
+  context: "",
   number: question.order,
-  status: question.isCorrect === null ? 'unanswered' : question.isCorrect ? 'correct' : 'wrong',
+  status: question.isCorrect === null ? "unanswered" : question.isCorrect ? "correct" : "wrong",
   userAnswer: question.userAnswer,
-  correct: question.correctOptions?.[0]?.text || question.correctAnswers?.[0] || ''
+  correct: question.correctOptions?.[0]?.text || question.correctAnswers?.[0] || "",
+  // Convert minimal correctOptions shape to OptionResultVM-like objects for consistent rendering
+  options: question.correctOptions
+    ? question.correctOptions.map((o) => ({ id: "", text: o.text, selected: false, isCorrect: true }))
+    : undefined,
+  correctOptions: question.correctOptions
+    ? question.correctOptions.map((o) => ({ id: "", text: o.text, selected: false, isCorrect: true }))
+    : undefined,
+  correctAnswers: question.correctAnswers || undefined,
+  selectedOptions: [],
 });

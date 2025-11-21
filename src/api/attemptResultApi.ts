@@ -69,8 +69,10 @@ export interface QuestionResultVM {
   context?: string;
   /** Explanation for the correct answer */
   explanation?: string;
-  /** Transcript for audio/video questions */
+  /** Transcript (audio URL) for audio/video questions */
   transcript?: string;
+  /** Outer content (description) of the parent question set if this question belongs to one */
+  outerContent?: string;
   /** Indicates if the user's answer is correct */
   isCorrect?: boolean;
   /** List of correct options for multiple-choice questions */
@@ -137,7 +139,9 @@ export const getTestInfo = async (attemptId: string): Promise<ApiResponse<TestIn
 /**
  * Get all answers for a specific test attempt
  * @param attemptId - The ID of the specific attempt
- * @returns Promise containing the test answers with questions and selected options
+ * @returns Promise containing the test answers with questions and selected options, including:
+ *          - Transcription (audio URL) for audio/video questions
+ *          - Outer content (question set description) if question belongs to a question set
  */
 export const getTestAnswers = async (attemptId: string): Promise<ApiResponse<AnswerResultVM>> => {
   return apiClient.get(`/attempts/${attemptId}/answers`);

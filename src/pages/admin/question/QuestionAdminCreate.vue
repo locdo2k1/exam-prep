@@ -13,6 +13,15 @@
             class="dark:bg-gray-900 dark:border-gray-700" />
         </div>
 
+        <!-- Question Transcript -->
+        <div class="mb-4.5">
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+            Question Transcript
+          </label>
+          <Editor v-model="question.transcript" placeholder="Write the transcript for this question..."
+            class="dark:bg-gray-900 dark:border-gray-700" />
+        </div>
+
         <!-- Question Type and Category -->
         <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-4.5">
           <div class="grid grid-cols-2 gap-6">
@@ -45,16 +54,10 @@
               <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                 Category
               </label>
-              <SearchableSelect 
-                v-model="question.category"
-                :options="questionCategories.map(c => ({ value: c.id, label: c.name }))"
-                :loading="loadingCategories"
-                :has-more="hasMoreCategories"
-                placeholder="Search categories..."
-                @search="handleCategorySearch"
-                @load-more="handleLoadMore"
-                @select="handleCategorySelect"
-              />
+              <SearchableSelect v-model="question.category"
+                :options="questionCategories.map(c => ({ value: c.id, label: c.name }))" :loading="loadingCategories"
+                :has-more="hasMoreCategories" placeholder="Search categories..." @search="handleCategorySearch"
+                @load-more="handleLoadMore" @select="handleCategorySelect" />
             </div>
           </div>
           <!-- the multiple choice options section -->
@@ -70,7 +73,8 @@
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div
                   class="flex w-full items-start gap-3 rounded-lg border p-4 shadow-sm bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700">
-                  <div class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <div
+                    class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {{ index + 1 }}
                   </div>
                   <!-- Left Side: Checkbox + Delete -->
@@ -131,7 +135,8 @@
               <div v-for="(option, index) in question.options" :key="option.id" class="flex items-center gap-3">
                 <div
                   class="flex w-full items-start gap-3 rounded-lg border p-4 shadow-sm bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700">
-                  <div class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <div
+                    class="flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {{ index + 1 }}
                   </div>
                   <div class="flex flex-col items-center gap-3 pt-1">
@@ -172,7 +177,8 @@
             </button>
           </div>
           <!-- the fill-in blank section -->
-          <div v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.FILL_IN_THE_BLANK"
+          <div
+            v-if="questionTypes.find(type => type.value === question.type)?.label === QUESTION_TYPES.FILL_IN_THE_BLANK"
             class="space-y-4">
             <h5 class="text-sm font-medium text-gray-700 dark:text-gray-400">Fill in the blank answers</h5>
 
@@ -257,7 +263,6 @@
 import { ref, watch, onMounted } from 'vue'
 import PageBreadcrumb from '@/components/admin/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/admin/common/ComponentCard.vue'
-import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
 import AudioUploader from '@/components/admin/forms/DropnDrapElements/AudioUploader.vue'
 import { questionCategoryApi } from '@/api/admin/question-category/questionCategoryApi'
@@ -272,6 +277,7 @@ const toast = useToast()
 
 const question = ref({
   prompt: '', // This will store the editor content
+  transcript: '', // Question transcript
   type: '',
   category: '',
   clipNumber: '',
@@ -299,6 +305,7 @@ const loadingQuestionTypes = ref(false)
 
 const validationErrors = ref({
   prompt: '',
+  transcript: '',
   type: '',
   category: '',
   options: '',
@@ -405,11 +412,11 @@ const fetchQuestionTypes = async () => {
       sort: 'name',
       direction: 'asc'
     })
-    
+
     if (!success) {
       throw new Error(message || 'Failed to fetch question types')
     }
-    
+
     if (!responseData || !Array.isArray(responseData.content)) {
       throw new Error('Invalid response format from server')
     }
@@ -418,7 +425,7 @@ const fetchQuestionTypes = async () => {
       value: type.id,
       label: type.name
     }))
-    
+
   } catch (error) {
     console.error('Error fetching question types:', error)
     toast.error(error.message || 'Failed to fetch question types', {
@@ -452,6 +459,7 @@ const validateForm = () => {
   // Reset all validation errors
   validationErrors.value = {
     prompt: '',
+    transcript: '',
     type: '',
     category: '',
     options: '',
@@ -549,6 +557,7 @@ const saveQuestion = async () => {
   try {
     const createQuestionViewModel = {
       prompt: question.value.prompt,
+      transcript: question.value.transcript,
       questionTypeId: question.value.type,
       categoryId: question.value.category,
       options: (question.value.options || []).map((o, i) => ({
@@ -638,7 +647,7 @@ const handleAudioUploadError = (error) => {
 
 const fetchQuestionCategories = async (isLoadMore = false) => {
   if (loadingCategories.value) return
-  
+
   loadingCategories.value = true
   try {
     const { data: responseData, success, message } = await questionCategoryApi.getAll({
@@ -648,7 +657,7 @@ const fetchQuestionCategories = async (isLoadMore = false) => {
       sort: 'name',
       direction: 'asc'
     })
-    
+
     if (!success) {
       throw new Error(message || 'Failed to fetch categories')
     }
@@ -658,7 +667,7 @@ const fetchQuestionCategories = async (isLoadMore = false) => {
     }
 
     const categories = responseData.content || []
-    
+
     if (isLoadMore) {
       // Append new categories when loading more
       questionCategories.value = [...questionCategories.value, ...categories]
@@ -666,9 +675,9 @@ const fetchQuestionCategories = async (isLoadMore = false) => {
       // Replace categories when searching or first load
       questionCategories.value = categories
     }
-    
+
     // Check if there are more items to load
-    hasMoreCategories.value = responseData.totalPages 
+    hasMoreCategories.value = responseData.totalPages
       ? (currentCategoryPage.value + 1) < responseData.totalPages
       : false
   } catch (error) {
@@ -677,7 +686,7 @@ const fetchQuestionCategories = async (isLoadMore = false) => {
       timeout: 3000,
       position: 'top-right'
     })
-    
+
     // Reset to previous page if loading more fails
     if (isLoadMore && currentCategoryPage.value > 0) {
       currentCategoryPage.value--
@@ -695,7 +704,7 @@ const handleCategorySearch = async (query) => {
 
 const handleLoadMore = async () => {
   if (!hasMoreCategories.value || loadingCategories.value) return
-  
+
   currentCategoryPage.value++
   await fetchQuestionCategories(true)
 }
