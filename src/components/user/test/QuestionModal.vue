@@ -21,6 +21,22 @@
       <div class="p-6">
         <slot>
           <div v-if="question" class="space-y-6">
+            <!-- 1. Audio Players -->
+            <div v-if="hasAudio" class="space-y-3">
+              <div class="flex items-center gap-2 mb-3">
+                <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z">
+                  </path>
+                </svg>
+                <h4 class="font-semibold text-indigo-900">Audio</h4>
+              </div>
+              <div v-for="(audio, index) in question.questionAudios" :key="index"
+                class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200 p-4">
+                <AudioPlayer :audio-url="audio.fileUrl" />
+              </div>
+            </div>
+
             <!-- 2. Outer Content (Context/Passage) -->
             <div v-if="question.outerContent"
               class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 p-6 shadow-sm">
@@ -58,7 +74,23 @@
 
             <!-- 5. User Answer vs Correct Answer -->
             <!-- For Multiple Choice and Single Choice -->
-            <div v-if="question.options && question.options.length > 0" class="space-y-4">
+            <div v-if="!isFillInBlank && question.options && question.options.length > 0" class="space-y-4">
+              <!-- Question Type Badge -->
+              <div class="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200 w-fit">
+                <svg v-if="isMultipleChoice" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <svg v-else class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+                  <circle cx="12" cy="12" r="5" />
+                </svg>
+                <span class="text-blue-800 text-sm font-semibold">
+                  {{ isMultipleChoice ? 'Chọn nhiều đáp án' : 'Chọn một đáp án' }}
+                </span>
+              </div>
+
               <div class="grid grid-cols-2 gap-4">
                 <!-- User Answer -->
                 <div class="bg-indigo-50 rounded-xl border-2 border-indigo-200 p-4">
@@ -124,17 +156,60 @@
                         ? 'bg-red-50 border-red-300'
                         : 'bg-gray-50 border-gray-200'
                   ]">
-                    <div class="flex items-start gap-2">
-                      <div :class="[
-                        'w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0',
-                        isOptionCorrect(index)
-                          ? 'bg-green-500 text-white'
-                          : isUserAnswerWrong(index)
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-400 text-white'
-                      ]" aria-hidden="true"></div>
+                    <div class="flex items-start gap-3">
+                      <!-- Visual indicator based on question type -->
+                      <div class="flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <!-- Multiple Choice - Checkbox style -->
+                        <div v-if="isMultipleChoice" :class="[
+                          'w-5 h-5 border-2 rounded flex items-center justify-center',
+                          isOptionCorrect(index)
+                            ? 'bg-green-500 border-green-500'
+                            : isUserAnswerWrong(index)
+                              ? 'bg-red-500 border-red-500'
+                              : 'bg-white border-gray-400'
+                        ]">
+                          <svg v-if="isOptionCorrect(index) || isUserAnswerWrong(index)" class="w-3 h-3 text-white"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7">
+                            </path>
+                          </svg>
+                        </div>
+                        <!-- Single Choice - Radio button style -->
+                        <div v-else :class="[
+                          'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                          isOptionCorrect(index)
+                            ? 'border-green-500'
+                            : isUserAnswerWrong(index)
+                              ? 'border-red-500'
+                              : 'border-gray-400'
+                        ]">
+                          <div v-if="isOptionCorrect(index) || isUserAnswerWrong(index)" :class="[
+                            'w-3 h-3 rounded-full',
+                            isOptionCorrect(index) ? 'bg-green-500' : 'bg-red-500'
+                          ]"></div>
+                        </div>
+                      </div>
+
+                      <!-- Option Text with Status -->
                       <div class="flex-1">
-                        <p class="text-gray-800 text-sm">{{ option.text }}</p>
+                        <div class="flex items-start justify-between gap-2">
+                          <p class="text-gray-800 text-sm flex-1">{{ option.text }}</p>
+                          <!-- Status Icons -->
+                          <div class="flex-shrink-0">
+                            <svg v-if="isOptionCorrect(index)" class="w-5 h-5 text-green-600" fill="currentColor"
+                              viewBox="0 0 20 20">
+                              <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd"></path>
+                            </svg>
+                            <svg v-else-if="isUserAnswerWrong(index)" class="w-5 h-5 text-red-600" fill="currentColor"
+                              viewBox="0 0 20 20">
+                              <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd"></path>
+                            </svg>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -143,7 +218,17 @@
             </div>
 
             <!-- For Fill in the Blank -->
-            <div v-else-if="question.type === 'FILL_IN_THE_BLANK' || !question.options" class="space-y-4">
+            <div v-else-if="isFillInBlank" class="space-y-4">
+              <!-- Question Type Badge -->
+              <div class="flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-lg border border-purple-200 w-fit">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                  </path>
+                </svg>
+                <span class="text-purple-800 text-sm font-semibold">Điền vào chỗ trống</span>
+              </div>
+
               <div class="grid grid-cols-2 gap-4">
                 <!-- User Answer -->
                 <div class="bg-indigo-50 rounded-xl border-2 border-indigo-200 p-4">
@@ -176,8 +261,23 @@
                     </svg>
                     <h5 class="font-semibold text-green-900 text-sm">Đáp án đúng</h5>
                   </div>
-                  <div class="p-3 bg-white rounded-lg border border-green-200">
-                    <p class="text-green-600 text-sm font-medium">{{ question.correctAnswer || question.answer }}</p>
+                  <div class="space-y-2">
+                    <!-- Display multiple correct answers if available -->
+                    <template v-if="question.correctAnswers && question.correctAnswers.length > 0">
+                      <div v-for="(answer, idx) in question.correctAnswers" :key="idx"
+                        class="p-3 bg-white rounded-lg border border-green-200">
+                        <p class="text-green-600 text-sm font-medium">{{ answer }}</p>
+                      </div>
+                    </template>
+                    <!-- Fallback to single correct answer fields -->
+                    <div v-else-if="question.correctAnswer || question.correct"
+                      class="p-3 bg-white rounded-lg border border-green-200">
+                      <p class="text-green-600 text-sm font-medium">{{ question.correctAnswer || question.correct }}</p>
+                    </div>
+                    <!-- No answer available -->
+                    <div v-else class="p-3 bg-white rounded-lg border border-green-200">
+                      <p class="text-gray-500 text-sm italic">Không có đáp án</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -193,7 +293,7 @@
                       d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z">
                     </path>
                   </svg>
-                  <span class="font-semibold text-cyan-900">Bản ghi âm / Transcript</span>
+                  <span class="font-semibold text-cyan-900">Transcript</span>
                 </div>
                 <svg :class="['w-5 h-5 text-cyan-600 transition-transform', showTranscript ? 'rotate-180' : '']"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,7 +330,9 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, ref } from 'vue';
+import { defineProps, defineEmits, ref, computed } from 'vue';
+import AudioPlayer from './AudioPlayer.vue';
+import { QUESTION_TYPES } from '@/constants/question.constants';
 
 const props = defineProps({
   show: {
@@ -249,6 +351,28 @@ const showTranscript = ref(false);
 const close = () => {
   emit('close');
 };
+
+// Check if question has audio files
+const hasAudio = computed(() => {
+  return props.question?.questionAudios && props.question.questionAudios.length > 0;
+});
+
+// Determine question type
+const questionType = computed(() => {
+  if (props.question?.questionType) {
+    return props.question.questionType;
+  }
+  // Infer type from data structure
+  if (props.question?.options && props.question.options.length > 0) {
+    const hasMultipleCorrect = props.question.correctOptions?.length > 1;
+    return hasMultipleCorrect ? QUESTION_TYPES.MULTIPLE_CHOICE : QUESTION_TYPES.SINGLE_CHOICE;
+  }
+  return QUESTION_TYPES.FILL_IN_THE_BLANK;
+});
+
+const isFillInBlank = computed(() => questionType.value === QUESTION_TYPES.FILL_IN_THE_BLANK);
+const isSingleChoice = computed(() => questionType.value === QUESTION_TYPES.SINGLE_CHOICE);
+const isMultipleChoice = computed(() => questionType.value === QUESTION_TYPES.MULTIPLE_CHOICE);
 
 const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {

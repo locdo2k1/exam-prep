@@ -1,4 +1,4 @@
-import type { QuestionResultVM, OptionResultVM } from "@/api/attemptResultApi";
+import type { QuestionResultVM, OptionResultVM, QuestionAudioVM } from "@/api/attemptResultApi";
 
 export type ModalQuestion = {
   context: string;
@@ -16,6 +16,11 @@ export type ModalQuestion = {
   selectedOptions?: OptionResultVM[];
   transcript?: string;
   outerContent?: string;
+  explanation?: string;
+  // Audio files associated with the question
+  questionAudios?: QuestionAudioVM[];
+  // Question type for determining how to display options
+  questionType?: string;
 };
 
 export const mapQuestionForModal = (question: QuestionResultVM): ModalQuestion => {
@@ -35,6 +40,9 @@ export const mapQuestionForModal = (question: QuestionResultVM): ModalQuestion =
     selectedOptions: selectedObjs,
     transcript: question.transcript,
     outerContent: question.outerContent,
+    explanation: question.explanation,
+    questionAudios: question.questionAudios || [],
+    questionType: (question as any).questionType,
   };
 };
 

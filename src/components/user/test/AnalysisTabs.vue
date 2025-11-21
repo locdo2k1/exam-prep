@@ -93,6 +93,7 @@ interface Question {
   context: string;
   explanation: string | null;
   transcript: string | null;
+  outerContent?: string;
   isCorrect: boolean | null;
   correctOptions: Array<{
     id: string;
@@ -109,6 +110,13 @@ interface Question {
     selected: boolean;
   }>;
   questionCategories: string[];
+  questionAudios?: Array<{
+    id: string;
+    fileUrl: string;
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+  }>;
 }
 
 interface Category {
@@ -127,11 +135,13 @@ interface Part {
 }
 
 interface OverallAnalysis {
-  partName: string;
+  categoryName?: string;
+  partName?: string;
   correctNumber: number;
   incorrectNumber: number;
   skipNumber: number;
   accuracy: number;
+  questions?: Question[];
 }
 
 interface Props {

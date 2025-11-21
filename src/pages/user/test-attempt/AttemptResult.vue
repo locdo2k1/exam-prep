@@ -126,18 +126,20 @@ const currentAnalysisData = computed(() => {
 });
 
 // Answer item shape expected by AnswerSection
-type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string; transcript?: string; outerContent?: string };
+type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string | null; transcript?: string; outerContent?: string; explanation?: string; questionAudios?: any[] };
 
 // Helper to map raw question model to AnswerSection's expected shape (OLD behavior)
 const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => {
   const selectedOptions = q.options?.filter(opt => opt.selected).map(opt => opt.text).join(', ') || '';
-  const userAnswer = selectedOptions || q.userAnswer || undefined;
+  const userAnswer = selectedOptions || q.userAnswer || null;
   return {
     number: q.order,
     correct: q.correctOptions?.map(opt => opt.text).join(', ') || q.correctAnswers?.join(', ') || '',
     userAnswer,
     transcript: q.transcript,
     outerContent: q.outerContent,
+    explanation: q.explanation,
+    questionAudios: q.questionAudios || [],
     status: !userAnswer ? 'unanswered' : q.isCorrect === true ? 'correct' : 'wrong'
   };
 };

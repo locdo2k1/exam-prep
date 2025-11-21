@@ -99,9 +99,11 @@ interface Answer {
   number: number;
   correct: string;
   status: AnswerStatus;
-  userAnswer?: string;
+  userAnswer?: string | null;
   transcript?: string;
   outerContent?: string;
+  explanation?: string;
+  questionAudios?: any[];
   [key: string]: any;
 }
 

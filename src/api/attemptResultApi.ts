@@ -62,6 +62,19 @@ export interface OptionResultVM {
   isCorrect: boolean;
 }
 
+export interface QuestionAudioVM {
+  /** ID of the audio file */
+  id: string;
+  /** URL to access the audio file */
+  fileUrl: string;
+  /** Name of the audio file */
+  fileName: string;
+  /** Size of the audio file in bytes */
+  fileSize: number;
+  /** MIME type of the audio file */
+  fileType: string;
+}
+
 export interface QuestionResultVM {
   /** Order of the question in the test */
   order: number;
@@ -85,6 +98,8 @@ export interface QuestionResultVM {
   options?: OptionResultVM[];
   /** List of categories this question belongs to */
   questionCategories?: string[];
+  /** List of audio files associated with this question */
+  questionAudios?: QuestionAudioVM[];
 }
 
 export interface AnalysisQuesCategory {
@@ -141,6 +156,7 @@ export const getTestInfo = async (attemptId: string): Promise<ApiResponse<TestIn
  * @param attemptId - The ID of the specific attempt
  * @returns Promise containing the test answers with questions and selected options, including:
  *          - Transcription (audio URL) for audio/video questions
+ *          - Question audio files (with URLs generated similar to practice tests)
  *          - Outer content (question set description) if question belongs to a question set
  */
 export const getTestAnswers = async (attemptId: string): Promise<ApiResponse<AnswerResultVM>> => {
