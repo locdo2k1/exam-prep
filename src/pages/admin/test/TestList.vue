@@ -189,12 +189,61 @@
       </DataTable>
     </div>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  <ConfirmationModal :show="showDeleteModal" title="Delete Test"
+    :message="`Are you sure you want to delete test &quot;${testToDelete?.name}&quot;? This action cannot be undone.`"
+    confirm-text="Delete" cancel-text="Cancel" :processing="isDeleting" @confirm="confirmDelete"
+    @cancel="cancelDelete" />
+
+  <!-- Success/Error Toast Notification -->
+  <Transition enter-active-class="transition ease-out duration-300" enter-from-class="translate-y-2 opacity-0"
+    enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-200"
+    leave-from-class="translate-y-0 opacity-100" leave-to-class="translate-y-2 opacity-0">
+    <div v-if="toast.show"
+      class="fixed top-4 right-4 z-[9999] max-w-md w-full bg-white dark:bg-gray-800 shadow-xl rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+      <div class="p-4">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg v-if="toast.type === 'success'" class="h-6 w-6 text-green-400" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <svg v-else class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-3 w-0 flex-1 pt-0.5">
+            <p class="text-sm font-medium text-gray-900 dark:text-white">
+              {{ toast.title }}
+            </p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ toast.message }}
+            </p>
+          </div>
+          <div class="ml-4 flex flex-shrink-0">
+            <button @click="toast.show = false"
+              class="inline-flex rounded-md bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              <span class="sr-only">Close</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import DataTable from '@/components/DataTable.vue';
-import { getAllTestsSimple, TestVMSimple } from '@/api/admin/test/testApi';
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
+import { getAllTestsSimple, TestVMSimple, deleteTest } from '@/api/admin/test/testApi';
 import debounce from 'lodash/debounce';
 
 const tests = ref<TestVMSimple[]>([]);
@@ -203,6 +252,26 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const loading = ref(false);
 const searchQuery = ref('');
+
+// Delete modal state
+const showDeleteModal = ref(false);
+const testToDelete = ref<TestVMSimple | null>(null);
+const isDeleting = ref(false);
+
+// Toast notification state
+const toast = ref({
+  show: false,
+  type: 'success' as 'success' | 'error',
+  title: '',
+  message: ''
+});
+
+const showToast = (type: 'success' | 'error', title: string, message: string) => {
+  toast.value = { show: true, type, title, message };
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 5000);
+};
 
 const debouncedFetch = debounce((query: string) => {
   fetchTests(1, query);
@@ -223,16 +292,48 @@ const handlePreview = (test: TestVMSimple) => {
   window.location.href = `/admin/tests/preview/${test.id}`;
 };
 
-const handleDelete = async (test: TestVMSimple) => {
-  if (confirm(`Are you sure you want to delete test "${test.name}"?`)) {
-    // Add your delete API call here
-    try {
-      // await deleteTest(test.id);
-      await fetchTests(currentPage.value);
-    } catch {
-      // Handle error silently or show notification
-      console.error('Error deleting test');
+const handleDelete = (test: TestVMSimple) => {
+  testToDelete.value = test;
+  showDeleteModal.value = true;
+};
+
+const cancelDelete = () => {
+  showDeleteModal.value = false;
+  testToDelete.value = null;
+};
+
+const confirmDelete = async () => {
+  if (!testToDelete.value) return;
+
+  isDeleting.value = true;
+  const testName = testToDelete.value.name;
+  const testId = testToDelete.value.id;
+
+  try {
+    const response = await deleteTest(testId);
+
+    if (response.success) {
+      showToast('success', 'Test Deleted', `Test "${testName}" has been deleted successfully.`);
+
+      // Close modal
+      showDeleteModal.value = false;
+      testToDelete.value = null;
+
+      // If we're on the last page and delete the last item, go to previous page
+      if (tests.value.length === 1 && currentPage.value > 1) {
+        await fetchTests(currentPage.value - 1);
+      } else {
+        await fetchTests(currentPage.value);
+      }
+    } else {
+      showToast('error', 'Delete Failed', response.message || 'Unknown error occurred');
     }
+  } catch (error: any) {
+    const errorMessage = error?.data?.message || error?.message || 'An unexpected error occurred while deleting the test';
+    showToast('error', 'Delete Failed', errorMessage);
+    console.error('Error deleting test:', error);
+  } finally {
+    isDeleting.value = false;
   }
 };
 

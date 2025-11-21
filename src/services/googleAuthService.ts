@@ -76,6 +76,8 @@ export function useGoogleAuth(clientId: string) {
 
                   if (tokenResponse) {
                     localStorage.setItem("token", tokenResponse.data);
+                    // Dispatch auth-changed event to update UI components
+                    window.dispatchEvent(new Event("auth-changed"));
                     router.push(redirectUrl);
                   }
                 })

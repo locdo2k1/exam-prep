@@ -53,7 +53,7 @@ const routes = [
          {
             path: '',
             name: 'home',
-            component: Home,
+            component: WelcomePage,
             meta: { requiresAuth: true },
          },
          {
@@ -154,7 +154,7 @@ const routes = [
       children: [
          {
             path: '',
-            redirect: '/admin/question-bank/questions',
+            redirect: '/admin/tests',
             meta: { requiresAuth: true },
          },
          // Tests section

@@ -17,7 +17,7 @@ export interface Question {
   options?: QuestionOption[];
   correctAnswer?: string | string[];
   category: string; // Required with default value
-  difficulty: 'easy' | 'medium' | 'hard'; // Made required with default value
+  difficulty: "easy" | "medium" | "hard"; // Made required with default value
   duration: number; // Made required with default value
   explanation: string; // Made required with default value
   tags: string[]; // Made required with default value
@@ -50,7 +50,7 @@ export interface TestPart {
   duration: number;
   questions: Question[];
   questionSets?: QuestionSet[];
-  listQuestionAndQuestionSet: Array<Question | QuestionSet>,
+  listQuestionAndQuestionSet: Array<Question | QuestionSet>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -78,6 +78,7 @@ export interface TestVM {
   listPart: TestPart[];
   listQuestionAndQuestionSet: Array<Question | QuestionSet>;
   files?: File[];
+  audioFile?: File | null;
   title?: string; // For backward compatibility
   testCategoryId?: string; // For backward compatibility
   skillIds?: string[]; // For backward compatibility

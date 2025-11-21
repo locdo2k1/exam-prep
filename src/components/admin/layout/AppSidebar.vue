@@ -219,11 +219,6 @@ const menuGroups: MenuGroup[] = [
             path: "/admin/tests/create"
           }
         ]
-      },
-      {
-        icon: StaredIcon,
-        name: "Certificates",
-        path: "/certificate"
       }
     ]
   },
@@ -257,51 +252,6 @@ const menuGroups: MenuGroup[] = [
             path: "/admin/question-bank/questions/create"
           },
         ]
-      }
-    ]
-  },
-  {
-    title: "Dashboard",
-    items: [
-      {
-        icon: GridIcon,
-        name: "Overview",
-        path: "/dashboard"
-      }
-    ]
-  },
-  {
-    title: "User Management",
-    items: [
-      {
-        icon: UserCircleIcon,
-        name: "User Profiles",
-        path: "/profile"
-      }
-    ]
-  },
-  {
-    title: "Examination",
-    items: [
-      {
-        icon: ListIcon,
-        name: "Test Exams",
-        subItems: [
-          {
-            name: "Test List",
-            path: "/admin/tests"
-          },
-          {
-            name: "Create Test",
-            path: "/admin/tests/create"
-          }
-          // Edit Test is not shown here, as it's a contextual route
-        ]
-      },
-      {
-        icon: StaredIcon,
-        name: "Certificates",
-        path: "/certificate"
       }
     ]
   },

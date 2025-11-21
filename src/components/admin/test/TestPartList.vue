@@ -309,6 +309,46 @@ const removeQuestion = (index) => {
   // Remove the item from listQuestionAndQuestionSet
   currentPart.listQuestionAndQuestionSet.splice(index, 1);
 
+  // Renumber all parts globally with continuous numbering
+  let globalOrder = 1;
+  newParts.forEach((part) => {
+    if (!part.listQuestionAndQuestionSet) return;
+
+    part.listQuestionAndQuestionSet = part.listQuestionAndQuestionSet.map((item) => {
+      if ('questions' in item) {
+        // Question set: assign order to the set and its questions
+        const questionSetOrder = globalOrder;
+        const reorderedQuestions = item.questions?.map((q) => {
+          const questionOrder = globalOrder;
+          globalOrder++;
+          return {
+            ...q,
+            order: questionOrder
+          };
+        });
+        return {
+          ...item,
+          order: questionSetOrder,
+          questions: reorderedQuestions
+        };
+      }
+      // Regular question
+      const questionOrder = globalOrder;
+      globalOrder++;
+      return {
+        ...item,
+        order: questionOrder
+      };
+    });
+
+    // Also update the questions array to maintain consistency
+    if (part.questions) {
+      part.questions = part.listQuestionAndQuestionSet
+        .filter(item => !('questions' in item))
+        .map(q => ({ ...q }));
+    }
+  });
+
   // Update the model value
   emit('update:modelValue', newParts);
 
@@ -316,12 +356,6 @@ const removeQuestion = (index) => {
   if (selectedQuestion.value === index) {
     selectedQuestion.value = null;
   }
-
-  // Show success message
-  emit('show-toast', {
-    message: 'Item removed successfully',
-    type: 'success'
-  });
 };
 
 // Initialize part names when parts change
