@@ -1,0 +1,343 @@
+<template>
+   <div>
+      <!-- Stats Bar -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+         <div
+            class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
+            <div class="flex items-center justify-between">
+               <div>
+                  <p class="text-sm font-medium text-blue-600 dark:text-blue-300">Total Types</p>
+                  <p class="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">{{ totalElements }}</p>
+               </div>
+               <div class="text-4xl opacity-20">📋</div>
+            </div>
+         </div>
+         <div
+            class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-6 border border-green-200 dark:border-green-700">
+            <div class="flex items-center justify-between">
+               <div>
+                  <p class="text-sm font-medium text-green-600 dark:text-green-300">Current Page</p>
+                  <p class="text-2xl font-bold text-green-900 dark:text-green-100 mt-1">{{ currentPage }} / {{
+                     Math.ceil(totalElements / pageSize) || 1 }}</p>
+               </div>
+               <div class="text-4xl opacity-20">📄</div>
+            </div>
+         </div>
+         <div
+            class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-6 border border-purple-200 dark:border-purple-700">
+            <div class="flex items-center justify-between">
+               <div>
+                  <p class="text-sm font-medium text-purple-600 dark:text-purple-300">Per Page</p>
+                  <p class="text-2xl font-bold text-purple-900 dark:text-purple-100 mt-1">{{ pageSize }}</p>
+               </div>
+               <div class="text-4xl opacity-20">⚙️</div>
+            </div>
+         </div>
+      </div>
+
+      <!-- Header with Create Button -->
+      <div class="flex justify-between items-center mb-6">
+         <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Question Types</h2>
+         <button @click="openCreateModal"
+            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+               </path>
+            </svg>
+            Create New Type
+         </button>
+      </div>
+
+      <!-- Data Table -->
+      <div
+         class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden p-6">
+         <DataTable :columns="columns" :data="questionTypes" :server-side-pagination="true" :total-items="totalElements"
+            :current-page="currentPage" :per-page="pageSize" :loading="loading" :searchable="true"
+            search-placeholder="🔍 Search question types..."
+            td-class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 break-words" @page-change="fetchQuestionTypes"
+            @search="handleSearch">
+            <template #cell-name="{ value }">
+               <div class="flex items-center space-x-3">
+                  <div class="flex-shrink-0">
+                     <div
+                        class="flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                           </path>
+                        </svg>
+                     </div>
+                  </div>
+                  <span class="font-semibold text-gray-900 dark:text-white">{{ value }}</span>
+               </div>
+            </template>
+
+            <template #cell-code="{ value }">
+               <span
+                  class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">{{
+                  value }}</span>
+            </template>
+
+            <template #cell-actions="{ row }">
+               <div class="flex items-center gap-2">
+                  <button @click="openEditModal(row)"
+                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors">
+                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                     </svg>
+                     Edit
+                  </button>
+                  <button @click="handleDelete(row)"
+                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors">
+                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                     </svg>
+                     Delete
+                  </button>
+               </div>
+            </template>
+         </DataTable>
+      </div>
+
+      <!-- Create/Edit Modal -->
+      <Transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0"
+         enter-to-class="opacity-100" leave-active-class="transition ease-in duration-200"
+         leave-from-class="opacity-100" leave-to-class="opacity-0">
+         <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div @click.self="closeModal" class="w-full h-full absolute inset-0"></div>
+            <div
+               class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full relative z-10 transform transition-all">
+               <div class="p-6">
+                  <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                     {{ isEditing ? 'Edit Question Type' : 'Create Question Type' }}
+                  </h3>
+
+                  <form @submit.prevent="handleSubmit" class="space-y-4">
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                           Name <span class="text-red-500">*</span>
+                        </label>
+                        <input v-model="formData.name" type="text" required
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                           placeholder="Enter type name" />
+                     </div>
+
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                           Code <span class="text-red-500">*</span>
+                        </label>
+                        <input v-model="formData.code" type="text" required
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono"
+                           placeholder="Enter type code (e.g., MULTIPLE_CHOICE)" />
+                     </div>
+
+                     <div class="flex justify-end gap-3 mt-6">
+                        <button type="button" @click="closeModal"
+                           class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                           Cancel
+                        </button>
+                        <button type="submit" :disabled="isSaving"
+                           class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                           {{ isSaving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+                        </button>
+                     </div>
+                  </form>
+               </div>
+            </div>
+         </div>
+      </Transition>
+
+      <!-- Delete Confirmation Modal -->
+      <ConfirmationModal :show="showDeleteModal" title="Delete Question Type"
+         :message="`Are you sure you want to delete the question type '${itemToDelete?.name}'?\nThis action cannot be undone.`"
+         confirm-text="Delete" cancel-text="Cancel" :processing="isDeleting" @confirm="confirmDelete"
+         @cancel="cancelDelete" />
+
+      <!-- Toast Notification -->
+      <Transition enter-active-class="transition ease-out duration-300" enter-from-class="translate-y-2 opacity-0"
+         enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-200"
+         leave-from-class="translate-y-0 opacity-100" leave-to-class="translate-y-2 opacity-0">
+         <div v-if="toast.show"
+            class="fixed top-4 right-4 z-[9999] max-w-md w-full bg-white dark:bg-gray-800 shadow-xl rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+            <div class="p-4">
+               <div class="flex items-start">
+                  <div class="flex-shrink-0">
+                     <svg v-if="toast.type === 'success'" class="h-6 w-6 text-green-400" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                     <svg v-else class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                           d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                  </div>
+                  <div class="ml-3 w-0 flex-1 pt-0.5">
+                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ toast.title }}</p>
+                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ toast.message }}</p>
+                  </div>
+                  <button @click="toast.show = false"
+                     class="ml-4 flex-shrink-0 inline-flex text-gray-400 hover:text-gray-500">
+                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                           d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                     </svg>
+                  </button>
+               </div>
+            </div>
+         </div>
+      </Transition>
+   </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import DataTable from '@/components/DataTable.vue';
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
+import {
+   getAllQuestionTypes,
+   createQuestionType,
+   updateQuestionType,
+   deleteQuestionType,
+   type QuestionType,
+   type QuestionTypeRequest
+} from '@/api/questionTypeApi';
+import debounce from 'lodash/debounce';
+
+const questionTypes = ref<QuestionType[]>([]);
+const totalElements = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const loading = ref(false);
+const searchQuery = ref('');
+
+const showModal = ref(false);
+const isEditing = ref(false);
+const isSaving = ref(false);
+const editingId = ref<string | null>(null);
+const formData = ref<QuestionTypeRequest>({
+   name: '',
+   code: ''
+});
+
+const showDeleteModal = ref(false);
+const itemToDelete = ref<QuestionType | null>(null);
+const isDeleting = ref(false);
+
+const toast = ref({
+   show: false,
+   type: 'success' as 'success' | 'error',
+   title: '',
+   message: ''
+});
+
+const columns = [
+   { key: 'name', label: 'Name', sortable: true },
+   { key: 'code', label: 'Code', sortable: true },
+   { key: 'actions', label: 'Actions', sortable: false }
+];
+
+const showToast = (type: 'success' | 'error', title: string, message: string) => {
+   toast.value = { show: true, type, title, message };
+   setTimeout(() => {
+      toast.value.show = false;
+   }, 5000);
+};
+
+const fetchQuestionTypes = async (page: number = 1, search: string = '') => {
+   loading.value = true;
+   try {
+      const response = await getAllQuestionTypes(page - 1, pageSize.value, 'name', 'asc', search);
+      questionTypes.value = response.data.content;
+      totalElements.value = response.data.totalElements;
+      currentPage.value = page;
+   } catch (error: any) {
+      showToast('error', 'Error', error.response?.data?.message || 'Failed to fetch question types');
+   } finally {
+      loading.value = false;
+   }
+};
+
+const debouncedFetch = debounce((query: string) => {
+   fetchQuestionTypes(1, query);
+}, 300);
+
+const handleSearch = (query: string) => {
+   searchQuery.value = query;
+   debouncedFetch(query);
+};
+
+const openCreateModal = () => {
+   isEditing.value = false;
+   editingId.value = null;
+   formData.value = { name: '', code: '' };
+   showModal.value = true;
+};
+
+const openEditModal = (item: QuestionType) => {
+   isEditing.value = true;
+   editingId.value = item.id;
+   formData.value = { name: item.name, code: item.code };
+   showModal.value = true;
+};
+
+const closeModal = () => {
+   showModal.value = false;
+   formData.value = { name: '', code: '' };
+};
+
+const handleSubmit = async () => {
+   isSaving.value = true;
+   try {
+      if (isEditing.value && editingId.value) {
+         await updateQuestionType(editingId.value, formData.value);
+         showToast('success', 'Success', 'Question type updated successfully');
+      } else {
+         await createQuestionType(formData.value);
+         showToast('success', 'Success', 'Question type created successfully');
+      }
+      closeModal();
+      fetchQuestionTypes(currentPage.value, searchQuery.value);
+   } catch (error: any) {
+      showToast('error', 'Error', error.response?.data?.message || 'Operation failed');
+   } finally {
+      isSaving.value = false;
+   }
+};
+
+const handleDelete = (item: QuestionType) => {
+   itemToDelete.value = item;
+   showDeleteModal.value = true;
+};
+
+const cancelDelete = () => {
+   showDeleteModal.value = false;
+   itemToDelete.value = null;
+};
+
+const confirmDelete = async () => {
+   if (!itemToDelete.value) return;
+
+   const itemId = itemToDelete.value.id;
+   isDeleting.value = true;
+   try {
+      await deleteQuestionType(itemId);
+      showToast('success', 'Success', 'Question type deleted successfully');
+      showDeleteModal.value = false;
+      itemToDelete.value = null;
+      fetchQuestionTypes(currentPage.value, searchQuery.value);
+   } catch (error: any) {
+      showToast('error', 'Error', error.response?.data?.message || 'Failed to delete question type');
+   } finally {
+      isDeleting.value = false;
+   }
+};
+
+onMounted(() => {
+   fetchQuestionTypes();
+});
+</script>

@@ -23,33 +23,57 @@
       :loading="loading" :error="error" @open-question="openQuestionModal" />
 
     <!-- Answer Section -->
-    <div class="flex items-center justify-between mb-4">
-      <h4 class="text-lg font-semibold text-gray-900">Đáp án</h4>
-      <div class="flex space-x-2">
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          Xem chi tiết đáp án
-        </button>
-        <button @click="handleRetryWrongAnswers"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          Làm lại các câu sai
-        </button>
+
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-6 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-2xl font-bold text-white">Đáp án chi tiết</h4>
+            <p class="text-blue-100 text-sm mt-0.5">Xem lại câu trả lời và giải thích chi tiết</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button @click="handleRetryWrongAnswers"
+            class="bg-white hover:bg-blue-50 text-blue-600 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Làm lại câu sai</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-      <span class="text-red-700 text-sm font-italic">
-        Chú ý: Khi làm lại các câu sai, điểm trung bình của bạn sẽ KHÔNG BỊ ẢNH HƯỞNG.
-      </span>
-    </div>
+    <!-- Info Banners -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-4 flex items-start space-x-3">
+        <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd" />
+        </svg>
+        <div class="text-amber-800 text-sm">
+          <strong class="font-semibold">Lưu ý:</strong> Khi làm lại các câu sai, điểm trung bình của bạn sẽ không bị ảnh
+          hưởng.
+        </div>
+      </div>
 
-    <div class="bg-green-100 border border-green-300 rounded-lg p-4 mb-6 flex items-start space-x-3">
-      <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-        <path
-          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-      </svg>
-      <div class="text-green-800 text-sm">
-        <strong>Tips:</strong> Khi xem chi tiết đáp án, bạn có thể tạo và lưu highlight từ vựng, keywords và tạo note đề
-        học và tra cứu khi có nhu cầu ôn lại đề thi này trong tương lai.
+      <div class="bg-emerald-50 border-l-4 border-emerald-400 rounded-lg p-4 flex items-start space-x-3">
+        <svg class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+        <div class="text-emerald-800 text-sm">
+          <strong class="font-semibold">Mẹo:</strong> Nhấn vào từng câu để xem giải thích chi tiết và tạo ghi chú học
+          tập.
+        </div>
       </div>
     </div>
     <!-- Anchor for 'Xem đáp án' button -->
@@ -59,7 +83,8 @@
 
     <!-- Question Modal -->
     <QuestionModal :show="showModal" :question="selectedQuestion || undefined" @close="closeModal">
-      <div v-if="selectedQuestion">
+      <!-- <div v-if="selectedQuestion">
+        
         <div class="mb-4" v-html="selectedQuestion.context"></div>
         <div class="space-y-2">
           <p><strong>Trạng thái:</strong> {{ getStatusText(selectedQuestion.status) }}</p>
@@ -68,7 +93,7 @@
           </p>
           <p><strong>Đáp án đúng:</strong> {{ selectedQuestion.correct }}</p>
         </div>
-      </div>
+      </div> -->
     </QuestionModal>
   </div>
 </template>
@@ -125,16 +150,20 @@ const currentAnalysisData = computed(() => {
 });
 
 // Answer item shape expected by AnswerSection
-type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string };
+type AnswerItem = { number: number; correct: string; status: 'correct' | 'wrong' | 'unanswered'; userAnswer?: string | null; transcript?: string; outerContent?: string; explanation?: string; questionAudios?: any[] };
 
 // Helper to map raw question model to AnswerSection's expected shape (OLD behavior)
 const mapRawToAnswer = (q: QuestionResultVM): AnswerItem => {
   const selectedOptions = q.options?.filter(opt => opt.selected).map(opt => opt.text).join(', ') || '';
-  const userAnswer = selectedOptions || q.userAnswer || undefined;
+  const userAnswer = selectedOptions || q.userAnswer || null;
   return {
     number: q.order,
     correct: q.correctOptions?.map(opt => opt.text).join(', ') || q.correctAnswers?.join(', ') || '',
     userAnswer,
+    transcript: q.transcript,
+    outerContent: q.outerContent,
+    explanation: q.explanation,
+    questionAudios: q.questionAudios || [],
     status: !userAnswer ? 'unanswered' : q.isCorrect === true ? 'correct' : 'wrong'
   };
 };

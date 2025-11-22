@@ -158,10 +158,10 @@ const handleQuestionsSelected = (questions: Question[]) => {
         toast.info(`${partSkipped} duplicate question(s) skipped`);
       }
       toast.success(`Added ${partDeduped.length} question(s) to the part`);
-    }
 
-    // Sort questions by order to ensure consistent display
-    test.value.listPart[currentPartIndex].questions.sort((a, b) => (a.order || 0) - (b.order || 0));
+      // Renumber all parts to maintain continuous global numbering
+      renumberAllParts();
+    }
   }
 
   // Close the question bank modal
@@ -184,7 +184,8 @@ const test = ref<TestVM>({
   skillIds: [],
   listPart: [],
   listQuestionAndQuestionSet: [],
-  files: []
+  files: [],
+  audioFile: null
 });
 
 // Watch for changes in the test object
@@ -203,7 +204,7 @@ watch(
 function normalizeTestVM(apiTest: any): TestVM {
   // Extract duration first since it can come from multiple places
   const duration = apiTest.durationMinutes || apiTest.duration || apiTest.info?.durationMinutes || 0;
-  
+
   // Normalize parts
   const normalizedParts = (apiTest.listPart || []).map((part: any, idx: number) => {
     const questionItems = Array.isArray(part.questionItems)
@@ -238,10 +239,10 @@ function normalizeTestVM(apiTest: any): TestVM {
             name: item.questionSet.name || item.questionSet.title,
             questions: Array.isArray(item.questionSet.questions)
               ? item.questionSet.questions.map((q: any) => ({
-                  ...q,
-                  type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
-                  correctAnswer: q.questionAnswers,
-                }))
+                ...q,
+                type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
+                correctAnswer: q.questionAnswers,
+              }))
               : [],
           };
         }
@@ -278,14 +279,32 @@ function normalizeTestVM(apiTest: any): TestVM {
             name: item.questionSet.name || item.questionSet.title,
             questions: Array.isArray(item.questionSet.questions)
               ? item.questionSet.questions.map((q: any) => ({
-                  ...q,
-                  type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
-                  correctAnswer: q.questionAnswers,
-                }))
+                ...q,
+                type: q.type || q.questionType?.name || q.questionType?.code || 'Unknown',
+                correctAnswer: q.questionAnswers,
+              }))
               : [],
           });
         }
       });
+    }
+  }
+
+  // Extract audio file from files array if present
+  let audioFile = null;
+  if (apiTest.files && apiTest.files.length > 0) {
+    // Find the first audio file in the files array
+    const audioFileInfo = apiTest.files.find((f: any) => f.fileType?.startsWith('audio/'));
+    if (audioFileInfo) {
+      // Create a pseudo-File object for display purposes
+      audioFile = {
+        name: audioFileInfo.fileName,
+        size: audioFileInfo.fileSize,
+        type: audioFileInfo.fileType,
+        url: audioFileInfo.url,
+        id: audioFileInfo.id,
+        isExisting: true // Flag to indicate this is from the server
+      };
     }
   }
 
@@ -301,7 +320,8 @@ function normalizeTestVM(apiTest: any): TestVM {
     duration: duration,
     listPart: normalizedParts,
     listQuestionAndQuestionSet: listQuestionAndQuestionSet,
-    files: apiTest.files || []
+    files: apiTest.files || [],
+    audioFile: audioFile
   };
 }
 
@@ -365,6 +385,50 @@ const getNextOrder = () => {
   );
 
   return maxOrder + 1;
+};
+
+// Renumber all questions across all parts with continuous numbering
+const renumberAllParts = () => {
+  let globalOrder = 1;
+
+  // Iterate through each part and renumber its questions
+  test.value.listPart.forEach((part) => {
+    if (!part.listQuestionAndQuestionSet) return;
+
+    part.listQuestionAndQuestionSet = part.listQuestionAndQuestionSet.map((item) => {
+      if ('questions' in item) {
+        // Question set: assign order to the set and its questions
+        const questionSetOrder = globalOrder;
+        const reorderedQuestions = item.questions?.map((q: any) => {
+          const questionOrder = globalOrder;
+          globalOrder++;
+          return {
+            ...q,
+            order: questionOrder
+          };
+        });
+        return {
+          ...item,
+          order: questionSetOrder,
+          questions: reorderedQuestions
+        };
+      }
+      // Regular question
+      const questionOrder = globalOrder;
+      globalOrder++;
+      return {
+        ...item,
+        order: questionOrder
+      };
+    });
+
+    // Also update the questions array to maintain consistency
+    if (part.questions) {
+      part.questions = part.listQuestionAndQuestionSet
+        .filter(item => !('questions' in item))
+        .map(q => ({ ...q })) as Question[];
+    }
+  });
 };
 
 // Question editor state
@@ -668,10 +732,9 @@ const handleQuestionSetsSelected = async (questionSets: any) => {
       }
     }
 
-    // Sort questions by order to ensure consistent display
-    currentPart.questions.sort((a, b) => (a.order || 0) - (b.order || 0));
-
+    // Renumber all parts to maintain continuous global numbering
     if (newQuestionSets.length > 0) {
+      renumberAllParts();
       const questionSetText = newQuestionSets.length > 1 ? 'question sets' : 'question set';
       const questionText = totalQuestionsAdded !== 1 ? 'questions' : 'question';
       toast.success(`Successfully added ${newQuestionSets.length} ${questionSetText} with ${totalQuestionsAdded} ${questionText} to "${currentPart.name || 'the part'}"`);
@@ -688,25 +751,38 @@ const handleSelectQuestionSet = (questionSet: QuestionSet) => {
   handleQuestionSetsSelected(questionSet);
 };
 
-// Remove a question by ID or index from either the current part's questions or the main question bank list
 const handleRemoveQuestion = (questionId: string | number) => {
   // Check if we're in a part or in the main question bank
   if (test.value.listPart && test.value.listPart.length > 0) {
     // Find which part contains the question
     const partIndex = test.value.listPart.findIndex(part => {
-      if (!part.questions) return false;
-      return part.questions.some((q, idx) => {
-        // Check both by ID and by index
-        return (q.id && q.id === questionId) || idx === questionId;
+      if (!part.listQuestionAndQuestionSet) return false;
+      return part.listQuestionAndQuestionSet.some((item: Question | QuestionSet) => {
+        // Only check questions, not question sets
+        if ('questions' in item) return false;
+        // Check by ID
+        return (item.id && item.id === questionId);
       });
     });
-    if (partIndex !== -1 && test.value.listPart[partIndex].questions) {
-      // Remove from the part's questions
-      test.value.listPart[partIndex].questions = test.value.listPart[partIndex].questions.filter(
-        (q, idx) => {
-          return (q.id ? q.id !== questionId : true) && (typeof questionId === 'number' ? idx !== questionId : true);
+
+    if (partIndex !== -1 && test.value.listPart[partIndex].listQuestionAndQuestionSet) {
+      const part = test.value.listPart[partIndex];
+      const initialLength = part.listQuestionAndQuestionSet!.length;
+
+      // Remove from listQuestionAndQuestionSet
+      part.listQuestionAndQuestionSet = part.listQuestionAndQuestionSet!.filter(
+        (item: Question | QuestionSet) => {
+          if ('questions' in item) return true; // Keep question sets
+          // Remove the question with matching ID
+          return item.id !== questionId;
         }
       );
+
+      // Renumber all parts globally if something was removed
+      if (part.listQuestionAndQuestionSet!.length < initialLength) {
+        renumberAllParts();
+        toast.success('Question removed successfully');
+      }
     }
   } else {
     // Remove from the main question and question set list
@@ -722,22 +798,122 @@ const handleRemoveQuestion = (questionId: string | number) => {
         }
       );
     }
+
+    // Reorder remaining items sequentially with continuous numbering
+    let currentOrder = 1;
+    test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.map((item) => {
+      if ('questions' in item) {
+        // Question set: assign order to the set and its questions
+        const questionSetOrder = currentOrder;
+        const reorderedQuestions = item.questions?.map((q: any) => {
+          const questionOrder = currentOrder;
+          currentOrder++;
+          return {
+            ...q,
+            order: questionOrder
+          };
+        });
+        return {
+          ...item,
+          order: questionSetOrder,
+          questions: reorderedQuestions
+        };
+      }
+      // Regular question
+      const questionOrder = currentOrder;
+      currentOrder++;
+      return {
+        ...item,
+        order: questionOrder
+      };
+    });
   }
+
+  toast.success('Question removed and list reordered');
 };
 
-// Remove a question set by ID from the main question and question set list
 const handleRemoveQuestionSet = (questionSetId: string) => {
-  const initialLength = test.value.listQuestionAndQuestionSet.length;
-  test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
-    (item: Question | QuestionSet) => {
-      if ('questions' in item) { // This is a question set
-        return item.id !== questionSetId;
+  // Check if we're in a part or in the main question bank
+  if (test.value.listPart && test.value.listPart.length > 0) {
+    // Find which part contains the question set
+    const partIndex = test.value.listPart.findIndex(part => {
+      if (!part.listQuestionAndQuestionSet) return false;
+      return part.listQuestionAndQuestionSet.some((item: Question | QuestionSet) =>
+        'questions' in item && item.id === questionSetId
+      );
+    });
+
+    if (partIndex !== -1 && test.value.listPart[partIndex].listQuestionAndQuestionSet) {
+      // Remove the question set from the part
+      const initialLength = test.value.listPart[partIndex].listQuestionAndQuestionSet!.length;
+      test.value.listPart[partIndex].listQuestionAndQuestionSet =
+        test.value.listPart[partIndex].listQuestionAndQuestionSet!.filter(
+          (item: Question | QuestionSet) => {
+            if ('questions' in item) {
+              return item.id !== questionSetId;
+            }
+            return true; // Keep all questions
+          }
+        );
+
+      // Update was successful
+      if (test.value.listPart[partIndex].listQuestionAndQuestionSet!.length < initialLength) {
+        const part = test.value.listPart[partIndex];
+
+        // Also update questionSets array if it exists
+        if (part.questionSets) {
+          part.questionSets = part.questionSets.filter((qs: any) => qs.id !== questionSetId);
+        }
+
+        // Renumber all parts globally
+        renumberAllParts();
+        toast.success('Question set removed successfully');
       }
-      return true; // Keep all questions
     }
-  );
-  if (test.value.listQuestionAndQuestionSet.length < initialLength) {
-    toast.success('Question set removed');
+  } else {
+    // Remove from the main question and question set list
+    const initialLength = test.value.listQuestionAndQuestionSet.length;
+    test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.filter(
+      (item: Question | QuestionSet) => {
+        if ('questions' in item) { // This is a question set
+          return item.id !== questionSetId;
+        }
+        return true; // Keep all questions
+      }
+    );
+
+    // If we removed a question set, reorder remaining items
+    if (test.value.listQuestionAndQuestionSet.length < initialLength) {
+      let currentOrder = 1;
+      test.value.listQuestionAndQuestionSet = test.value.listQuestionAndQuestionSet.map((item) => {
+        if ('questions' in item) {
+          // Question set: assign order to the set and its questions
+          const questionSetOrder = currentOrder;
+          const reorderedQuestions = item.questions?.map((q: any) => {
+            const questionOrder = currentOrder;
+            currentOrder++;
+            return {
+              ...q,
+              order: questionOrder
+            };
+          });
+          return {
+            ...item,
+            order: questionSetOrder,
+            questions: reorderedQuestions
+          };
+        }
+        // Regular question
+        const questionOrder = currentOrder;
+        currentOrder++;
+        return {
+          ...item,
+          order: questionOrder
+        };
+      });
+
+      toast.success('Question set removed and list reordered');
+    }
   }
 };
 
@@ -807,7 +983,7 @@ const handleSave = async () => {
     };
 
     // Call the API to update the test (edit mode)
-    const response = await testApi.updateTest(payload.id, payload);
+    const response = await testApi.updateTest(payload.id, payload, test.value.files || []);
     if (response.success && response.data) {
       toast.success('Test saved successfully!');
       // Optionally, redirect or update state after saving

@@ -9,9 +9,9 @@
         <div class="p-4 md:p-6 flex flex-col lg:flex-row gap-4">
           <!-- Left Column -->
           <div class="flex-1 w-full space-y-8">
-            <!-- Audio Player -->
-            <!-- <AudioPlayer :recordings="testData.recordings" :current-recording="currentRecording"
-              @recording-change="handleRecordingChange" /> -->
+            <!-- Audio Player - Only show in exam mode (not practice mode) -->
+            <AudioPlayer v-if="!isPracticeMode && testData?.audioFiles?.length > 0"
+              :audioUrl="testData.audioFiles[0].fileUrl" />
 
             <PracticePartList v-if="testData?.parts?.length > 0" ref="practicePartListRef"
               @part-changed="handlePartChange" />
@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts">
-import { computed, onMounted, onUnmounted, watch, ref, nextTick } from 'vue';
+import { computed, onMounted, onUnmounted, watch, ref, nextTick, provide } from 'vue';
 import { useRoute } from 'vue-router';
 import { useExamTestStore } from '@/stores/examTestStore.ts';
 import TestHeader from '@/components/user/test/TestHeader.vue';
@@ -63,6 +63,13 @@ export default {
 
     // Create a computed property for reactive testData
     const testData = computed(() => examStore.state.testData);
+
+    // Provide information about test-level audio to child components
+    // Only hide question audio in exam mode (not practice mode)
+    const hasTestAudio = computed(() => {
+      return !props.isPracticeMode && testData.value?.audioFiles && testData.value.audioFiles.length > 0;
+    });
+    provide('hasTestAudio', hasTestAudio);
 
     // Function to load test data
     const loadTestData = async () => {

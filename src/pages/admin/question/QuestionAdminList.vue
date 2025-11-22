@@ -16,29 +16,15 @@
       </button>
     </div>
 
-    <DataTable 
-      :columns="columns" 
-      :data="questions" 
-      :showPagination="true" 
-      :currentPage="currentPage"
-      :itemsPerPage="itemsPerPage"
-      :totalItems="totalItems"
-      @page-change="handlePageChange" 
-      :actions="actions" 
-      :primaryColumn="'prompt'"
-      @sort="handleSort" 
-      :searchable="true" 
-      :searchPlaceholder="'Search questions...'" 
-      :loading="loading"
-      @search="handleSearch" 
-      :loadingText="'Loading questions...'" 
-      :emptyStateText="'No questions found'" 
-      class="mt-6"
+    <DataTable :columns="columns" :data="questions" :showPagination="true" :currentPage="currentPage"
+      :itemsPerPage="itemsPerPage" :totalItems="totalItems" @page-change="handlePageChange" :actions="actions"
+      :primaryColumn="'prompt'" @sort="handleSort" :searchable="true" :searchPlaceholder="'Search questions...'"
+      :loading="loading" @search="handleSearch" :loadingText="'Loading questions...'"
+      :emptyStateText="'No questions found'" class="mt-6"
       :mobile-card-class="'bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-100 dark:border-gray-700'"
       :mobile-card-title-class="'font-medium text-gray-900 dark:text-white text-base'"
       :mobile-card-meta-class="'flex flex-col gap-1 mt-1 text-sm text-gray-600 dark:text-gray-300'"
-      :serverSidePagination="true"
-    >
+      :serverSidePagination="true">
       <template #cell-status="{ value }">
         <span :class="{
           'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
@@ -73,22 +59,29 @@
         <!-- Question Prompt -->
         <div class="grid grid-cols-4 gap-4 items-start">
           <div class="col-span-1 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1 1.5 1.5 2.5"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1 1.5 1.5 2.5">
+              </path>
               <path d="M9 18h6"></path>
               <path d="M10 22h4"></path>
             </svg>
             <span class="font-semibold text-gray-800 dark:text-gray-200">Question Prompt</span>
           </div>
-          <div class="col-span-3 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg" v-html="selectedQuestion.prompt || '—'"></div>
+          <div class="col-span-3 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg"
+            v-html="selectedQuestion.prompt || '—'"></div>
         </div>
 
         <!-- Details Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
           <div class="grid grid-cols-2 items-center">
             <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.23A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.23A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z">
+                </path>
               </svg>
               <span class="font-semibold text-gray-800 dark:text-gray-200">Category</span>
             </div>
@@ -96,11 +89,17 @@
               <span class="text-gray-600 dark:text-gray-400">{{ selectedQuestion.questionCategory?.name || '—' }}</span>
             </div>
           </div>
-          
+
           <div class="grid grid-cols-2 items-center">
             <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <path d="M12 11h4"></path>
+                <path d="M12 16h4"></path>
+                <path d="M8 11h.01"></path>
+                <path d="M8 16h.01"></path>
               </svg>
               <span class="font-semibold text-gray-800 dark:text-gray-200">Type</span>
             </div>
@@ -110,16 +109,19 @@
               </span>
             </div>
           </div>
-          
+
           <div class="grid grid-cols-2 items-center">
             <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="6"></circle>
+                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
               </svg>
               <span class="font-semibold text-gray-800 dark:text-gray-200">Score</span>
             </div>
             <div class="flex items-center">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                 <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
                   <circle cx="4" cy="4" r="3" />
                 </svg>
@@ -127,11 +129,14 @@
               </span>
             </div>
           </div>
-          
+
           <div class="grid grid-cols-2 items-center">
             <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 mr-2" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" x2="12" y1="19" y2="22"></line>
               </svg>
               <span class="font-semibold text-gray-800 dark:text-gray-200">Audio</span>
             </div>
@@ -157,26 +162,31 @@
         <!-- Options -->
         <div class="grid grid-cols-4 gap-4 items-start">
           <div class="col-span-1 flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path><path d="M13 6h8"></path><path d="M13 12h8"></path><path d="M13 18h8"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="m3 17 2 2 4-4"></path>
+              <path d="m3 7 2 2 4-4"></path>
+              <path d="M13 6h8"></path>
+              <path d="M13 12h8"></path>
+              <path d="M13 18h8"></path>
             </svg>
             <span class="font-semibold text-gray-800 dark:text-gray-200">Options</span>
           </div>
           <div class="col-span-3">
             <div v-if="selectedQuestion.options?.length" class="space-y-2">
-              <div v-for="(option, index) in selectedQuestion.options" :key="index" 
-                   class="flex items-start p-2 rounded-lg transition-colors duration-200"
-                   :class="{
-                     'bg-green-50 dark:bg-green-900/20': option.correct,
-                     'hover:bg-gray-50 dark:hover:bg-gray-700/50': !option.correct
-                   }">
+              <div v-for="(option, index) in selectedQuestion.options" :key="index"
+                class="flex items-start p-2 rounded-lg transition-colors duration-200" :class="{
+                  'bg-green-50 dark:bg-green-900/20': option.correct,
+                  'hover:bg-gray-50 dark:hover:bg-gray-700/50': !option.correct
+                }">
                 <div class="flex-shrink-0 mt-0.5">
-                  <div class="flex items-center justify-center w-5 h-5 rounded-full border-2"
-                       :class="{
-                         'border-green-500 bg-green-500': option.correct,
-                         'border-gray-300 dark:border-gray-500': !option.correct
-                       }">
-                    <svg v-if="option.correct" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="flex items-center justify-center w-5 h-5 rounded-full border-2" :class="{
+                    'border-green-500 bg-green-500': option.correct,
+                    'border-gray-300 dark:border-gray-500': !option.correct
+                  }">
+                    <svg v-if="option.correct" class="w-3 h-3 text-white" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
@@ -198,8 +208,11 @@
         <!-- Correct Answers -->
         <div class="grid grid-cols-4 gap-4">
           <div class="col-span-1 flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+              <path d="m9 12 2 2 4-4"></path>
             </svg>
             <span class="font-semibold text-gray-800 dark:text-gray-200">Correct Answers</span>
           </div>
@@ -215,7 +228,8 @@
             </div>
             <div v-else class="flex items-center text-gray-500 dark:text-gray-400">
               <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               No correct answers specified
             </div>
@@ -223,17 +237,21 @@
         </div>
       </div>
       <!-- Modal footer -->
-      <div class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b sticky bottom-0 space-x-3">
+      <div
+        class="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b sticky bottom-0 space-x-3">
         <button @click="closePopup"
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 transition-colors duration-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>
+          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
           </svg>
           Close
         </button>
         <button @click="editQuestion(selectedQuestion)"
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 transition-colors duration-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
             <path d="m15 5 4 4"></path>
           </svg>
@@ -250,9 +268,11 @@
       <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl dark:bg-gray-800 overflow-hidden">
         <div class="p-6">
           <div class="flex items-start">
-            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:h-10 sm:w-10">
+            <div
+              class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:h-10 sm:w-10">
               <svg class="h-6 w-6 text-red-600 dark:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div class="ml-4 flex-1">
@@ -265,8 +285,8 @@
                 </div>
                 <div v-else>
                   <p class="text-gray-500 dark:text-gray-400">Are you sure you want to delete this question?</p>
-                  <p v-if="questionToDelete" class="mt-1 font-medium text-gray-700 dark:text-gray-300 truncate">
-                    {{ questionToDelete.prompt?.substring(0, 50) }}{{ questionToDelete.prompt?.length > 50 ? '...' : '' }}
+                  <p v-if="questionToDelete" class="mt-1 font-medium text-gray-700 dark:text-gray-300 truncate"
+                    v-html="(questionToDelete.prompt?.length > 50 ? questionToDelete.prompt?.substring(0, 50) + '...' : questionToDelete.prompt) || ''">
                   </p>
                 </div>
               </div>
@@ -274,24 +294,18 @@
           </div>
         </div>
         <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 flex justify-end space-x-3">
-          <button
-            type="button"
-            @click="cancelDelete"
-            :disabled="deleting"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
+          <button type="button" @click="cancelDelete" :disabled="deleting"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
             {{ deleteError ? 'Close' : 'Cancel' }}
           </button>
-          <button
-            v-if="!deleteError"
-            type="button"
-            @click="confirmDelete"
-            :disabled="deleting"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            <svg v-if="deleting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <button v-if="!deleteError" type="button" @click="confirmDelete" :disabled="deleting"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+            <svg v-if="deleting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
             </svg>
             {{ deleting ? 'Deleting...' : 'Delete' }}
           </button>
@@ -354,6 +368,7 @@ const columns = [
     key: 'questionCategory',
     label: 'Category',
     sortable: true,
+    sortKey: 'category',
     hideOnMobile: true,
     render: (category) => category?.name || '—'
   },
@@ -406,10 +421,10 @@ const questionToDelete = ref(null);
 const deleteError = ref('');
 const loading = ref(false);
 const currentPage = ref(1);
-const itemsPerPage = ref(10); 
+const itemsPerPage = ref(10);
 const totalItems = ref(0);
-const sortBy = ref('insertedAt'); 
-const sortDirection = ref('desc'); 
+const sortBy = ref('insertedAt');
+const sortDirection = ref('desc');
 const searchQuery = ref('');
 
 /**
@@ -418,7 +433,7 @@ const searchQuery = ref('');
 const fetchQuestions = async () => {
   try {
     loading.value = true;
-    
+
     // Prepare filter parameters
     const filter = {
       page: currentPage.value - 1, // Convert to 0-based for the API
@@ -435,15 +450,15 @@ const fetchQuestions = async () => {
         cleanFilter[key] = filter[key];
       }
     });
-    
+
     // Make the API call
     const response = await questionApi.getAll(cleanFilter);
-    
+
     if (!response.success) {
       // Optionally show a warning to the user
       return;
     }
-    
+
     if (response.data) {
       questions.value = response.data.content;
       totalItems.value = response.data.totalElements;
@@ -500,12 +515,12 @@ const handleSort = (sortEvent) => {
 let searchTimeout = null;
 const handleSearch = (query) => {
   searchQuery.value = query;
-  
+
   // Clear previous timeout
   if (searchTimeout) {
     clearTimeout(searchTimeout);
   }
-  
+
   // Set a new timeout to fetch after user stops typing
   searchTimeout = setTimeout(() => {
     currentPage.value = 1; // Reset to first page when searching
@@ -598,18 +613,18 @@ function deleteQuestion(question) {
 
 async function confirmDelete() {
   if (!questionToDelete.value) return;
-  
+
   try {
     deleting.value = true;
     // Call the API to delete the question
     await questionApi.delete(questionToDelete.value.id);
-    
+
     // Remove the question from the local state
     const index = questions.value.findIndex(q => q.id === questionToDelete.value.id);
     if (index !== -1) {
       questions.value.splice(index, 1);
     }
-    
+
     showDeleteModal.value = false;
     // You might want to show a success message here
     console.log('Question deleted successfully');

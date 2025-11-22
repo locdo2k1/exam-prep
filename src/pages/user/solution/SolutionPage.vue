@@ -52,6 +52,21 @@
                 <p class="text-gray-700 font-medium">
                   Đáp án đúng: <span class="text-green-600">{{ q.answer }}</span>
                 </p>
+
+                <!-- Outer Content (Question Set Description) -->
+                <button v-if="q.outerContent" @click="toggleOuterContent(q.order)"
+                  class="mt-2 text-sm text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1">
+                  {{ q.showOuterContent ? 'Ẩn' : 'Hiện' }} Mô tả
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200"
+                    :class="{ 'rotate-180': q.showOuterContent }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div v-if="q.showOuterContent && q.outerContent"
+                  class="mt-2 pl-4 py-2 border-l-2 border-purple-200 text-gray-600 text-sm bg-purple-50 rounded">
+                  {{ q.outerContent }}
+                </div>
+
                 <button @click="toggleTranscript(q.order)"
                   class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1">
                   {{ q.showTranscript ? 'Ẩn' : 'Hiện' }} Transcript
@@ -118,23 +133,16 @@ import { ref, computed, watch, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { getTestSolutions } from "@/api/testInfoApi";
 
-interface QuestionAnswerVM {
+interface Question {
   order: number;
-  correctAnswer: string;
+  part: string;
+  answer: string;
+  transcript: string;
+  outerContent?: string;
+  showTranscript: boolean;
+  showOuterContent: boolean;
+  isCorrect: boolean;
   userAnswer: string;
-  transcript?: string;
-}
-
-interface TestAnswerVM {
-  questionAnswers: QuestionAnswerVM[];
-  status: number;
-  statusText: string;
-}
-
-interface ApiResponse<T> {
-  data: T;
-  status: number;
-  statusText: string;
 }
 
 const props = defineProps<{
@@ -147,19 +155,19 @@ const error = ref<string | null>(null);
 
 const activePart = ref<string | null>(null);
 
+const questions = ref<Question[]>([]);
+const testName = ref<string>('');
 
-interface Question {
+interface RawQuestionData {
   order: number;
   part: string;
   answer: string;
-  transcript: string;
-  showTranscript: boolean;
-  isCorrect: boolean;
-  userAnswer: string;
+  transcript?: string;
+  outerContent?: string;
+  correct?: boolean;
+  userAnswer?: string;
+  showTranscript?: boolean;
 }
-
-const questions = ref<Question[]>([]);
-const testName = ref<string>('');
 
 const fetchTestSolutions = async () => {
   try {
@@ -170,12 +178,14 @@ const fetchTestSolutions = async () => {
 
     if (response.success && response.data) {
       testName.value = response.data.testName || 'Test';
-      questions.value = response.data.flattenedQuestions.map((q: any) => ({
+      questions.value = response.data.flattenedQuestions.map((q: RawQuestionData) => ({
         order: q.order,
         part: q.part,
         answer: q.answer,
         transcript: q.transcript || "No transcript available",
+        outerContent: q.outerContent,
         showTranscript: q.showTranscript || false,
+        showOuterContent: false,
         isCorrect: q.correct || false,
         userAnswer: q.userAnswer || ""
       }));
@@ -223,6 +233,13 @@ const toggleTranscript = (order: number) => {
   const question = questions.value.find((q) => q.order === order);
   if (question) {
     question.showTranscript = !question.showTranscript;
+  }
+};
+
+const toggleOuterContent = (order: number) => {
+  const question = questions.value.find((q) => q.order === order);
+  if (question) {
+    question.showOuterContent = !question.showOuterContent;
   }
 };
 
