@@ -368,6 +368,7 @@ const columns = [
     key: 'questionCategory',
     label: 'Category',
     sortable: true,
+    sortKey: 'category',
     hideOnMobile: true,
     render: (category) => category?.name || '—'
   },

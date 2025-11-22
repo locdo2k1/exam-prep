@@ -11,21 +11,10 @@
         </div>
 
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-            <DataTable 
-                :data="questionSets" 
-                :columns="columns" 
-                :actions="actions" 
-                :loading="loading"
-                :total-items="totalItems" 
-                :current-page="currentPage"
-                :items-per-page="itemsPerPage" 
-                :searchable="true"
-                :server-side-pagination="true"
-                search-placeholder="Search question sets..." 
-                @update:current-page="handlePageChange"
-                @sort="handleSort"
-                @search="handleSearch"
-            />
+            <DataTable :data="questionSets" :columns="columns" :actions="actions" :loading="loading"
+                :total-items="totalItems" :current-page="currentPage" :items-per-page="itemsPerPage" :searchable="true"
+                :server-side-pagination="true" search-placeholder="Search question sets..."
+                @update:current-page="handlePageChange" @sort="handleSort" @search="handleSearch" />
         </div>
 
         <!-- Delete Confirmation Modal -->
@@ -35,9 +24,12 @@
                 <div class="relative w-full max-w-md bg-white rounded-lg shadow-xl dark:bg-gray-800 overflow-hidden">
                     <div class="p-6">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:h-10 sm:w-10">
-                                <svg class="h-6 w-6 text-red-600 dark:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            <div
+                                class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600 dark:text-red-300" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
                             <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">
@@ -50,27 +42,25 @@
                             </p>
                         </div>
                         <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                            <button
-                                type="button"
+                            <button type="button"
                                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
-                                :disabled="deleting"
-                                @click="confirmDelete"
-                            >
+                                :disabled="deleting" @click="confirmDelete">
                                 <span v-if="deleting" class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                     Deleting...
                                 </span>
                                 <span v-else>Delete</span>
                             </button>
-                            <button
-                                type="button"
+                            <button type="button"
                                 class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
-                                :disabled="deleting"
-                                @click="cancelDelete"
-                            >
+                                :disabled="deleting" @click="cancelDelete">
                                 Cancel
                             </button>
                         </div>
@@ -80,103 +70,228 @@
         </div>
 
         <!-- Question Set Preview Modal -->
-        <div v-if="isModalOpen && previewData" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" @click.self="closeModal">
-            <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" @click="closeModal"></div>
-            <div class="relative w-full max-w-4xl bg-white rounded-xl shadow-xl dark:bg-gray-800 overflow-hidden">
-                <!-- Header -->
-                <div class="border-b border-gray-200 dark:border-gray-700">
+        <div v-if="isModalOpen && previewData" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            @click.self="closeModal">
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" @click="closeModal"></div>
+            <div
+                class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl dark:bg-gray-800 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
+                <!-- Header with Gradient -->
+                <div
+                    class="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 dark:from-blue-800 dark:via-blue-900 dark:to-indigo-900">
                     <div class="px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-                                {{ previewData.title || 'Question Set Preview' }}
-                            </h3>
-                            <button @click="closeModal" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1 pr-8">
+                                <div class="flex items-center space-x-2 mb-1.5">
+                                    <div
+                                        class="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg backdrop-blur-sm">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-white">
+                                        {{ previewData.title || 'Question Set Preview' }}
+                                    </h3>
+                                </div>
+                                <div class="flex items-center space-x-4 text-blue-100">
+                                    <span class="inline-flex items-center text-sm">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        {{ previewData.questions?.length || 0 }} Questions
+                                    </span>
+                                    <span class="inline-flex items-center text-sm">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Total Points: {{previewData.questions?.reduce((sum, q) => sum + (q.score || 0),
+                                        0) || 0 }}
+                                    </span>
+                                </div>
+                            </div>
+                            <button @click="closeModal"
+                                class="flex-shrink-0 p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Question Set Description -->
                     <div v-if="previewData.description" class="px-6 pb-4">
-                        <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-600 p-4 rounded-r">
-                            <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200 uppercase tracking-wider mb-2">
-                                Description
-                            </h4>
-                            <div class="prose dark:prose-invert prose-sm max-w-none text-blue-700 dark:text-blue-100" v-html="previewData.description"></div>
+                        <div
+                            class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl max-h-24 overflow-y-auto custom-scrollbar-light">
+                            <div class="flex items-start space-x-2.5 p-3.5">
+                                <svg class="w-4 h-4 text-blue-200 flex-shrink-0 mt-0.5" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex-1 prose dark:prose-invert prose-sm max-w-none text-white/95 text-sm"
+                                    v-html="previewData.description"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Questions List -->
-                <div class="overflow-y-auto max-h-[60vh] p-6 space-y-6 custom-scrollbar">
-                    <div v-if="!previewData.questions?.length" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No questions in this set
+                <!-- Questions List with Enhanced Styling -->
+                <div class="overflow-y-auto max-h-[65vh] bg-gray-50 dark:bg-gray-900/50">
+                    <div v-if="!previewData.questions?.length"
+                        class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                        <svg class="w-20 h-20 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-lg font-medium">No questions in this set</p>
                     </div>
 
-                    <div v-for="(question, qIndex) in previewData.questions" :key="question.id" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                        <!-- Question Header -->
-                        <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="font-medium text-gray-900 dark:text-white">Question {{ qIndex + 1 }}</span>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
-                                        :class="question.questionCategory?.skill === 'Listening' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'">
-                                        {{ question.questionCategory?.skill || 'General' }}
-                                    </span>
+                    <div v-else class="p-4 space-y-3">
+                        <div v-for="(question, qIndex) in previewData.questions" :key="question.id"
+                            class="group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200">
+                            <!-- Question Header with Enhanced Design -->
+                            <div
+                                class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700/70 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <div
+                                            class="flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-lg font-bold text-xs">
+                                            {{ qIndex + 1 }}
+                                        </div>
+                                        <span class="font-semibold text-gray-900 dark:text-white text-base">Question {{
+                                            qIndex + 1 }}</span>
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm"
+                                            :class="question.questionCategory?.skill === 'Listening'
+                                                ? 'bg-blue-500 text-white dark:bg-blue-600'
+                                                : 'bg-green-500 text-white dark:bg-green-600'">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path v-if="question.questionCategory?.skill === 'Listening'"
+                                                    stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                <path v-else stroke-linecap="round" stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                            </svg>
+                                            {{ question.questionCategory?.skill || 'General' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 text-xs font-semibold">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                            </svg>
+                                            {{ question.score || 0 }} {{ question.score !== 1 ? 'points' : 'point' }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ question.score || 0 }} point{{ question.score !== 1 ? 's' : '' }}
-                                </span>
-                            </div>
-                            <div v-if="question.questionCategory" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                {{ question.questionCategory.name }}
-                            </div>
-                        </div>
-
-                        <!-- Question Content -->
-                        <div class="p-4">
-                            <div v-if="question.description" class="prose dark:prose-invert prose-sm max-w-none mb-4">
-                                <div v-html="question.description"></div>
-                            </div>
-                            
-                            <div v-if="question.prompt" class="prose dark:prose-invert prose-sm max-w-none mb-4 text-gray-800 dark:text-gray-200" v-html="question.prompt"></div>
-                            
-                            <!-- Audio Player (if any) -->
-                            <div v-if="question.questionAudios?.length" class="mb-4">
-                                <audio controls class="w-full">
-                                    <source :src="question.questionAudios[0].url" type="audio/mpeg">
-                                    Your browser does not support the audio element.
-                                </audio>
+                                <div v-if="question.questionCategory"
+                                    class="flex items-center mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                    {{ question.questionCategory.name }}
+                                </div>
                             </div>
 
-                            <!-- Show Options if available -->
-                            <div v-if="question.options?.length" class="space-y-2">
-                                <div v-for="(option, oIndex) in question.options" :key="option.id"
-                                    class="flex items-start p-3 rounded-lg border"
-                                    :class="{
-                                        'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/30': option.correct,
-                                        'border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50': !option.correct
-                                    }">
-                                    <span class="text-gray-700 dark:text-gray-200">{{ option.text }}</span>
-                                    <span v-if="option.correct" class="ml-auto text-green-600 dark:text-green-400 text-sm flex items-center">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <!-- Question Content with Better Spacing -->
+                            <div class="p-4">
+                                <div v-if="question.description"
+                                    class="mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 dark:border-amber-600 rounded-r-lg">
+                                    <div class="prose dark:prose-invert prose-sm max-w-none text-amber-900 dark:text-amber-100"
+                                        v-html="question.description"></div>
+                                </div>
+
+                                <div v-if="question.prompt"
+                                    class="mb-3 prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 text-sm leading-relaxed"
+                                    v-html="question.prompt"></div>
+
+                                <!-- Enhanced Audio Player -->
+                                <div v-if="question.questionAudios?.length"
+                                    class="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                                         </svg>
-                                        Correct
-                                    </span>
+                                        <span class="text-xs font-semibold text-blue-800 dark:text-blue-200">Audio
+                                            Track</span>
+                                    </div>
+                                    <audio controls class="w-full h-9">
+                                        <source :src="question.questionAudios[0].url" type="audio/mpeg">
+                                        Your browser does not support the audio element.
+                                    </audio>
                                 </div>
-                            </div>
-                            
-                            <!-- Show Question Answers if no options -->
-                            <div v-else-if="question.questionAnswers?.length" class="space-y-2">
-                                <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                                    <h5 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Answer:</h5>
-                                    <div class="space-y-2">
-                                        <div v-for="(answer, aIndex) in question.questionAnswers" :key="aIndex" 
-                                             class="p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                                            <div v-html="answer.text"></div>
+
+                                <!-- Enhanced Options Display -->
+                                <div v-if="question.options?.length" class="space-y-2">
+                                    <h5
+                                        class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                        </svg>
+                                        Answer Options
+                                    </h5>
+                                    <div v-for="(option, oIndex) in question.options" :key="option.id"
+                                        class="group/option relative flex items-start p-2.5 rounded-lg border transition-all duration-200"
+                                        :class="{
+                                            'border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/30 shadow-sm': option.correct,
+                                            'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800/50 dark:hover:bg-gray-700/50': !option.correct
+                                        }">
+                                        <div class="flex items-center justify-center w-6 h-6 rounded-full mr-2.5 flex-shrink-0 font-semibold text-xs"
+                                            :class="option.correct
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">
+                                            {{ String.fromCharCode(65 + oIndex) }}
+                                        </div>
+                                        <span class="flex-1 text-gray-800 dark:text-gray-200 leading-relaxed text-sm">{{
+                                            option.text }}</span>
+                                        <span v-if="option.correct"
+                                            class="ml-3 flex items-center px-2 py-0.5 rounded-full bg-green-500 text-white text-xs font-semibold shadow-sm">
+                                            <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                    d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Correct
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Enhanced Question Answers Display -->
+                                <div v-else-if="question.questionAnswers?.length" class="space-y-2">
+                                    <div
+                                        class="p-3 rounded-lg border border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20">
+                                        <h5
+                                            class="font-semibold text-green-800 dark:text-green-200 mb-2 flex items-center text-sm">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Correct Answer
+                                        </h5>
+                                        <div class="space-y-2">
+                                            <div v-for="(answer, aIndex) in question.questionAnswers" :key="aIndex"
+                                                class="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-800 shadow-sm">
+                                                <div class="prose dark:prose-invert prose-sm max-w-none text-sm"
+                                                    v-html="answer.text"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -185,31 +300,39 @@
                     </div>
                 </div>
 
-                <!-- Footer -->
-                <div class="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+                <!-- Enhanced Footer -->
+                <div class="bg-white dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700 shadow-lg">
                     <div class="px-6 py-4 flex items-center justify-between">
-                        <div class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                            <span v-if="previewData?.questions?.length">
-                                {{ previewData.questions.length }} question{{ previewData.questions.length !== 1 ? 's' : '' }}
-                            </span>
-                            <span v-else>No questions</span>
+                        <div class="flex items-center space-x-4">
+                            <div
+                                class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span v-if="previewData?.questions?.length">
+                                    {{ previewData.questions.length }} {{ previewData.questions.length !== 1 ?
+                                    'Questions' : 'Question' }}
+                                </span>
+                                <span v-else>No Questions</span>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2.5">
                             <button @click="closeModal" type="button"
-                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors duration-150">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:border-gray-500 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                                 Close
                             </button>
                             <button v-if="previewData?.id"
-                                @click="$router.push({ name: 'admin-question-sets-edit', params: { id: previewData.id } })" type="button"
-                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                @click="$router.push({ name: 'admin-question-sets-edit', params: { id: previewData.id } })"
+                                type="button"
+                                class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 border border-transparent rounded-lg shadow-md hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                                 Edit Question Set
                             </button>
@@ -527,46 +650,73 @@ export default {
 <style scoped>
 /* Custom scrollbar styles */
 .custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 #f7fafc;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
 }
 
 /* Webkit browsers (Chrome, Safari, etc.) */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+    width: 8px;
+    height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f7fafc;
-  border-radius: 4px;
+    background: #f7fafc;
+    border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #cbd5e0;
-  border-radius: 4px;
-  border: 2px solid #f7fafc;
+    background-color: #cbd5e0;
+    border-radius: 4px;
+    border: 2px solid #f7fafc;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #a0aec0;
+    background-color: #a0aec0;
 }
 
 /* Dark mode styles */
 .dark .custom-scrollbar {
-  scrollbar-color: #4a5568 #2d3748;
+    scrollbar-color: #4a5568 #2d3748;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-track {
-  background: #2d3748;
+    background: #2d3748;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #4a5568;
-  border-color: #2d3748;
+    background-color: #4a5568;
+    border-color: #2d3748;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #718096;
+    background-color: #718096;
+}
+
+/* Light scrollbar for gradient background */
+.custom-scrollbar-light {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar-light::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.7);
 }
 </style>
